@@ -1,0 +1,1 @@
+/home/felipe/code/puppy-brasil/trunk/usr/sbin/pusb_modeswitch.sh
