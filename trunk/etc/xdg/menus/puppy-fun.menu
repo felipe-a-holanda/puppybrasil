@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Fun</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Fun.directory</Directory>
+  <Include>
+    <Category>Game</Category>
+    <Category>Amusement</Category>
+    <Category>ActionGame</Category>
+    <Category>AdventureGame</Category>
+    <Category>ArcadeGame</Category>
+    <Category>BlocksGame</Category>
+    <Category>BoardGame</Category>
+    <Category>CardGame</Category>
+    <Category>KidsGame</Category>
+    <Category>LogicGame</Category>
+    <Category>RolePlaying</Category>
+    <Category>Simulation</Category>
+    <Category>SportsGame</Category>
+    <Category>StrategyGame</Category>
+  </Include>
+
+</Menu>

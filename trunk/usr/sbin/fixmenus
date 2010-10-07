@@ -1,0 +1,51 @@
+#!/bin/sh
+#v2.14 Puppy now has XDG menus.
+#this script builds the menus from template files.
+#Any templates can be placed into /etc/xdg/templates, and the file must be
+#named to show its final destination. For example, the template for JWM:
+# _root_.jwmrc
+#...the '_' will be converted to a '/', so the generated JWM config file is:
+# /root/.jwmrc
+# 5jan2008: fbpanel,lxpanel support developed by plinej.
+#100404 BK added 'variconlinks' for my fbpanel pkg.
+#100427 when called via /etc/rc.d/rc.update, HOME is '/' (needed by some of the menu generating apps).
+
+#100427
+[ ! "$HOME" ] && HOME='/root'
+[ "$HOME" = "/" ] && HOME='/root'
+export HOME
+
+TEMPLATES="`ls -1 /etc/xdg/templates | tr '\n' ' '`"
+
+for ONETPL in $TEMPLATES
+do
+ [ "$ONETPL" = "README.txt" ] && continue
+ ONEDEST="`echo -n "$ONETPL" | sed -e 's/_/\//g'`"
+ ONESRC="/etc/xdg/templates/$ONETPL"
+ echo "Generating $ONEDEST..."
+ 
+ [ -f $ONEDEST ] && mv -f $ONEDEST ${ONEDEST}-previous
+
+ cat $ONESRC |
+ while read ONELINE
+ do
+  EXECMENU="`echo -n "$ONELINE" | grep -o 'PUPPYMENU.*' | cut -f 2-5 -d ' '`"
+  if [ "$EXECMENU" = "" ];then
+   echo "$ONELINE" >> $ONEDEST
+  else
+   ${EXECMENU} >> ${ONEDEST}
+  fi
+ done
+
+done
+
+#w001 support for fbpanel, lxpanel, openbox, fluxbox, pekwm...
+[ `which variconlinks` ] && variconlinks #100404 for my fbpanel pkg.
+[ `which tempicons` ] && tempicons
+[ `which fbpanel_menu_refresh` ] && fbpanel_menu_refresh
+[ `which lxpanel_menu_refresh` ] && lxpanel_menu_refresh
+[ `which jwm2fluxbox` ] && jwm2fluxbox  ##current fluxbox_menu_refresh doesn't support menu icons while this does
+[ `which obmenu-refresh` ] && obmenu-refresh
+[ `which jwm2pekwm` ] && jwm2pekwm
+
+###END###

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Ayttm MSN/Yahoo/IRC/ICQ/Jabber/LJ
+Exec=/usr/sbin/ayttmshell
+Icon=/usr/share/pixmaps/ayttm.png
+Comment="The GTK Unified Messaging Client"
+Terminal=false
+Type=Application
+Categories=X-Internet
+GenericName=Ayttm

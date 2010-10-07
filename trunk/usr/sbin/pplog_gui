@@ -1,0 +1,47 @@
+#! /bin/sh
+#(c) Barry Kauler July 2008, licence: GPL2
+
+PSSTATUS="`ps`"
+if [ "`echo "$PSSTATUS" | grep ' hiawatha'`" = "" ];then
+ xmessage -center -bg '#ffc0c0' -buttons START:10,EXIT:11 -title "PPLOG personal blog" "PPLOG personal blog requires the Hiawatha web server to be running.
+Click the START button to do this, otherwise click EXIT to abort."
+ [ $? -ne 10 ] && exit
+
+ echo '' > /tmp/hiawatha_error
+ hiawatha 2>/tmp/hiawatha_error
+
+ if [ $? -ne 0 ];then
+  ERRMSG="`cat /tmp/hiawatha_error`"
+  xmessage -center -bg 'red' -buttons EXIT:10 -title "PPLOG personal blog" "There was an error when attempting to start Hiawatha, this error message:
+
+${ERRMSG}
+
+Click EXIT button to quit:"
+  exit
+ fi
+fi
+
+xmessage -center -bg 'orange' -buttons PPLOG:10,STOP:11,EXIT:12 -title "PPLOG personal blog" "
+Click the PPLOG button to run the PPLOG personal blog.
+
+The Hiawatha web server is currently running, which is required for PPLOG.
+If you want to stop the server and exit, click the STOP button.
+
+To just quit, click the EXIT button:"
+
+case $? in
+ 10)
+  exec defaulthtmlviewer http://127.0.0.1:80/blog/pup_pplog.pl
+ ;;
+ 11)
+  hiawatha.run stop
+  exit
+ ;;
+ *)
+  exit
+ ;;
+esac
+
+
+
+###END###

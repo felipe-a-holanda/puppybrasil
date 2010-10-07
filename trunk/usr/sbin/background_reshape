@@ -1,0 +1,73 @@
+#!/bin/sh
+#Barry Kauler 2009
+#the background image is at /usr/share/backgrounds/default.jpg
+#this may have the wrong dimensions to suit either a 'normal' or a 'widescreen' monitor.
+#for now, keep this simple, assume image is suitable for normal screen, truncate vertically
+#if widescreen.
+#v424 fix maths.
+#v424 move ORIGINAL-* images to /usr/share/backgrounds_original
+
+#accept optional image file as passed param...
+IMAGEFILE="/usr/share/backgrounds/default.jpg"
+[ $1 ] && IMAGEFILE="$1"
+
+#v423 precaution, if someone has chosen the backup original...
+[ "`echo -n "$IMAGEFILE" | grep 'ORIGINAL'`" != "" ] && exit
+
+IMAGEPATH="`dirname $IMAGEFILE`"
+mkdir -p "${IMAGEPATH}_original" #v424
+IMAGEBASE="`basename $IMAGEFILE`"
+IMAGEEXT="`echo -n "$IMAGEBASE" | rev | cut -f 1 -d '.' | rev`"
+
+[ "$IMAGEEXT" != "jpg" ] && [ "$IMAGEEXT" != "jpeg" ] && [ "$IMAGEEXT" != "JPG" ] && [ "$IMAGEEXT" != "JPEG" ] && exit
+
+#first boot, maybe trying different video modes, so this causes reset each time...
+if [ ! -f ${IMAGEPATH}_original/ORIGINAL-${IMAGEBASE} ];then #v424
+ cp -f ${IMAGEFILE} ${IMAGEPATH}_original/ORIGINAL-${IMAGEBASE} #v424
+else
+ cp -f ${IMAGEPATH}_original/ORIGINAL-${IMAGEBASE} ${IMAGEFILE} #restore. v424
+fi
+
+IMAGEDIMS="`jpegtopnm ${IMAGEFILE} 2>/dev/null | pamfile 2>&1 | grep 'stdin:' | tr -s ' ' | cut -f 2 -d ',' | cut -f 2,4 -d ' '`" #ex: 1200 800
+IMAGEHORIZ=`echo -n "$IMAGEDIMS" | cut -f 1 -d ' '`
+IMAGEVERT=`echo -n "$IMAGEDIMS" | cut -f 2 -d ' '`
+
+ROOTDIMS="`xwininfo -root | grep ' \-geometry ' | tr -s ' ' | cut -f 3 -d ' ' | cut -f 1 -d '+' | tr 'x' ' '`"
+ROOTHORIZ=`echo -n "$ROOTDIMS" | cut -f 1 -d ' '`
+ROOTVERT=`echo -n "$ROOTDIMS" | cut -f 2 -d ' '`
+
+#v423...
+RATIOIMAGE=`dc $IMAGEHORIZ $IMAGEVERT div 100 mul p | cut -f 1 -d '.'`
+RATIOROOT=`dc $ROOTHORIZ $ROOTVERT div 100 mul p | cut -f 1 -d '.'`
+#echo "RATIOIMAGE=$RATIOIMAGE RATIOROOT=$RATIOROOT" #TEST
+xRATIOIMAGE=`expr $RATIOIMAGE + 5` #allow for roundoff errors.
+[ $xRATIOIMAGE -ge $RATIOROOT ] && exit
+
+#v423 some math gymnastics involved here...
+IMGVERTSCALED=`dc $ROOTHORIZ $IMAGEHORIZ div $IMAGEVERT mul p`
+VERTDIFF=`dc $IMGVERTSCALED $ROOTVERT sub p`
+NEWIMGVERTSCALED=`dc $IMGVERTSCALED $VERTDIFF sub p`
+NEWVERT=`dc $IMAGEHORIZ $ROOTHORIZ div $NEWIMGVERTSCALED mul p | cut -f 1 -d '.'` #v424 fix.
+
+#echo "IMGVERTSCALED=$IMGVERTSCALED VERTDIFF=$VERTDIFF NEWIMGVERTSCALED=$NEWIMGVERTSCALED NEWVERT=$NEWVERT" #TEST
+
+#this method only cuts off the bottom of image...
+#if [ $xNEWVERT -lt $IMAGEVERT ];then
+# jpegtopnm ${IMAGEFILE} | pamdice -height=${NEWVERT} -outstem=/root/out #creates out_0_0.ppm
+# [ $? -ne 0 ] && exit
+# pnmtojpeg -quality=85 out_0_0.ppm > ${IMAGEFILE}
+# rm -f /root/out_*.ppm
+#fi
+
+#this method cuts equal amount from top and bottom...
+if [ $NEWVERT -lt $IMAGEVERT ];then #precaution
+ PAMCUT="pamcut"
+ [ "`which pnmcut`" != "" ] && PAMCUT="pnmcut" #older netpbm.
+ CUTVERT=`expr $IMAGEVERT - $NEWVERT`
+ TOP=`expr $CUTVERT \/ 2`
+ BOTTOM=`expr $NEWVERT + $TOP`
+# jpegtopnm ${IMAGEPATH}_original/ORIGINAL-${IMAGEBASE} | ${PAMCUT} -left=0 -right=${IMAGEHORIZ} -top=${TOP} -bottom=${BOTTOM} | pnmtojpeg -quality=85 > ${IMAGEFILE}
+ jpegtopnm ${IMAGEPATH}_original/ORIGINAL-${IMAGEBASE} | ${PAMCUT} -left=0 -top=${TOP} -bottom=${BOTTOM} | pnmtojpeg -quality=85 > ${IMAGEFILE}
+fi
+
+###END###

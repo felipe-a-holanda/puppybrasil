@@ -1,0 +1,16 @@
+#!/bin/sh
+
+case "$1" in
+
+-h) echo "pupradio v-0.5.4
+	Options-
+	-h -prints this help
+	-p -plays last radio station selected"
+;;
+-p) if [ -e /usr/local/pupradio/last-played ];then exec $(cat /usr/local/pupradio/last-played)
+		else echo "ERROR: You must run pupRadio from gui first to generate the file needed for execution"
+	  fi	
+;;
+*) /usr/local/pupradio/pupradio "@"
+;;
+esac

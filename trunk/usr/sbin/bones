@@ -1,0 +1,745 @@
+#!/bin/sh
+#(c) Copyright Barry Kauler 2009 bkhome.org
+#2009 Lesser GPL licence v2 (/usr/share/doc/legal/lgpl-2.1.txt)
+#Ultra-simple version-control system. well, that's what is planned, just starting...
+#requirements: xdelta3, gtkdialog3, gftp, wget, openssh.
+#100322 extract user-modified project files before a download.
+
+#if current dir is, for example 'woof-t2-8.0rc' then read the name of project as "woof" (first word, '-' delimited)
+#bones project repository will be ../woof-bones
+
+#../woof-bones/filelist contains a list of all dirs and files in the repository.
+#that is, not all files/dirs in current directory will want to be in the repository.
+#example entries:
+# 1download
+# 2createpackages
+# boot
+#...if a directory is specified then it is recursive, includes all contents. wildcards allowed.
+
+CURRDIR="`pwd`"
+BONESCOMMAND="$1"
+[ "$BONESCOMMAND" = "" ] && BONESCOMMAND="gui"
+mkdir -p /var/local/bones
+TODAYDATE="`date +%Y%m%d`"
+
+PROJECTNAME="`pwd | rev | cut -f 1 -d '/' | rev | cut -f 1 -d '-'`"
+if [ ! -d ../${PROJECTNAME}-bones ];then
+ echo
+ echo "WARNING: it is required that the current directory be named"
+ echo "'<project name>-<anything>', for example 'woof-tree', 'woof-source'"
+ echo "or 'woof-project-2009' for the Woof project."
+ echo "Extracting the project name from current dir: '${PROJECTNAME}'"
+ echo "...if this is incorrect, abort this script and name it correctly."
+ echo -n "Press ENTER to continue (CTRL-C to abort): "
+ read keepgoing
+fi
+mkdir -p ../${PROJECTNAME}-bones
+
+if [ "$BONESCOMMAND" = "help" ];then
+ echo
+ echo "Accepted parameters: add check diff gui help download save setup upload"
+ echo "To get started, run 'bones setup', then"
+ echo "to download project, run 'bones download'"
+ echo "For a GUI frontend to all operations in Bones, run 'bones gui' or just 'bones'"
+ exit
+fi
+
+#091210 get rid of .delta files with single-date in filename... 091211 bugfix...
+if [ -s ../${PROJECTNAME}-bones/commits ];then
+ cd ../${PROJECTNAME}-bones
+ NEWDELTAS="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*-2*.delta"`"
+ OLDDELTAS="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].delta"`"
+ if [ "$OLDDELTAS" != "" ];then
+  rm -f "${PROJECTNAME}-2*.delta" 2>/dev/null
+  rm -f "${PROJECTNAME}-LATEST.tar.gz" 2>/dev/null
+  rm -f "${PROJECTNAME}-PREVIOUS.tar.gz" 2>/dev/null
+  grep -v 'delta|' commits > /tmp/bones-commits
+  grep -v 'LATEST' /tmp/bones-commits > /tmp/bones-commits2
+  grep -v 'PREVIOUS' /tmp/bones-commits2 > commits
+ fi
+ cd $CURRDIR
+fi
+
+check_func() { #091210
+ #do an integrity check...
+ #current dir must be woof-bones (repository)...
+ echo
+ echo "Checking .delta files (if any)..."
+ CHECKFLAG=0
+ #note, ALLDATES ex line: 20091234567890-20091234567890$branch
+ ALLDATES="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*.delta" | rev | cut -f 2-9 -d '.' | cut -f 1,2 -d '-' | rev | sort --numeric-sort --key=1,1 --field-separator='-'`"
+ if [ "$ALLDATES" ];then
+  #check they are all present...
+  echo "Checking for missing .delta files..."
+  PREVFIRST="";PREVSECOND=""
+  for ONEDATE in $ALLDATES
+  do
+   FIRSTFIELD="`echo -n "$ONEDATE" | cut -f 1 -d '-'`"
+   SECONDFIELD="`echo -n "$ONEDATE" | cut -f 2 -d '-' | cut -c 1-14`" #may have $branch on end.
+   if [ "$PREVSECOND" != "" ];then
+    if [ "$FIRSTFIELD" != "$PREVSECOND" ];then
+     echo "ERROR! A .delta file is missing or incorrect."
+     echo "They need to form a continuous chain of dates."
+     echo "This is the one that is wrong:"
+     echo "${PROJECTNAME}-${ONEDATE}.delta"
+     CHECKFLAG=1
+     break
+    fi
+   fi
+   PREVFIRST="$FIRSTFIELD"
+   PREVSECOND="$SECONDFIELD"
+  done
+  echo "...ok"
+  #check md5sums...
+  echo "Checking md5sums of .delta files..."
+  for ONEDELTA in `find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*.delta" | sed -e 's%^\./%%'`
+  do
+   itPATTERN='^'"$ONEDELTA"
+   CORRECTSUM="`grep "$itPATTERN" commits | cut -f 2 -d '|'`"
+   CALCSUM="`md5sum $ONEDELTA | cut -f 1 -d ' '`"
+   if [ "$CORRECTSUM" != "$CALCSUM" ];then
+    echo "ERROR! $ONEDELTA has incorrect md5sum"
+    echo "Recommend delete it, then run 'bones download' again to re-download it."
+    echo -n "Press ENTER only to delete it (any other key to keep): "
+    read keepit
+    if [ "$keepit" = "" ];then
+     rm -f $ONEDELTA
+     echo "...deleted $ONEDELTA"
+    fi
+    CHECKFLAG=1
+   fi
+  done
+  echo "Checking entries in 'commits' file..."
+  DELTAS_COMMITS="`grep '\.delta|' commits | cut -f 1 -d '|' | sort --numeric-sort --key=2,2 --field-separator='-'`"
+  DELTAS_ACTUAL="`ls -1 | grep '\.delta$' |  sort --numeric-sort --key=2,2 --field-separator='-'`"
+  echo "$DELTAS_COMMITS" > /tmp/bones-DELTAS_COMMITS
+  echo "$DELTAS_ACTUAL" > /tmp/bones-DELTAS_ACTUAL
+  if [ "`diff -q /tmp/bones-DELTAS_COMMITS /tmp/bones-DELTAS_ACTUAL`" != "" ];then
+   echo "ERROR: entries in 'commits' file do not agree with actual .delta files"
+   echo "Suggest that you run 'bones download' again. Here are the differences:"
+   echo
+   diff /tmp/bones-DELTAS_COMMITS /tmp/bones-DELTAS_ACTUAL | grep '^[<>] '
+   echo
+   return 1
+  fi
+  echo "...done"
+ fi
+ echo "Checking REFERENCE tarball (if any)..."
+ REFERENCETARBALL="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*REFERENCE.tar.gz" | sed -e 's%^\./%%'`"
+ if [ "$REFERENCETARBALL" ];then
+  rtPATTERN='^'"$REFERENCETARBALL"
+  CORRECTSUM="`grep "$rtPATTERN" commits | cut -f 2 -d '|'`"
+  CALCSUM="`md5sum $REFERENCETARBALL | cut -f 1 -d ' '`"
+  if [ "$CORRECTSUM" != "$CALCSUM" ];then
+   echo "ERROR! $REFERENCETARBALL has incorrect md5sum"
+   echo "Recommend delete it, then run 'bones download' again to re-download it."
+   echo -n "Press ENTER only to delete it (any other key to keep): "
+   read keepit
+   if [ "$keepit" = "" ];then
+    rm -f $REFERENCETARBALL
+    echo "...deleted $REFERENCETARBALL"
+   fi
+   CHECKFLAG=1
+  fi
+ fi
+ echo "...done"
+ return $CHECKFLAG
+} #end check_func
+
+#setup...
+[ ! -f ../${PROJECTNAME}-bones/setup ] && BONESCOMMAND="setup"
+[ ! -d ../${PROJECTNAME}-bones ] && BONESCOMMAND="setup"
+if [ "$BONESCOMMAND" = "setup" ];then
+ #a gui to fill in fields of ../${PROJECTNAME}-bones/setup
+ local_username='';download_url='';download_username='';download_password=''
+ [ -f ../${PROJECTNAME}-bones/setup ] && . ../${PROJECTNAME}-bones/setup
+ export MAIN_DIALOG="<window title=\"Bones Setup\" icon-name=\"gtk-preferences\">
+  <vbox>
+   <text use-markup=\"true\"><label>\"<b>This GUI is for setting the variables in file ../${PROJECTNAME}-bones/setup</b>\"</label></text>
+   <hbox><text><label>Please enter a username. The username 'administrator' is reserved for benevolent dictator or big cheese of this project.</label></text><vbox><text><label>local_username:</label></text><entry><default>\"${local_username}\"</default><variable>zzzlocal_username</variable></entry></vbox></hbox>
+   <hbox><text><label>This is the URL where the administrator keeps the project. You will be able to download the latest version of the project from here. Must be HTTP URL, please include 'http://' prefix:</label></text><vbox><text><label>download_url:</label></text><entry><default>\"${download_url}\"</default><variable>zzzdownload_url</variable></entry></vbox></hbox>
+   <hbox><text><label>If download from the URL requires a username, enter it here.</label></text><vbox><text><label>download_username:</label></text><entry><default>\"${download_username}\"</default><variable>zzzdownload_username</variable></entry></vbox></hbox>
+   <hbox><text><label>If download from the URL requires a password, enter it here.</label></text><vbox><text><label>download_password:</label></text><entry><default>\"${download_password}\"</default><variable>zzzdownload_password</variable></entry></vbox></hbox>
+
+   <hbox><button ok></button><button cancel></button></hbox>
+  </vbox>
+ </window>"
+ RETVALS="`gtkdialog3 --program=MAIN_DIALOG`"
+ eval "$RETVALS"
+ if [ "$EXIT" = "OK" ];then
+  echo "$RETVALS" | sed -e 's%zzz%%' | tr ' ' '_' | grep -v '^EXIT' > ../${PROJECTNAME}-bones/setup
+  sync
+  if [ "$local_username" = "administrator" ];then
+   echo
+   echo "NOTICE: as you are administrator, please manually edit this file:"
+   echo "../${PROJECTNAME}-bones/administrator"
+   echo "#setup manually, for use by administrator. do not upload.
+#host for secure ftp (without the ftp:// prefix):
+upload_ftp_url=''
+#if not known, try '22':
+upload_ftp_port=''
+#directory at host that has the project:
+upload_ftp_directory=''
+upload_ftp_username=''
+#may be left empty for security...
+upload_ftp_password=''" > ../${PROJECTNAME}-bones/administrator
+  fi
+ fi
+ [ "$BONESCOMMAND" = "setup" ] && exit
+fi
+[ ! -f ../${PROJECTNAME}-bones/setup ] && exit
+
+. ../${PROJECTNAME}-bones/setup
+if [ "$local_username" = "" ];then
+ echo
+ echo "ERROR: You must setup a username. Exiting."
+ exit
+fi
+branch="$local_username"
+[ "$local_username" = "administrator" ] && branch=""
+
+upload_ftp_url='';upload_ftp_username='';upload_ftp_password='';upload_ftp_directory='';upload_ftp_port='';upload_ftp_url=''
+[ -f ../${PROJECTNAME}-bones/administrator ] && . ../${PROJECTNAME}-bones/administrator
+
+rebuild_func() {
+ #create LATEST and PREVIOUS tarballs, from REFERENCE and the deltas...
+ #current dir must be ${PROJECTNAME}-bones
+ echo "Building..."
+ #091210 ALLDATES now has two dates in it ex: 200912345678-2009124567890
+ ALLDATES="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*.delta" | rev | cut -f 2-9 -d '.' | cut -f 1,2 -d '-' | rev | sort --numeric-sort --key=1,1 --field-separator='-'`"
+ REFERENCETARBALL="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*REFERENCE.tar.gz"`"
+ cp -f $REFERENCETARBALL PREVIOUS.tar.gz
+ PREVFIRST="";PREVSECOND=""
+ for ONEDATE in $ALLDATES
+ do
+  FIRSTDATE="`echo -n "$ONEDATE" | cut -f 1 -d '-'`"
+  SECONDDATE="`echo -n "$ONEDATE" | cut -f 2 -d '-' | cut -c 1-14`" #may have $branch on end.
+  DELTAFILE="${PROJECTNAME}-${ONEDATE}.delta"
+  if [ "$PREVSECOND" ];then
+   if [ "$PREVSECOND" != "$FIRSTDATE" ];then
+    echo "ERROR! There seems to be a missing .delta file."
+    [ -f LATEST.tar.gz ] && rm -f LATEST.tar.gz
+    [ -f PREVIOUS.tar.gz ] && rm -f PREVIOUS.tar.gz
+    return 1
+   fi
+  fi
+  [ -f LATEST.tar.gz ] && mv -f LATEST.tar.gz PREVIOUS.tar.gz
+  xdelta3 -d -s PREVIOUS.tar.gz $DELTAFILE LATEST.tar.gz
+  sync
+  PREVFIRST="$FIRSTDATE"
+  PREVSECOND="$SECONDDATE"
+ done
+ echo
+ mv -f PREVIOUS.tar.gz ${PROJECTNAME}-PREVIOUS.tar.gz
+ mv -f LATEST.tar.gz ${PROJECTNAME}-LATEST.tar.gz
+} #end rebuild_func
+
+rebuild_date_func() { #called from diff_func.
+ #passed param is a date. create a tarball for this date.
+ #current dir must be ${PROJECTNAME}-bones
+ echo "Building tarball for ${1}..."
+ rm -f PREVIOUS.tar.gz 2>/dev/null
+ rm -f LATEST.tar.gz 2>/dev/null
+ DATENUMERIC=`echo -n "${1}" | cut -c 1-14` #may have $branch on end.
+ #ALLDATES has two dates in it ex: 200912345678-2009124567890
+ ALLDATES="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*.delta" | rev | cut -f 2-9 -d '.' | cut -f 1,2 -d '-' | rev | sort --numeric-sort --key=1,1 --field-separator='-'`"
+ #find most recent tarball...
+ DATES_REV="`echo "$ALLDATES" | cut -f 1 -d '-' | sort --numeric-sort --unique --reverse | tr '\n' ' '`"
+ echo -n "" > /tmp/bones-zzz
+ for ONEDATE in $DATES_REV
+ do
+  echo "$ALLDATES" | grep "^${ONEDATE}" >> /tmp/bones-zzz
+  if [ ${DATENUMERIC} -gt ${ONEDATE} ];then
+   if [ -f archive/${PROJECTNAME}-${ONEDATE}.tar.gz ];then
+    cp -f archive/${PROJECTNAME}-${ONEDATE}.tar.gz PREVIOUS.tar.gz
+    ALLDATES="`cat /tmp/bones-zzz | sort --numeric-sort --key=1,1 --field-separator='-'`"
+    break
+   fi
+  fi
+ done
+ if [ ! -f PREVIOUS.tar.gz ];then #start at the beginning...
+  REFERENCETARBALL="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*REFERENCE.tar.gz"`"
+  cp -f $REFERENCETARBALL PREVIOUS.tar.gz
+ fi
+ PREVFIRST="";PREVSECOND=""
+ for ONEDATE in $ALLDATES
+ do
+  FIRSTDATE="`echo -n "$ONEDATE" | cut -f 1 -d '-'`"
+  SECONDDATE="`echo -n "$ONEDATE" | cut -f 2 -d '-' | cut -c 1-14`" #may have $branch on end.
+  SECONDDATEFULL="`echo -n "$ONEDATE" | cut -f 2 -d '-'`" #may have $branch on end.
+  DELTAFILE="${PROJECTNAME}-${ONEDATE}.delta"
+  if [ "$PREVSECOND" ];then
+   if [ "$PREVSECOND" != "$FIRSTDATE" ];then
+    echo "ERROR! There seems to be a missing .delta file."
+    [ -f LATEST.tar.gz ] && rm -f LATEST.tar.gz
+    [ -f PREVIOUS.tar.gz ] && rm -f PREVIOUS.tar.gz
+    return 1
+   fi
+  fi
+  [ -f LATEST.tar.gz ] && mv -f LATEST.tar.gz PREVIOUS.tar.gz
+  xdelta3 -d -s PREVIOUS.tar.gz $DELTAFILE LATEST.tar.gz
+  sync
+  PREVFIRST="$FIRSTDATE"
+  PREVSECOND="$SECONDDATE"
+  if [ "$SECONDDATEFULL" = "${1}" ];then
+   rm -f PREVIOUS.tar.gz
+   mkdir -p archive
+   mv -f LATEST.tar.gz archive/${PROJECTNAME}-${1}.tar.gz
+   return 0 #have reached required date.
+  fi
+ done
+ rm -f PREVIOUS.tar.gz
+ rm -f LATEST.tar.gz
+ echo "...error."
+ return 1
+} #end rebuild_date_func
+
+
+
+save_func() {
+ if [ ! -f ../${PROJECTNAME}-bones/filelist ];then
+  echo "You first need to run 'bones add' to create a filelist. aborting."
+  return 1
+ fi
+ echo
+ echo "Please type a one-line comment for this save:"
+ read COMMENT
+ CURRDATE="`date +%Y%m%d%H%M%S`"
+ #create a tarball of project...
+ mkdir ../${PROJECTNAME}-bones/${PROJECTNAME}-LATEST${branch}
+ echo "Checking in..."
+ for ONEFILE in `cat ../${PROJECTNAME}-bones/filelist`
+ do
+  [ "$ONEFILE" = "" ] && continue
+  [ ! -e $ONEFILE ] && continue
+  echo -n "$ONEFILE "
+  ONEDIR="`dirname ${ONEFILE}`"
+  if [ "$ONEDIR" != "." ];then
+   mkdir -p ../${PROJECTNAME}-bones/${PROJECTNAME}-LATEST${branch}/${ONEDIR}
+   cp -a ${ONEFILE} ../${PROJECTNAME}-bones/${PROJECTNAME}-LATEST${branch}/${ONEDIR}/ 2>/dev/null
+  else
+   cp -a ${ONEFILE} ../${PROJECTNAME}-bones/${PROJECTNAME}-LATEST${branch}/ 2>/dev/null
+  fi
+ done
+ echo
+ echo "Creating tarball..."
+ cd ../${PROJECTNAME}-bones
+ #get date of last save... note, ALLDATES ex line: 20091234567890-20091234567890$branch
+ ALLDATES="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*.delta" | rev | cut -f 2-9 -d '.' | cut -f 1,2 -d '-' | rev | sort --numeric-sort --key=1,1 --field-separator='-'`"
+ PREVSAVEDATE="`echo -n "$ALLDATES" | tail -n 1 | cut -f 2 -d '-' | cut -c 1-14`"
+ [ -f ${PROJECTNAME}-LATEST${branch}.tar.gz ] && mv -f ${PROJECTNAME}-LATEST${branch}.tar.gz ${PROJECTNAME}-PREVIOUS${branch}.tar.gz
+ tar -c -f ${PROJECTNAME}-LATEST${branch}.tar ${PROJECTNAME}-LATEST${branch}/
+ gzip ${PROJECTNAME}-LATEST${branch}.tar
+ sync
+ rm -rf ${PROJECTNAME}-LATEST${branch}
+ #now create a delta (unless its the first save)...
+ if [ ! -f ${PROJECTNAME}-PREVIOUS${branch}.tar.gz ];then
+  cp -f ${PROJECTNAME}-LATEST${branch}.tar.gz ${PROJECTNAME}-${CURRDATE}REFERENCE${branch}.tar.gz
+  MD5SUM="`md5sum ${PROJECTNAME}-${CURRDATE}REFERENCE${branch}.tar.gz | cut -f 1 -d ' '`"
+  REFERENCETARBALL="`find ./ -maxdepth 1 -type f -name "${PROJECTNAME}-2*REFERENCE.tar.gz"`"
+  if [ "$REFERENCETARBALL" ];then
+   #must be start of a branch, so append to 'commits'...
+   echo "${PROJECTNAME}-${CURRDATE}REFERENCE${branch}.tar.gz|${MD5SUM}|${COMMENT}|" >> commits
+  else
+   #this is the very first save...
+   echo "${PROJECTNAME}-${CURRDATE}REFERENCE${branch}.tar.gz|${MD5SUM}|${COMMENT}|" > commits
+  fi
+ else
+  echo "Creating delta..."
+  #xdelta_gui ${PROJECTNAME}-PREVIOUS${branch}.tar.gz ${PROJECTNAME}-LATEST${branch}.tar.gz
+  ##...generates ${PROJECTNAME}-PREVIOUS.tar.gz:${PROJECTNAME}-LATEST.tar.gz.delta
+  #mv -f ${PROJECTNAME}-PREVIOUS${branch}.tar.gz:${PROJECTNAME}-LATEST${branch}.tar.gz.delta ${PROJECTNAME}-${CURRDATE}${branch}.delta
+  xdelta3 -e -s ${PROJECTNAME}-PREVIOUS${branch}.tar.gz ${PROJECTNAME}-LATEST${branch}.tar.gz ${PROJECTNAME}-${PREVSAVEDATE}-${CURRDATE}${branch}.delta
+  sync
+  #MD5SUMprevious="`md5sum ${PROJECTNAME}-PREVIOUS${branch}.tar.gz | cut -f 1 -d ' '`"
+  #MD5SUMlatest="`md5sum ${PROJECTNAME}-LATEST${branch}.tar.gz | cut -f 1 -d ' '`"
+  MD5SUMdelta="`md5sum ${PROJECTNAME}-${PREVSAVEDATE}-${CURRDATE}${branch}.delta | cut -f 1 -d ' '`"
+  COMMITS="`cat commits | grep -v "PREVIOUS" | grep -v "LATEST"`"
+  echo "$COMMITS" > commits
+  #echo "${PROJECTNAME}-PREVIOUS${branch}.tar.gz|${MD5SUMprevious}||" >> commits
+  echo "${PROJECTNAME}-${PREVSAVEDATE}-${CURRDATE}${branch}.delta|${MD5SUMdelta}|${COMMENT}|" >> commits
+  #echo "${PROJECTNAME}-LATEST${branch}.tar.gz|${MD5SUMlatest}||" >> commits
+ fi
+ sync
+ cd $CURRDIR
+ echo "...done"
+} #end save_func
+
+add_func() {
+ if [ ! $2 ];then
+  echo
+  echo "ERROR: required format 'bones add <file-or-dir>'"
+  echo "  <file-or-dir> must be relative to current directory"
+  echo "  '$CURRDIR'."
+  echo "   Wildcards allowed. If dir then recursive."
+  echo "   <file-or-dir> will be added to ../${PROJECTNAME}-bones/filelist"
+  return 1
+ fi
+ NEWFLAG='bad'
+ [ "`find . -name "$2"`" != "" ] && NEWFLAG='good'
+ NEWFILE="`echo -n "$2" | sed -e 's%^\\./%%'`"
+ [ "`echo -n "$NEWFILE" | grep '^\\.\\./'`" != "" ] && NEWFLAG='bad'
+ [ "`echo -n "$NEWFILE" | grep '^/'`" != "" ] && NEWFLAG='bad'
+ if [ "$NEWFLAG" = "good" ];then
+  echo "$NEWFILE" >> ../${PROJECTNAME}-bones/filelist
+  sort -u ../${PROJECTNAME}-bones/filelist > /tmp/bones-filelist
+  mv -f /tmp/bones-filelist ../${PROJECTNAME}-bones/filelist
+  echo "OK: '$NEWFILE' added to ../${PROJECTNAME}-bones/filelist"
+ else
+  echo
+  echo "ERROR: '$NEWFILE' does not exist. Please specify a file or directory"
+  echo "relative to current directory '$CURRDIR'"
+  return 1
+ fi
+} #end add_func
+
+upload_func() {
+ if [ "$local_username" != "administrator" ];then
+  echo
+  echo "SORRY: only the administrator can upload. Exiting."
+  exit
+ fi
+ cd ../${PROJECTNAME}-bones
+ if [ "$upload_ftp_url" = "" -o "$upload_ftp_username" = "" ];then
+  echo
+  echo "Enter values for the 'upload_*' variables in file 'administrator'. Aborting."
+  return 1
+ fi
+ #for now, do it manually...
+ FTPPORT=''
+ [ "$upload_ftp_port" ] && FTPPORT=':'"$upload_ftp_port"
+ upload_ftp_url="`echo -n "$upload_ftp_url" | sed -e 's%/$%%'`"
+ upload_ftp_directory="`echo -n "$upload_ftp_directory" | sed -e 's%/$%%' -e 's%^/%%'`"
+ if [ "$upload_ftp_password" = "" ];then
+  echo "Running: gftp ssh2://${upload_ftp_username}@${upload_ftp_url}${FTPPORT}/${upload_ftp_directory}/"
+  gftp ssh2://${upload_ftp_username}@${upload_ftp_url}${FTPPORT}/${upload_ftp_directory}/
+ else
+  echo "Running: gftp ssh2://${upload_ftp_username}:${upload_ftp_password}@${upload_ftp_url}${FTPPORT}/${upload_ftp_directory}/"
+  gftp ssh2://${upload_ftp_username}:${upload_ftp_password}@${upload_ftp_url}${FTPPORT}/${upload_ftp_directory}/
+ fi
+ #TODO use sftp to auto-upload. --or whatever
+ #ssh -e none -l bkauler -p 2222 puppylinux.com -s sftp
+ #cd $upload_ftp_directory
+ #put <name of file>
+ #bye
+ #this not working...
+ #echo "Executing: ssh -e none -l ${upload_ftp_username} -p ${upload_ftp_port} ${upload_ftp_url} -s sftp"
+ #echo "For now, manual 'put' of files. also need to 'cd' to correct remote dir..."
+ #ssh -e none -l ${upload_ftp_username} -p ${upload_ftp_port} ${upload_ftp_url} -s sftp
+ cd $CURRDIR
+} #end upload_func
+
+download_func() {
+ cd ../${PROJECTNAME}-bones
+ touch /tmp/bones-commits-previous
+ [ -f commits ] && cp -f commits /tmp/bones-commits-previous
+ touch /tmp/bones-filelist-previous
+ [ -f filelist ] && cp -f filelist /tmp/bones-filelist-previous
+ #download everything...
+ download_url="`echo -n "$download_url" | sed -e 's%$%/%' -e 's%//$%/%'`"
+ #wildcard only works for ftp download...
+ #wget --user=${download_username} --password=${download_password} --no-clobber "${download_url}${PROJECTNAME}-2*"
+ #this works for http...
+ SECURITY=""
+ [ "$download_username" ] && SECURITY="--http_user=${download_username} --http_password=${download_password}"
+ wget --recursive --level=1 --no-parent --accept "${PROJECTNAME}-2*" --no-clobber --no-directories ${SECURITY} ${download_url}
+ wget --no-clobber ${SECURITY} ${download_url}setup
+ #if these already exist, they get saved with .1 extension...
+ #but, move them aside first...
+ mkdir -p archive
+ mv -f commits archive/commits 2>/dev/null
+ mv -f filelist archive/filelist 2>/dev/null
+ wget ${SECURITY} ${download_url}commits
+ wget ${SECURITY} ${download_url}filelist
+
+ #check that files got downloaded properly...
+ CHKBAD='yes'
+ NEWCOMMITS="`diff /tmp/bones-commits-previous commits  | grep '^> ' | cut -f 2 -d ' ' | cut -f 1,2 -d '|' | tr '\n' ' '`"
+ while [ "$CHKBAD" = "yes" ];do
+  CHKBAD='no'
+  for ONECOMMIT in $NEWCOMMITS
+  do
+   ONEFILE="`echo -n "$ONECOMMIT" | cut -f 1 -d '|'`"
+   [ "`echo -n "$ONEFILE" | grep 'PREVIOUS'`" != "" ] && continue
+   [ "`echo -n "$ONEFILE" | grep 'LATEST'`" != "" ] && continue
+   ONEMD5SUM="`echo -n "$ONECOMMIT" | cut -f 2 -d '|'`"
+   CHKMD5SUM="`md5sum $ONEFILE | cut -f 1 -d ' '`"
+   if [ "$ONEMD5SUM" != "$CHKMD5SUM" ];then
+    CHKBAD='yes'
+    echo "ERROR: $ONEFILE did not download properly"
+    echo -n "Press ENTER to try again: "
+    read tryagain
+    [ "$tryagain" != "" ] && break 2
+    rm -f $ONEFILE 2>/dev/null
+    wget ${SECURITY} ${download_url}${ONEFILE}
+   fi
+  done
+ done
+ if [ "$CHKBAD" = "yes" ];then
+  echo
+  echo "ERROR: One or more files failed to download."
+  echo "You need to run 'bones download' again sometime."
+  echo "Restoring repository to before download attempted..."
+  #echo restore previous files...
+  cp -f /tmp/bones-commits-previous commits
+  cp -f /tmp/bones-filelist-previous filelist
+  for ONECOMMIT in $NEWCOMMITS
+  do
+   ONEFILE="`echo -n "$ONECOMMIT" | cut -f 1 -d '|'`"
+   [ -f $ONEFILE ] && rm -f $ONEFILE
+  done
+  return 1
+ fi
+
+ #move aside any user work... note, do not put $branch in here...
+ cp -a -f ${PROJECTNAME}-2*${local_username}.delta archive/ 2>/dev/null
+ rm -f ${PROJECTNAME}-2*${local_username}.delta 2>/dev/null
+ cp -a -f ${PROJECTNAME}-2*${local_username}.tar.gz archive/ 2>/dev/null
+ rm -f ${PROJECTNAME}-2*${local_username}.tar.gz 2>/dev/null
+
+ #need to post-process...
+ rebuild_func #create tarball of LATEST and PREVIOUS tarballs
+ if [ $? -ne 0 ];then
+  echo "A problem. Suggest run 'bones download' again."
+  echo "Not updating files in $CURRDIR"
+  return 1
+ fi
+ #now update the user's working dir...
+ echo "Updating working directory ${CURRDIR}..."
+ tar -z -x --strip=1 --directory=${CURRDIR}/ -f ${PROJECTNAME}-LATEST.tar.gz
+ sync
+ echo "...done"
+
+ cd $CURRDIR #project working dir.
+} #end download_func
+
+diff_func() {
+ #current directory is ${PROJECTNAME}-bones
+ #bring up a gui to choose two dates, then find differences... 
+ #generate a text file which documents the saves...
+ pnPATTERN="s%^${PROJECTNAME}\\-%%"
+ REFSAVE_INFO="`grep 'REFERENCE' commits | cut -f 1,3 -d '|' | sed -e "$pnPATTERN" -e 's%REFERENCE\.tar\.gz|%: %'`"
+ SAVES_INFO="`grep 'delta|' commits | cut -f 1,3 -d '|' | sed -e "$pnPATTERN" -e 's%\.delta|%: %' | cut -c 16-999`"
+ echo "$REFSAVE_INFO" > /tmp/bones-log-of-comments-for-all-saves
+ echo "$SAVES_INFO" >> /tmp/bones-log-of-comments-for-all-saves
+ defaulttextviewer /tmp/bones-log-of-comments-for-all-saves &
+ SIPID=$!
+ sleep 2
+ #build a list of dates... do not do numeric-sort, as want any $branch in name...
+ DELTA_DATES="` ls -1 | grep '\.delta$' | cut -f 2,3 -d '-' | cut -f 1 -d '.' | tr '-' '\n' | sort --unique`"
+ DELTA_ITEMS="`echo "$DELTA_DATES" | sed -e 's%^%<item>%' -e 's%$%</item>%'`"
+ export DIFF_DIALOG="<window title=\"Bones file differences\" icon-name=\"gtk-preferences\">
+<vbox>
+  <text use-markup=\"true\"><label>\"<b>To examine the differences between two 'saves', you need to choose a start-date and an end-date (the start-date must be earlier than the end-date!)</b>\"</label></text>
+  <hbox>
+    <text><label>Start date:</label></text>
+    <combobox><variable>COMBO_STARTDATE</variable>${DELTA_ITEMS}</combobox>
+  </hbox>
+  <hbox>
+    <text><label>End date:</label></text>
+    <combobox><variable>COMBO_ENDDATE</variable>${DELTA_ITEMS}</combobox>
+  </hbox>
+  <hbox>
+   <text><label>Click OK to examine differences:</label></text>
+   <button ok></button>
+   <button cancel></button>
+  </hbox>
+ </vbox></window>"
+ RETVALS="`gtkdialog3 --program=DIFF_DIALOG`"
+ eval "$RETVALS"
+ kill $SIPID
+ [ "$EXIT" != "OK" ] && return
+
+ if [ $COMBO_STARTDATE -ge $COMBO_ENDDATE ];then
+  xmessage -center -bg red "ERROR: end-date must be greater than start-date"
+  return 1
+ fi
+ if [ ! -f /var/local/bones/bones-differences-${PROJECTNAME}-${COMBO_STARTDATE}-${COMBO_ENDDATE} ];then
+  mkdir -p archive
+  if [ ! -f archive/${PROJECTNAME}-${COMBO_STARTDATE}.tar.gz ];then
+   if [ -f ${PROJECTNAME}-${COMBO_STARTDATE}REFERENCE.tar.gz ];then
+    cp ${PROJECTNAME}-${COMBO_STARTDATE}REFERENCE.tar.gz archive/${PROJECTNAME}-${COMBO_STARTDATE}.tar.gz
+   fi
+  fi
+  if [ ! -f archive/${PROJECTNAME}-${COMBO_STARTDATE}.tar.gz ];then
+   rebuild_date_func ${COMBO_STARTDATE}
+   [ $? -ne 0 ] && return 1
+  fi
+  if [ ! -f archive/${PROJECTNAME}-${COMBO_ENDDATE}.tar.gz ];then
+   rebuild_date_func ${COMBO_ENDDATE}
+   [ $? -ne 0 ] && return 1
+  fi
+  #have two tarballs, extract difference data, using ecube's perl script...
+  echo "Extracting difference information, using ecube's perl script..."
+  mkdir -p /var/local/bones
+  cd archive
+  bones_diff.pl $PROJECTNAME $COMBO_STARTDATE $COMBO_ENDDATE > /var/local/bones/bones-differences-${PROJECTNAME}-${COMBO_STARTDATE}-${COMBO_ENDDATE}
+  cd ..
+ fi
+ defaulttextviewer /var/local/bones/bones-differences-${PROJECTNAME}-${COMBO_STARTDATE}-${COMBO_ENDDATE} &
+ d2PID=$!
+ sleep 3
+ export DIFF2_DIALOG="<window title=\"Bones file differences\" icon-name=\"gtk-preferences\">
+<vbox>
+  <text use-markup=\"true\"><label>\"<b>COMING SOON: stuff here to extract information about an individual file.</b>\"</label></text>
+  <text><label>Note: tarballs of the project, for both dates, have been created in the 'archive' directory</label></text>
+  <hbox>
+   <button ok></button>
+   <button cancel></button>
+  </hbox>
+ </vbox></window>"
+ RETVALS="`gtkdialog3 --program=DIFF2_DIALOG`"
+ kill $d2PID
+ eval "$RETVALS"
+ [ "$EXIT" != "OK" ] && return
+} #end diff_func
+
+gui_func() {
+ #main gui
+ export GUI_DIALOG="<window title=\"Bones main GUI window\" icon-name=\"gtk-preferences\">
+<vbox>
+   <text use-markup=\"true\"><label>\"<b>These options can also be invoked directly on the commandline, for example 'bones save'</b>\"</label></text>
+  <frame User options>
+  <hbox>
+    <text><label>Check integrity of project database (contents of ../${PROJECTNAME}-bones)</label></text>
+    <vbox><button><label>check</label><action type=\"exit\">check</action></button></vbox>
+  </hbox>
+  <hbox>
+    <text><label>Examine file differences between two project saves</label></text>
+    <vbox><button><label>diff</label><action type=\"exit\">diff</action></button></vbox>
+  </hbox>
+  <hbox>
+    <text><label>Download latest version of '${PROJECTNAME}' project from the Internet. Warning: currently all project files will be overwritten (see file list in ../${PROJECTNAME}-bones/filelist)</label></text>
+    <vbox><button><label>download</label><action type=\"exit\">download</action></button></vbox>
+  </hbox>
+  <hbox>
+    <text><label>Fundamental setup options for this project</label></text>
+    <vbox><button><label>setup</label><action type=\"exit\">setup</action></button></vbox>
+  </hbox>
+  </frame>
+  <frame Administrator options>
+  <text><label>Note: any user who modifies the project files can do a 'save' and the .delta file will be marked with their username, which they can forward to the administrator by email if they wish. Warning: a 'download' will move user .deltas into ../${PROJECTNAME}-bones/archive/</label></text>
+  <hbox>
+    <text><label>Add a file or directory to project (see file ../${PROJECTNAME}-bones/filelist)</label></text>
+    <vbox><button><label>add</label><action type=\"exit\">add</action></button></vbox>
+  </hbox>
+  <hbox>
+    <text><label>Saves project files (see ../${PROJECTNAME}-bones/filelist) as a .delta file in ../${PROJECTNAME}-bones, appends entry to 'commits' file</label></text>
+    <vbox><button><label>save</label><action type=\"exit\">save</action></button></vbox>
+  </hbox>
+  <hbox>
+    <text><label>Uploads latest delta files and 'commits' file to the Internet</label></text>
+    <vbox><button><label>upload</label><action type=\"exit\">upload</action></button></vbox>
+  </hbox>
+  </frame>
+  <hbox>
+   <button cancel></button>
+  </hbox>
+ </vbox></window>"
+ RETVALS="`gtkdialog3 --program=GUI_DIALOG`"
+ eval "$RETVALS"
+ case $EXIT in
+  add)
+   echo
+   echo -n "Type relative-path and filename/directory: "
+   read NEWFILE
+   exec bones add $NEWFILE
+  ;;
+  check|diff|download|setup|save|upload)
+   exec bones $EXIT
+  ;;
+  *)
+   return
+  ;;
+ esac
+} #end gui_func
+
+user_mod_files_func() { #100322
+ #current dir must be project working dir ex: woof-tree.
+ #finds all project files that the user has modified since last official download.
+ echo
+ echo "Examining project directory to see if you have modified any files"
+ echo "since the previous download, please wait..."
+ echo -n "" > /var/local/bones/user-different-files
+ rm -rf ../${PROJECTNAME}-user-modified-${TODAYDATE} 2>/dev/null
+ mkdir ../${PROJECTNAME}-user-modified-${TODAYDATE}
+ #first, copy all project files...
+ for ONEOLD in `cat ../${PROJECTNAME}-bones/filelist | tr '\n' ' '`
+ do
+  [ ! -e $ONEOLD ] && continue
+  ONEDIR="`dirname ${ONEOLD}`"
+  if [ "$ONEDIR" != "." ];then
+   mkdir -p ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEDIR}
+   cp -a ${ONEOLD} ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEDIR}/ 2>/dev/null
+  else
+   cp -a ${ONEOLD} ../${PROJECTNAME}-user-modified-${TODAYDATE}/ 2>/dev/null
+  fi
+ done
+ #now compare each file with that in latest archive...
+ LASTARCHIVEDATE=`stat --format=%Y ../${PROJECTNAME}-bones/${PROJECTNAME}-LATEST.tar.gz`
+ umPATTERN="s%^\\.\\./${PROJECTNAME}-user-modified-${TODAYDATE}/%%"
+ ALLFILES="`find ../${PROJECTNAME}-user-modified-${TODAYDATE} -type f | sed -e "$umPATTERN" | tr '\n' ' '`"
+ for ONEFILE in $ALLFILES
+ do
+  [ ! -f ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEFILE} ] && continue
+  BKUPFILEDATE=`stat --format=%Y ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEFILE}`
+  [ $BKUPFILEDATE -gt $LASTARCHIVEDATE ] && echo "$ONEFILE" >> /var/local/bones/user-different-files
+ done
+ #now extract only the user-modified files...
+ rm -rf ../${PROJECTNAME}-user-modified-${TODAYDATE}
+ mkdir ../${PROJECTNAME}-user-modified-${TODAYDATE}
+ if [ -s /var/local/bones/user-different-files ];then
+  for ONEFILE in `cat /var/local/bones/user-different-files | tr '\n' ' '`
+  do
+  ONEDIR="`dirname ${ONEFILE}`"
+  if [ "$ONEDIR" != "." ];then
+   mkdir -p ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEDIR}
+   cp -a ${ONEFILE} ../${PROJECTNAME}-user-modified-${TODAYDATE}/${ONEDIR}/ 2>/dev/null
+  else
+   cp -a ${ONEFILE} ../${PROJECTNAME}-user-modified-${TODAYDATE}/ 2>/dev/null
+  fi
+  done
+  echo
+  echo "NOTICE: You have modified some of the project files!"
+  echo "The 'download' operation will overwrite these files with the latest"
+  echo "official files, however your modified files have been moved to"
+  echo "directory '../${PROJECTNAME}-user-modified-${TODAYDATE}'"
+  echo "After the download is complete, you may examine your modified files"
+  echo "and investigate how they may be merged back into the official project."
+  echo -n "Press ENTER to continue: "
+  read yabbadodah
+ fi
+} #end user_mod_files_func
+
+
+
+case $BONESCOMMAND in
+ save)  #create .delta of latest project.
+  save_func
+ ;;
+ add)      #add a file/dir name to 'filelist'.
+  add_func
+ ;;
+ download) #download project from internet.
+  user_mod_files_func #100322
+  download_func
+ ;;
+ upload)   #upload latest .delta to internet.
+  upload_func
+ ;;
+ check)
+  cd ../${PROJECTNAME}-bones
+  check_func
+  cd $CURRDIR
+ ;;
+ diff|difference)
+  cd ../${PROJECTNAME}-bones
+  diff_func
+  cd $CURRDIR
+ ;;
+ gui)
+  gui_func
+ ;;
+esac
+
+###END###

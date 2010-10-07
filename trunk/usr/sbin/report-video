@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. /etc/DISTRO_SPECS
+
+if [ "`which scanpci`" != "" ];then
+ GRAPHICSCHIP="`scanpci | grep -i -E 'graphic|video|display'`"
+else
+ GRAPHICSCHIP="`lspci | grep -i -E 'graphic|video|display'`"
+fi
+if [ "$GRAPHICSCHIP" = "" ];then
+ if [ -f /tmp/ddcprobe.txt ];then
+  GRAPHICSCHIP="`cat /tmp/ddcprobe.txt | grep -E '^oem: |^product: '`"
+ else
+  GRAPHICSCHIP="`ddcprobe | grep -E '^oem: |^product: '`"
+ fi
+fi
+
+VIDEODRIVER="`grep '#card0driver' /etc/X11/xorg.conf | cut -f 2 -d '"'`" #'geany
+
+#VIDEOMODE="`cat /etc/videomode`"
+VIDEORES="`cat /etc/X11/xorg.conf | tr '\t' ' ' | tr -s ' ' | tr -s '\n' | tr '\n' '|' | grep -o '|Section "Screen".*' | cut -f 9 -d '|' | cut -f 2 -d '"'`" #'geany
+VIDEODEPTH="`cat /etc/X11/xorg.conf | tr '\t' ' ' | tr -s ' ' | tr -s '\n' | tr '\n' '|' | grep -o '|Section "Screen".*' | cut -f 8 -d '|' | cut -f 3 -d ' '`"
+
+echo "VIDEO REPORT: $DISTRO_NAME, version $DISTRO_VERSION
+
+Chip description:
+$GRAPHICSCHIP
+
+Driver used by Xorg:
+$VIDEODRIVER
+
+Video mode used by Xorg:
+Resolution: $VIDEORES  Depth: $VIDEODEPTH" > /tmp/report-video
+
+cat /tmp/report-video
+echo
+echo "...the above also recorded in /tmp/report-video"
+

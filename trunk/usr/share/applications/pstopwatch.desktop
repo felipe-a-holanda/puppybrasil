@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=pStopWatch stop watch
+Icon=mini-clock.xpm
+Comment=pStopWatch stop watch
+Exec=pstopwatch
+Terminal=false
+Type=Application
+Categories=X-PersonalUtility
+GenericName=pStopWatch stop watch

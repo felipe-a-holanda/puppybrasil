@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pictureviewer drag-and-drop images
+Comment=Pictureviewer drag-and-drop images
+Exec=Pictureviewer
+Icon=Pictureviewer.png
+Categories=2DGraphics
+MimeType=
+Type=Application

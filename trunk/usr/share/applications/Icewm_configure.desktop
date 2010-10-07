@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Icewm Configuration Change Icewm Settings
+Icon=/usr/share/pixmaps/icewin.xpm
+Comment=Icewm Configuration Change Icewm Settings
+Exec=ice_config.sh
+Terminal=false
+Type=Application
+Categories=DesktopSettings
+GenericName=Icewm Configuration Change Icewm Settings

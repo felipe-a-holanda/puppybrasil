@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Sylpheed mail and news
+Icon=mini-mail.xpm
+Comment=Sylpheed mail and news
+Exec=sylpheed
+Terminal=false
+Type=Application
+Categories=X-Internet
+GenericName=Sylpheed mail and news

@@ -1,0 +1,40 @@
+#!/bin/sh
+#called from modemprobe
+#delete current modem setting.
+#v416 manage linuxant modems
+#v432 Undo automatic HCF/HSF overrides if modem selection is already cleared, to require second erase to reset the overrides.
+
+rm -f /dev/modem
+
+#v432 If no modem currently "detected", reset ALSA override of HSF driver (and vice versa).
+if [ ! -e /etc/wvdial.conf ] \
+  || grep -q -E '^Modem = (/dev/MYDEVM|MYDEVM)' /etc/wvdial.conf;then
+ [ -d /etc/hsfmodem ] && rm -f /etc/hsfmodem/.substitute_alternate_module
+fi #v432 end
+
+[ -e /etc/wvdial.conf ] && sed -i -e 's%^Modem = .*%Modem = MYDEVM%' /etc/wvdial.conf #424
+
+#v432 Remove ttyS_, ttySHCF, ttyHSF, & ttySL0 device links and nodes, to prevent wvdialconf from finding an incorrect device name after a modem-hardware change.
+rm -f /dev/ttyS_* /dev/ttySHCF* /dev/ttySHSF* /dev/ttySL0 /dev/ttySM0
+
+#v432 Delete includes of modem configuration files and clear the include files, to allow fresh start.
+#Avoid locks if pretection daemon not running (e.g., erasing after installing it initially, but before reboot).
+ps | grep 'pup_event_backend_modprobe_protect' | grep -q ' \-\-daemon'
+PROTECT=$?
+[ $PROTECT -eq 0 ] && /sbin/pup_event_backend_modprobe_protect --lock=modprobeconf
+sed -i '/^include \/etc\/modprobe_includes\/modem/d' /etc/modprobe.conf
+[ $PROTECT -eq 0 ] && /sbin/pup_event_backend_modprobe_protect --unlock=modprobeconf
+
+#v432 Remove firmware-installed entries to allow firmware reinstall to restore only needed init scripts, modprobe.conf include lines, and ttyS* links/devices.
+[ $PROTECT -eq 0 ] && /sbin/pup_event_backend_modprobe_protect --lock=firmwareinst
+sed -i \
+ -e /^dgcmodem$/d \
+ -e /^hcfpcimodem$/d \
+ -e /^hsfmodem$/d \
+ -e /^sl.*modem$/d \
+ -e /^ess$/d \
+ -e /^pctel$/d \
+ /etc/modules/firmware.inst.`uname -r` 2>/dev/null
+[ $PROTECT -eq 0 ] && /sbin/pup_event_backend_modprobe_protect --unlock=firmwareinst
+
+xmessage "/dev/modem deleted, 'Modem' entry in /etc/wvdialconf initialized."

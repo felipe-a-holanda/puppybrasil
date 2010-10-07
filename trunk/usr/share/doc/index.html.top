@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><title>Lucid Puppy Help Page</title>
+
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8">
+
+  <meta http-equiv="content-style-type" content="text/css">
+
+  <meta http-equiv="expires" content="0">
+
+<script language="JavaScript">
+
+<!-- Begin
+function formHandler(form){
+var URL = document.form.site.options[document.form.site.selectedIndex].value;
+window.location.href = URL;
+}
+function formHandler2(form2){
+var URL = document.form2.site2.options[document.form2.site2.selectedIndex].value;
+window.location.href = URL;
+}
+function search_site()
+{
+var url = "http://linux.die.net/man/1/"
+// Append the text box input to the search url for the selected site
+url = url + document.search_form.u_search.value;
+// Change the the browser location to the new url
+window.location.href = url;
+}
+// End -->
+
+</script></head><body>
+
+<img style="width: 96px; height: 96px;" src="puppylogo96.png" alt="logo" align="middle"> 
+<big style="font-weight: bold;"> Welcome to Lucid Puppy version 5.1.1, released Sep 2010</big><br>
+<br>
+Lucid Puppy is the latest in our family of "Puppy Linux distros"!<br>
+<br>
+<table style="text-align: left;" border="0" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; background-color: rgb(255, 204, 204);">
+      &nbsp;PLEASE READ: <a href="release-Lucid-511.htm">
+      <big style="font-weight: bold;">Announcement and Release Notes for Lucid Puppy 5.1.1</big></a> <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+
+<h2>Lucid Puppy help</h2>
+All Lucid Puppy's local documentation is in HTML or plain text format. This page is the master index.<br>
+
+<h3>Lucid Puppy-specific help</h3>
+<ul>
+  <li><a href="HOWTO_Internet.htm">HOWTO get onto the Internet</a> (dial-up your ISP)</li><li><a href="HOWTO-microsoft.htm">HOWTO view and edit Microsoft documents</a>&nbsp;</li>
+  <li><a href="HOWTO-program.htm">HOWTO write programs for Lucid Puppy</a> </li>
+  <li><a href="HOWTO-multimedia.htm">HOWTO multimedia</a> (work with graphics, sound, video)</li>
+  <li><a href="HOWTO-regexps.htm">HOWTO regular expressions</a> (what they are, how to use)</li>
+  <li><a href="HOWTO-fattenpuppy.htm">HOWTO fatten Lucid Puppy</a> (add-on fonts, plugins, spellchecking)</li>
+<!--  <li><a href="HOWTO_quisp_shsql.htm">HOWTO QUISP and SHSQL</a> (dynamic web pages with SQL DB backend)</li> -->
+  <li><a href="shortcutkeys.htm">Keyboard shortcuts for International characters</a></li>
+  <li><a href="samba-printing.htm">HOWTO print with Samba and CUPS</a></li>
+</ul>
+
+<h3>Applications documentation</h3>
+
+<p>The pulldown menu provides easy access to online documentation of all utilities and applications in Lucid Puppy. Select and go!...</p>
+

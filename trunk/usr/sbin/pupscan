@@ -1,0 +1,338 @@
+#!/bin/sh
+#(c) Copyright 2006 Barry Kauler www.puppylinux.com
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#v3.01 BK 11oct07: bugfix, crash when choose usb button.
+#BK v3.98: improve create mono font in status log.
+#v425 rerwin: read device IDs from modules.alias and dialup-modem rules, instead of pci/usbmaps; choose last match, corresponding to backend_modprobe.
+#v431 rerwin: Add --silent option to only generate files, without display.
+#100108 BK 'scanpci' is not working properly xorg 7.5. actually it is no longer part of libpciaccess pkg.
+
+[ "`echo $@ | grep ' *--silent *'`" != "" ] && SILENT=true || SILENT=false #v431
+KERNVER="`uname -r`"
+ZDRV='' #set in PUPSTATE.
+#variables created at bootup by init script in initrd...
+. /etc/rc.d/PUPSTATE
+#v4.02 common functions...
+. /etc/rc.d/functions4puppy4
+
+if [ "$SILENT" != "true" ];then #100108
+ yaf-splash -font "8x16" -outline 0 -margin 4 -bg orange -text "Please wait, probing hardware..." &
+ YSPID=$!
+fi
+
+MODITEMS=""
+for ONEMOD in `lsmod | grep -v '^Module ' | cut -f 1 -d ' ' | tr '\n' ' '`
+do
+ MODITEMS="$MODITEMS<item>$ONEMOD</item>"
+done
+
+#PCINUMS="`lspci -n | tr -s " " | cut -f 4 -d " " | tr "\n" " "`"
+
+#v4.02 all mods now present...
+#[ ! -f /lib/modules/$KERNVER/modules.pcimap ] && load_zdrv #func in functions4puppy4
+PCIMODINFO="`cat /lib/modules/$KERNVER/modules.alias | tr -s " " | grep '^alias pci:' | sed -e 's/alias pci:v/0x/' \
+-e 's/^0x\*/0xffffffff/' \
+-e 's/d\(0000....\)sv[^ ]*/ 0x\1/' \
+-e 's/d\*sv[^ ]*/ 0xffffffff/' \
+ | tr [A-F] [a-f]`"
+[ -s /etc/udev/rules.d/??-dialup-modem.rules ] && RULEMODINFO="`cat /etc/udev/rules.d/??-dialup-modem.rules | tr -s " " | grep '^ATTR{vendor}==' | sed -e 's/ATTR{vendor}==\"0x\(....\)\",/0x0000\1/' \
+-e 's/ATTR{device}==\"0x\([^\"]*\)\",.*RUN[^ ]*/0x0000\1/' \
+-e 's/0x0000[^ ]*\[.*\][^ ]*/0xffffffff/' \
+-e 's/\"$//'`" || RULEMODINFO=""
+[ "$RULEMODINFO" != "" ] && PCIMODINFO="$RULEMODINFO
+$PCIMODINFO"
+
+echo -n "" > /tmp/chipnummod.txt
+#100108...
+#if [ "`which scanpci`" = "" ];then
+# echo "PCI scan utility scanpci not available. This must be a
+#cutdown Puppy (scanpci is part of the Xorg package).
+#Simplified information only is displayed here:
+#"  >> /tmp/chipnummod.txt
+# elspci -l  >> /tmp/chipnummod.txt
+#else
+# scanpci |
+# while read ONELINE
+# do
+#  VENDOR="`echo -n "$ONELINE" | grep '^pci' | grep -o 'vendor .*' | cut -f 2 -d ' ' | cut -f 2 -d 'x'`"
+#  CHIPNO="`echo -n "$ONELINE" | grep '^pci' | grep -o 'device .*' | cut -f 2 -d ' ' | cut -f 2 -d 'x'`"
+#  if [ "$VENDOR" ];then
+#   read NEXTLINE
+#   CHIPDESC="`echo -n "$NEXTLINE" | cut -f 2 -d '[' | cut -f 2 -d ']'`"
+#   LVENDOR="0x0000$VENDOR"
+#   LCHIPNO="0x0000$CHIPNO"
+#   APATTERN="$LVENDOR $LCHIPNO"
+#   FNDMOD="`echo "$PCIMODINFO" | grep "$APATTERN" | tail -n 1`" #v425
+#   MODULE="unknown"
+#   [ ! "$FNDMOD" = "" ] && MODULE="`echo -n "$FNDMOD" | cut -f 3 -d " "`" #v425
+#   if [ "$MODULE" = "unknown" ];then
+#    #find out if it is a usb module...
+#    UPATTERN=" ${VENDOR}:${CHIPNO} "
+#    [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0300'`" = "" ] && MODULE="uhci-hcd"
+#    [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0310'`" = "" ] && MODULE="ohci-hcd"
+#    [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0320'`" = "" ] && MODULE="ehci-hcd"
+#   fi
+#      echo "DESCRIPTION: $CHIPDESC" >> /tmp/chipnummod.txt
+#   echo "VENDOR: $VENDOR  DEVICE: $CHIPNO  KERNEL MODULE: $MODULE" >> /tmp/chipnummod.txt
+#   echo  >> /tmp/chipnummod.txt
+#  fi
+# done
+#fi
+
+#100108 puppy builds now have the full pci.ids file...
+if [ ! -e /usr/share/pci.ids ];then
+ #this is the old code...
+ if [ "`which scanpci`" = "" ];then
+  echo "PCI scan utility scanpci not available. This must be a
+cutdown Puppy (scanpci is part of the Xorg package).
+Simplified information only is displayed here:
+"  >> /tmp/chipnummod.txt
+  elspci -l  >> /tmp/chipnummod.txt
+ else
+  scanpci |
+  while read ONELINE
+  do
+   VENDOR="`echo -n "$ONELINE" | grep '^pci' | grep -o 'vendor .*' | cut -f 2 -d ' ' | cut -f 2 -d 'x'`"
+   CHIPNO="`echo -n "$ONELINE" | grep '^pci' | grep -o 'device .*' | cut -f 2 -d ' ' | cut -f 2 -d 'x'`"
+   if [ "$VENDOR" ];then
+    read NEXTLINE
+    CHIPDESC="`echo -n "$NEXTLINE" | cut -f 2 -d '[' | cut -f 2 -d ']'`"
+    LVENDOR="0x0000$VENDOR"
+    LCHIPNO="0x0000$CHIPNO"
+    APATTERN="$LVENDOR $LCHIPNO"
+    FNDMOD="`echo "$PCIMODINFO" | grep "$APATTERN" | tail -n 1`" #v425
+    MODULE="unknown"
+    [ ! "$FNDMOD" = "" ] && MODULE="`echo -n "$FNDMOD" | cut -f 3 -d " "`" #v425
+    if [ "$MODULE" = "unknown" ];then
+     #find out if it is a usb module...
+     UPATTERN=" ${VENDOR}:${CHIPNO} "
+     [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0300'`" = "" ] && MODULE="uhci-hcd"
+     [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0310'`" = "" ] && MODULE="ohci-hcd"
+     [ ! "`elspci -l | grep -i "$UPATTERN" | grep '0C0320'`" = "" ] && MODULE="ehci-hcd"
+    fi
+    echo "DESCRIPTION: $CHIPDESC" >> /tmp/chipnummod.txt
+    echo "VENDOR: $VENDOR  DEVICE: $CHIPNO  KERNEL MODULE: $MODULE" >> /tmp/chipnummod.txt
+    echo  >> /tmp/chipnummod.txt
+   fi
+  done
+ fi
+else
+ lspci -nn -k | tr '|' ' ' | tr -s ' ' | tr '\t' '|' | grep -v 'Subsystem: ' |
+ while read ONELINE
+ do
+  if [ "`echo "$ONELINE" | cut -c 1`" != "|" ];then
+   DESCRIPTION="DESCRIPTION: `echo -n "${ONELINE}" | cut -f 2-99 -d ' ' | rev | cut -f 2-9 -d '[' | rev | sed -e 's% \[.*\]:%:%'`"
+   echo "$DESCRIPTION"  >> /tmp/chipnummod.txt
+   CHIPNUMS="VENDOR: `echo -n "$ONELINE" | rev | cut -f 1 -d '[' | cut -f 2 -d ']' | rev | sed -e 's%:%  DEVICE: %'`"
+   echo "$CHIPNUMS"  >> /tmp/chipnummod.txt
+  else
+   KMODULE="KERNEL MODULE:`echo "$ONELINE" | rev | cut -f 1 -d ':' | rev`"
+   echo "$KMODULE"  >> /tmp/chipnummod.txt
+   echo  >> /tmp/chipnummod.txt
+  fi
+ done
+fi
+
+[ ! -s /tmp/chipnummod.txt ] && echo "No PCI interfaces" > /tmp/chipnummod.txt #v3.01
+
+#     <action>/tmp/formatfunc.sh 30</action>
+
+#v2.17 usb devices...
+USBSECTION=""
+echo -n "" > /tmp/usbchipnummod.txt
+if [ -e /proc/bus/usb ];then
+
+#v4.02...
+USBMODINFO="`cat /lib/modules/$KERNVER/modules.alias | tr -s " " | grep '^alias usb:' | sed -e 's/alias usb:v/0x/' \
+-e 's/^0x\*/0xffff/' \
+-e 's/p\(....\)d[^ ]*/ 0x\1/' \
+-e 's/p\*d[^ ]*/ 0xffff/' \
+ | tr [A-F] [a-f]`"
+
+ #...returns module-name vendor-id product-id
+
+ #format so paragraphs can be separated...
+ #DELPARAMS="`cat /proc/bus/usb/devices | tr -s ' ' | sed -e 's%^$%|||||%g'`"
+
+
+  USBNUMS="`cat /proc/bus/usb/devices | grep '^P: ' | tr -s ' ' | cut -f 2-3 -d ' ' | tr ' ' '|' | tr [A-Z] [a-z] | tr '\n' ' '`"
+  for ONENUM in $USBNUMS
+  do
+   VENDOR="`echo -n "$ONENUM" | cut -f 1 -d '|' | cut -f 2 -d '='`"
+   PRODUCT="`echo -n "$ONENUM" | cut -f 2 -d '|' | cut -f 2 -d '='`"
+   ONEUSB="0x${VENDOR} 0x${PRODUCT}"
+   
+   [ "$ONEUSB" = "0x0000 0x0000" ] && continue
+   
+   YESPARA=no
+   USBMODULE=""
+   rm -f /tmp/usbmodulexxx
+   echo -n "" > /tmp/usbdevdescr
+   cat /proc/bus/usb/devices | tr -s ' ' |
+   while read ONELINE
+   do
+    zPATTERN="Vendor=${VENDOR} ProdID=${PRODUCT}"
+    [ "`echo -n "$ONELINE" | grep "$zPATTERN"`" != "" ] && YESPARA=yes
+    if [ "$YESPARA" = "yes" ];then
+     xDRIVER="`echo -n "$ONELINE" | grep '^I:' | grep -o ' Driver=.*' | cut -f 2 -d '='`"
+     [ "$xDRIVER" != "" ] && echo -n "$xDRIVER" > /tmp/usbmodulexxx
+     xDESCR="`echo -n "$ONELINE" | grep '^S:' | cut -f 2-20 -d ' '`"
+     [ "$xDESCR" != "" ] && echo "$xDESCR" >> /tmp/usbdevdescr
+     [ "$ONELINE" = "" ] && break
+    fi
+   done
+   [ ! -s /tmp/usbdevdescr ] && [ "`grep ' ' /tmp/usbmodulexxx`" != "" ] && echo "Product=`cat /tmp/usbmodulexxx`" > /tmp/usbdevdescr && rm /tmp/usbmodulexxx #v425
+   [ -f /tmp/usbmodulexxx ] && USBMODULE="`cat /tmp/usbmodulexxx`"
+   
+   [ "$USBMODULE" = "" ] && USBMODULE="`echo "$USBMODINFO" | grep "$ONEUSB" | cut -f 3 -d ' ' | tail -n 1`" #v425
+
+   #echo "DESCRIPTION: $CHIPDESC" >> /tmp/usbchipnummod.txt
+   cat /tmp/usbdevdescr >> /tmp/usbchipnummod.txt
+   echo "VendorID=$VENDOR  ProductID=$PRODUCT  KERNEL-MODULE=$USBMODULE" >> /tmp/usbchipnummod.txt
+   echo  >> /tmp/usbchipnummod.txt
+   
+  done
+
+[ ! -s /tmp/usbchipnummod.txt ] && echo "No plugged-in USB devices" > /tmp/usbchipnummod.txt #v3.01
+
+  USBSECTION="
+  <frame USB devices>
+  <hbox>
+   <text><label>USB interfaces are part of the PCI interfaces, but to find information about any plugged-in USB devices, click this button:</label></text>
+   <vbox>
+    <button>
+     <input file>/usr/local/lib/X11/mini-icons/usb16.xpm</input>
+     <action>cp -f /tmp/usbchipnummod.txt /tmp/hwproberesult.txt</action>
+     <action>refresh:INFO</action>
+    </button>
+   </vbox>
+  </hbox>
+  </frame>
+"
+
+fi
+
+MAINDIALOG="
+<wtitle>Puppy hardware-interfaces information</wtitle>
+<hbox>
+ <vbox>
+  
+  <frame Kernel modules>
+  <hbox>
+   <text><label>At bootup, Puppy examines the hardware interfaces to determine what kernel drivers (modules) to load, and does so. Click this button for information on loaded modules:</label></text>
+   <vbox>
+    <button>
+     <input file>/usr/local/lib/X11/mini-icons/module16.xpm</input>
+     <action>eval /tmp/hwprobelsmod</action>
+     <action>refresh:INFO</action>
+    </button>
+   </vbox>
+   <vbox>
+    <text><label>More details on each loaded module:</label></text>
+    <combobox>
+     <variable>MODCOMBO</variable>
+      $MODITEMS
+    </combobox>
+   </vbox>
+   <vbox>
+    <button>
+     <input file>/usr/local/lib/X11/mini-icons/module16.xpm</input>
+     <action>eval /tmp/hwprobemodinfo \$MODCOMBO</action>
+     <action>refresh:INFO</action>
+    </button>
+   </vbox>
+  </hbox>
+  </frame>
+
+  <frame PCI interfaces>
+  <hbox>
+   <text><label>Most of the hardware interfaces inside a PC are 'PCI' devices. Click this button for a scan of all the PCI interfaces:</label></text>
+   <vbox>
+    <button>
+     <input file>/usr/local/lib/X11/mini-icons/Card.xpm</input>
+     <action>cp -f /tmp/chipnummod.txt /tmp/hwproberesult.txt</action>
+     <action>refresh:INFO</action>
+    </button>
+   </vbox>
+  </hbox>
+  </frame>
+
+  ${USBSECTION}
+  
+  <frame result>
+   <edit>
+    <variable>INFO</variable>
+    <input file>/tmp/hwproberesult.txt</input>
+    <width>450</width>
+    <height>300</height>
+   </edit>
+  </frame>
+  <hbox>     
+   <button>
+    <label>exit</label>
+    <action>EXIT=EXIT</action>
+   </button>
+  </hbox>
+ </vbox>
+</hbox>
+"
+
+#  <frame Other interfaces>
+#  <hbox>
+#   <text><label>Information about USB interfaces:</label></text>
+#   <vbox>
+#    <button>
+#     <input file>/usr/local/lib/X11/mini-icons/usb16.xpm</input>
+#     <action>usbview &</action>
+#    </button>
+#   </vbox>
+#  </hbox>
+#  </frame>
+
+rm -f /tmp/hwproberesult.txt #v425 erase stale info 
+
+if [ "`which scanpci`" = "" ];then
+ echo 'echo "This must be a cutdown Puppy that does not have the scanpci utility
+(which is part of the Xorg package). So, cannot give a detailed
+report on the PCI bus. Instead can display this summary only. The
+most useful information here is the vendor:chip numbers (column-3):
+" >/tmp/hwproberesult.txt
+lspci -n >>/tmp/hwproberesult.txt'  >/tmp/hwprobescanpci
+else
+ #echo '#!/bin/sh' >/tmp/hwprobescanpci.sh
+ echo 'scanpci >/tmp/hwproberesult.txt' >/tmp/hwprobescanpci
+fi
+chmod 755 /tmp/hwprobescanpci
+
+echo 'lsmod >/tmp/hwproberesult.txt' >/tmp/hwprobelsmod
+chmod 755 /tmp/hwprobelsmod
+echo 'modinfo $1 > /tmp/hwproberesult.txt 2>&1' >/tmp/hwprobemodinfo
+chmod 755 /tmp/hwprobemodinfo
+
+#v3.98 improved...
+##i don't know enough about themes to do this any better...
+#[ -f /etc/gtk-2.0/gtkrc ] && cp -f /etc/gtk-2.0/gtkrc /tmp/gtkrc-pupscan
+#cp -f /etc/gtk-2.0/gtkrcMONOSPACED-APPEND /etc/gtk-2.0/gtkrc
+#echo '#!/bin/sh
+# sleep 2
+# if [ -f /tmp/gtkrc-pupscan ];then
+#  cp -f /tmp/gtkrc-pupscan /etc/gtk-2.0/gtkrc
+# else
+#  rm /etc/gtk-2.0/gtkrc
+# fi
+#' > /tmp/delaygtkrc.sh
+#chmod 755 /tmp/delaygtkrc.sh
+#/tmp/delaygtkrc.sh &
+echo 'style "specialmono"
+{
+  font_name="Mono 12"
+}
+
+class "GtkText*" style "specialmono"' > /tmp/gtkrc_mono
+export GTK2_RC_FILES=/tmp/gtkrc_mono:/root/.gtkrc-2.0
+
+[ "$SILENT" != "true" ] && kill $YSPID #100108
+
+[ $SILENT != true ] && RETSTRING="`echo "$MAINDIALOG" | gtkdialog2 --stdin`" #v431
+
+###END###

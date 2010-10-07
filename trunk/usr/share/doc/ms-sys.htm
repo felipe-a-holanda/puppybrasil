@@ -1,0 +1,279 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of MS-SYS</TITLE>
+</HEAD><BODY>
+<H1>MS-SYS</H1>
+Section: User Commands  (1)<BR>Updated: September 25, 2005<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+ms-sys - write Microsoft boot block
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>ms-sys</B>
+
+[options] [device]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>ms-sys</B> is for writing Microsoft compatible boot records.
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+A summary of options is included below.
+<DL COMPACT>
+<DT><B>-1, --fat12</B>
+
+<DD>
+Write a FAT12 floppy boot record to device.
+<DT><B>-2, --fat32nt</B>
+
+<DD>
+Write a FAT32 partition NT boot record to device.
+<DT><B>-3, --fat32</B>
+
+<DD>
+Write a FAT32 partition DOS (Win9x) boot record to device.
+<DT><B>-4, --fat32free</B>
+
+<DD>
+Write a FAT32 partition FreeDOS boot record to device.
+<DT><B>-5, --fat16free</B>
+
+<DD>
+Write a FAT16 partition FreeDOS boot record to device.
+<DT><B>-6, --fat16</B>
+
+<DD>
+Write a FAT16 partition DOS (Win9x) boot record to device.
+<DT><B>-l, --wipelabel</B>
+
+<DD>
+Reset partition disk label in boot record.
+<DT><B>-p, --partition</B>
+
+<DD>
+Write partition info (hidden sectors, heads and drive id) to boot
+record. This might be needed on some partitions depending on
+which program was used to create the file system.
+<DT><B>-m, --mbr</B>
+
+<DD>
+Write a Windows 2000/XP/2003 master boot record to device.
+Does not change Windows Disk Signature (bytes 01b8-01bd).
+This MBR will boot certain partition types beyond cylinder 
+1024 using LBA addressing.
+<DT><B>-9, --mbr95b</B>
+
+<DD>
+Write a Windows 95B/98/98SE/ME master boot record to device.
+Does not change Windows Disk Signature (bytes 01b8-01bd) or 
+boot drive and time (bytes 00da-00df).
+This MBR will boot FAT-LBA partition types 0c and 0e beyond cylinder 
+1024 using LBA addressing.
+<DT><B>-d, --mbrdos</B>
+
+<DD>
+Write a DOS/Windows NT master boot record to device.
+Does not change Windows Disk Signature (bytes 01b8-01bd).
+This MBR will not boot beyond cylinder 1024 as it does not support 
+LBA addressing.
+<DT><B>-s, --mbrsyslinux</B>
+
+<DD>
+Write a public domain syslinux master boot record to device.
+Does not change Windows Disk Signature (bytes 01b8-01bd).
+This MBR will boot any partition types beyond cylinder 
+1024 using LBA addressing.
+<DT><B>-z, --mbrzero</B>
+
+<DD>
+Write an empty (zeroed, non-bootable) master boot record to device.
+Zeroes all bytes except the partition map and signature (bytes 01be-01ff). 
+Similar to the empty DOS partition table that fdisk creates.
+<DT><B>-f, --force</B>
+
+<DD>
+Force writing of boot record.
+<DT><B>-h, --help</B>
+
+<DD>
+Show summary of options.
+<DT><B>-v, --version</B>
+
+<DD>
+Show program version.
+<DT><B>-w, --write</B>
+
+<DD>
+Write automatically selected boot record to device.
+
+If ms-sys is started without any options a simple diagnosis will be done on
+the given device.
+<BR>
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+
+Please note that Windows ME is not useful for making standalone bootable
+floppies. However, Win9x and DOS works fine with the first two examples.
+
+<B>Creating a 1.68 MB bootable floppy</B>
+
+<DL COMPACT>
+<DT>This example assumes that you have your windows installation mounted at /dosc and also have mtools and fdformat installed.<DD>
+
+fdformat /dev/fd0u1680
+<BR>
+
+mformat a:
+<BR>
+
+ms-sys -w /dev/fd0
+<BR>
+
+mcopy /dosc/io.sys a:
+<BR>
+
+mcopy /dosc/msdos.sys a:
+<BR>
+
+mcopy /dosc/command.com a:
+
+<B>Creating a bootable 2.8 MB floppy image to use with an el-torito bootable CD</B>
+
+
+dd if=/dev/zero of=floppy288.img bs=1024 count=2880
+<BR>
+
+/sbin/mkdosfs floppy288.img
+<BR>
+
+ms-sys -1 -f floppy288.img
+<BR>
+
+su
+<BR>
+
+mount -o loop floppy288.img /mnt
+<BR>
+
+cp msdos.sys /mnt/
+<BR>
+
+cp io.sys /mnt/
+<BR>
+
+cp command.com /mnt/
+<BR>
+
+(it might also be a good idea to add a config.sys and autoexec.bat with CDROM support)
+<BR>
+
+umount /mnt
+<BR>
+
+exit
+<BR>
+
+cp floppy288.img cd-files/boot.img
+<BR>
+
+mkisofs -b boot.img -c boot.cat -o cdimage.iso cd-files
+<BR>
+
+(burn the file cdimage.iso to a CD with cdrecord or another program)
+
+<B>restoring a backup of Win9x or Win ME to a fresh hard disk</B>
+
+
+Step 1, use GNU parted to create your FAT32 partition and file system:
+
+parted (then create partition and file system)
+
+Step 2, write the MBR:
+
+ms-sys -w /dev/hda
+
+Step 3, write the FAT32 partition boot record:
+
+ms-sys -w /dev/hda1
+
+Step 4, mount your new filesystem:
+
+mount /dev/hda1 /mnt
+
+Step 5, read your backup
+
+cd /mnt; tar -xzvf /path/to/my_windows_backup_file.tgz
+<BR>
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The variables LANG and LC_ALL have  the usual meaning, however there are not
+many translations available.
+<BR>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+There have been reports about unbootable FAT32 partitions created with
+&quot;mformat -F c:&quot;. The problem has also been reported on partitions
+formatted with mkdosfs and mkfs.vfat. One workaround is to use gnu parted
+to create the partition instead. Since version 1.1.3 ms-sys has the switch
+-p which is supposed to fix this problem. Unfortunately, when using ms-sys
+with Linux kernel 2.6 nor the -p switch or gnu parted might work. The only
+reliable workaround known so far is to use ms-sys with Linux kernel 2.4.
+<A NAME="lbAI">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+This manual page was originally written by G[:u]rkan Seng[:u]n and since
+edited by Henrik Carlqvist. The program ms-sys is mostly written by
+Henrik Carlqvist, the file CONTRIBUTORS in the source archive contains a
+complete list of contributors.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="http://localhost/cgi-bin/man/man2html?1+mformat">mformat</A>(1)  <A HREF="http://localhost/cgi-bin/man/man2html?8+fdformat">fdformat</A>(8)  <A HREF="http://localhost/cgi-bin/man/man2html?8+mkdosfs">mkdosfs</A>(8)  <A HREF="http://localhost/cgi-bin/man/man2html?8+mkisofs">mkisofs</A>(8)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">EXAMPLES</A><DD>
+<DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">AUTHOR</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 07:17:15 GMT, March 20, 2009
+</BODY>
+</HTML>

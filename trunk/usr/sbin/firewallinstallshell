@@ -1,0 +1,8 @@
+#!/bin/bash
+
+/usr/sbin/firewall_install.sh
+
+echo
+echo "Firewall install script finished."
+echo -n "Press ENTER key to quit: "
+read nnn

@@ -1,0 +1,87 @@
+#!/bin/sh -a
+#v-1.0 #gpl 2010, 01micko
+
+kill `ps|grep "defbrowser"|awk '{print $1}'`
+
+SCREEN=`xwininfo -root | grep ' \-geometry ' | tr -s ' ' | cut -f 3 -d ' ' | cut -f 1 -d '+' | tr 'x' ' '`
+HEIGHT=`echo -n "$SCREEN" | cut -f 2 -d ' '`
+YDIMENSION=`echo $(($HEIGHT - 163))`
+
+function CHGDEF(){
+	DEFOLD=`grep -v "#" /usr/local/bin/defaultbrowser`
+	if [[ "$BRS" != "midori" ]];then BRS="$BRS"
+	 else
+	  if [[ "$(stat -c %s  /usr/bin/midori)" != "2553304" ]];then BRS="$BRS"
+		else 
+		 BRS="midori-wrapper"
+	  fi
+	fi
+	DEFNEW="exec $BRS \"\$@\""
+	
+	OLD=`echo $CUR|cut -d ' ' -f2`
+	if [[ "$BRS" != "$OLD" ]];then
+	echo "sed -i 's/$DEFOLD/$DEFNEW/' /usr/local/bin/defaultbrowser" >/tmp/change-browser
+	. /tmp/change-browser
+	#echo $OLD
+	   if [ `which yaf-splash2` != "" ];then
+       yaf-splash2 -font "-misc-dejavu sans-bold-r-normal--16-0-0-0-p-0-iso10646-1" -margin 4 -bg yellow -timeout 3 -outline 0 -text "$BRS is now the default browser" &
+	      else gtkdialog-splash -icon gtk-info -bg yellow -timeout 3 -outline 0 -text "$BRS is now the default browser" &
+	   fi
+	fi
+}
+
+function browsenow (){
+     sleep 2
+     exec defaultbrowser &
+}
+
+#echo "#browsers" >/tmp/installed-browsers
+#[ "`which PuppyBrowser`" != "" ]&& echo "PuppyBrowser" >>/tmp/installed-browsers
+#[ "`which seamonkey2`" != "" ]&& echo "seamonkey2" >>/tmp/installed-browsers
+#[ "`which chromium-browser`" != "" ]&& echo "chromium-browser" >>/tmp/installed-browsers
+#[ "`which firefox`" != "" ]&& echo "firefox" >>/tmp/installed-browsers
+#[ "`which opera`" != "" ]&& echo "opera" >>/tmp/installed-browsers
+#[ "`which iron`" != "" ]&& echo "iron" >>/tmp/installed-browsers
+#[ "`which midori`" != "" ]&& echo "midori" >>/tmp/installed-browsers
+#[ "`which google-chrome`" != "" ]&& echo "google-chrome" >>/tmp/installed-browsers
+#[ "`which chrome`" != "" ]&& echo "chrome" >>/tmp/installed-browsers
+
+#new engine to find installed browsers from *.desktop files
+rm -rf /tmp/tmpbrs
+mkdir /tmp/tmpbrs
+grep -i "browser" /usr/share/applications/*.desktop|cut -d ':' -f1|tr '/' ' '|awk '{print $4}'>/tmp/browserlist
+echo '#browsers' >/tmp/installed-browsers
+INSTALLED_BROWSERS=`cat /tmp/browserlist`
+for i in $INSTALLED_BROWSERS;do grep 'Exec=' /usr/share/applications/$i|cut -d '=' -f2|sed 's/ \%U$//g'|sed s'/\// /'g | tr " '" '\n' | tail -n1>/tmp/tmpbrs/$i
+	#cat /tmp/tmpbrs/$i>>/tmp/browserexecs
+done 
+BROWSE=`ls /tmp/tmpbrs`
+for b in $BROWSE;do cat /tmp/tmpbrs/$b>>/tmp/installed-browsers
+done
+
+
+
+
+CUR=`grep -v "#" /usr/local/bin/defaultbrowser|awk '{print $2}'`
+if [ "$CUR" = "quickpet" ];then CUR="Change to a Browser!"
+	else CUR="Now $CUR"
+fi
+
+defbrowser="
+<window title=\"Change Default\">
+ <vbox>
+   
+    <tree>
+     <label>$CUR</label>
+     <variable>BRS</variable>
+     
+     <input>grep -v '#' /tmp/installed-browsers</input>
+     <action signal=\"button-release-event\">CHGDEF</action>
+     <action signal=\"button-release-event\">browsenow</action>
+     <action signal=\"button-release-event\">exit:done</action>
+    </tree>
+   
+ </vbox>
+</window>"
+gtkdialog3 -p defbrowser --geometry +40+$YDIMENSION
+unset defbrowser

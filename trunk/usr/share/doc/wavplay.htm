@@ -1,0 +1,249 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of WAVPLAY</TITLE>
+</HEAD><BODY>
+<H1>WAVPLAY</H1>
+Section: User Commands  (1)<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wavplay, wavrec - play and record WAV files
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>wavplay</B>
+
+[<B>-h,</B>--help<B>]</B>
+
+[<B>-q</B>]
+
+[<B>-s</B>
+
+<I>rate</I>]
+
+[<B>-S</B>]
+
+[<B>-M</B>]
+
+[<B>-b</B>
+
+<I>bits</I>]
+
+[<B>-i</B>]
+
+[<B>-k</B>
+
+<I>ipc-key</I>]
+
+[<B>-R</B>]
+
+[<B>-l</B>]
+
+[<B>-u</B>]
+
+[<B>-L</B>]
+
+[<B>-U</B>]
+
+[<B>-V,</B>--version<B>]</B>
+
+[<I>input-files</I>]
+
+<P>
+
+<B>wavrec</B>
+
+[<B>-h,</B>--help<B>]</B>
+
+[<B>-q</B>]
+
+[<B>-s</B>
+
+<I>rate</I>]
+
+[<B>-S</B>]
+
+[<B>-M</B>]
+
+[<B>-b</B>
+
+<I>bits</I>]
+
+[<B>-t</B>
+
+<I>secs</I>]
+
+[<B>-k</B>
+
+<I>ipc-key</I>]
+
+[<B>-R</B>]
+
+[<B>-l</B>]
+
+[<B>-u</B>]
+
+[<B>-L</B>]
+
+[<B>-U</B>]
+
+[<B>-V,</B>--version<B>]</B>
+
+[<I>output-file</I>]
+
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>wavplay</B>
+
+plays a WAV format file to the audio device (by default
+<B>/dev/dsp</B>
+
+) reading WAV parameters from the input file header.  
+(Command-line options will
+override these defaults, if you know better or for special effects.)
+<P>
+
+<B>wavrec</B>
+
+samples the audio device and writes a WAV file.  Command-line options
+provide complete control over the resolution and duration of sampling.
+<P>
+
+Both
+<B>wavplay</B>
+
+and
+<B>wavrec</B>
+
+allow the audio device to be locked for exclusive access.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-h</B>
+
+<DD>
+print a short summary of options.
+<DT><B>--help</B>
+
+<DD>
+same as -h.
+<DT><B>-q</B>
+
+<DD>
+quiet mode, suppress messages.
+<DT><B>-s</B><I> rate</I>
+
+<DD>
+set sampling rate in Hz.  The default is 8000 Hz.
+<DT><B>-S</B>
+
+<DD>
+set stereo mode (overrides -M).  This is the default.
+<DT><B>-M</B>
+
+<DD>
+set mono mode (overrides -S).
+<DT><B>-b</B><I> bits</I>
+
+<DD>
+set the number of bits per sample (8/12/16).  The default is 16.
+<DT><B>-t</B><I> secs</I>
+
+<DD>
+set time limit for recording.  The default is 10 seconds.
+<DT><B>-i</B>
+
+<DD>
+don't play, just display WAV file header information.
+<DT><B>-k</B><I> key</I>
+
+<DD>
+specify the IPC key for device-locking semaphores.  The default is 0x33333333.
+<DT><B>-R</B>
+
+<DD>
+remove and recreate device-locking semaphores.
+<DT><B>-l</B>
+
+<DD>
+lock the audio device for playing.
+<DT><B>-u</B>
+
+<DD>
+unlock the audio device for playing.
+<DT><B>-L</B>
+
+<DD>
+lock the audio device for recording.
+<DT><B>-U</B>
+
+<DD>
+unlock the audio device for recording.
+<DT><B>-V</B>
+
+<DD>
+display version and copyright information.
+<DT><B>--version</B>
+
+<DD>
+same as -V.
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>BUGS</H2>
+
+<B>wavplay</B>
+
+will not play files which contain SLNT or LIST chunks.
+<P>
+
+Compressed formats are not currently supported.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+<B>wavplay </B>
+
+was almost totally rewritten for version 1.0 by Warren W. 
+Gay (<A HREF="mailto:wwg@ica.net">wwg@ica.net</A>) replacing earlier code by Andre Fuechsel 
+(<A HREF="mailto:af1@irz.inf.tu-dresden.de">af1@irz.inf.tu-dresden.de</A>).  Erik 
+de Castro Lopo (<A HREF="mailto:erikd@zip.com.au">erikd@zip.com.au</A>) wrote the WAV header I/O routines.
+This manual page was written by Stephen Crane (<A HREF="mailto:jsc@cs.city.ac.uk">jsc@cs.city.ac.uk</A>).
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="http://localhost/cgi-bin/man/man2html?1+xltwavplay">xltwavplay</A>(1)
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>DATE</H2>
+
+12 June 1997
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">AUTHOR</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">DATE</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 07:36:38 GMT, May 29, 2003
+</BODY>
+</HTML>

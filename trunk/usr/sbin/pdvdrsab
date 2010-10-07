@@ -1,0 +1,884 @@
+#!/bin/bash
+
+VERSION=0.1
+
+#Pdvdrsab - the rsab stands for rip, shrink, author, burn
+#This script depends on gktdialog-0.7.20 or possibly greater (can be named gtkdialog3)
+#it also depends on vobcopy to rip the dvd
+#To take full advantage of this script you'll also want to install vamps, dvdauthor, & ffmpeg
+
+rm -f /tmp/$WHOAMI-pvobcopy* 2>/dev/null
+
+DIR=`pwd`
+CANFIT=NO
+CONTINUE=YES
+CURRENTDIR=`pwd`
+
+##find a suitable version of gtkdialog (needs 0.7.20 or greater) currently (as of puppy 4 and maybe before)
+##the executable is named gtkdialog3. Exit with a warning incase gtkdialog isn't found.
+GTKDIALOG=""
+if [ "`which gtkdialog3`" != "" ]; then
+GTKDIALOG=gtkdialog3
+elif [ "`which gtkdialog`" != "" ]; then
+GTKDIALOG=gtkdialog
+elif [ "$GTKDIALOG" = "" ]; then
+echo "you need to install gtkdialog"
+exit 0
+fi
+
+if [ "`which vobcopy`" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>You need to install vobcopy.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"closewindow\">closewindow</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOSPACE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+exit 0
+fi
+
+##find a suitable terminal
+TERMINAL=""
+if [ "`which rxvt`" != "" ]; then
+TERMINAL=rxvt
+elif [ "`which urxvt`" != "" ]; then
+TERMINAL=urxvt
+elif [ "`which mrxvt`" != "" ]; then
+TERMINAL=mrxvt
+elif [ "`which aterm`" != "" ]; then
+TERMINAL=aterm
+elif [ "`which materm`" != "" ]; then
+TERMINAL=materm
+elif [ "`which xterm`" != "" ]; then
+TERMINAL=xterm
+elif [ "`which Eterm`" != "" ]; then
+TERMINAL=Eterm
+elif [ "`which sakura`" != "" ]; then
+TERMINAL=sakura
+elif [ "`which konsole`" != "" ]; then
+TERMINAL=konsole
+elif [ "`which gnome-terminal`" != "" ]; then
+TERMINAL=gnome-terminal
+elif [ "`which xfce4terminal`" != "" ]; then
+TERMINAL=xfce4terminal
+elif [ "`which xfce4term`" != "" ]; then
+TERMINAL=xfce4term
+elif [ "`which xfce4-term`" != "" ]; then
+TERMINAL=xfce4-term
+fi
+
+if [ "$TERMINAL" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>You need one of the terminal programs in this script.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"closewindow\">closewindow</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOSPACE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+exit 0
+fi
+
+WHOAMI=`whoami`
+
+##I wanted to make the script not depend on probedisk to find your cd drives
+##so I scanned /dev/ & /media/ (used in other distros) for cd & dvd
+rm -f /tmp/$WHOAMI-pvobcopy-PROBEDISK 2>/dev/null
+if [ "`which probedisk`" != "" ]; then
+probedisk | grep -i cd-*rom | cut -f 1 -d '|' 2>/dev/null > /tmp/$WHOAMI-pvobcopy-PROBEDISK
+else
+ls /dev/cd* 2>/dev/null > /tmp/$WHOAMI-pvobcopy-PROBEDISK
+ls /dev/dvd* 2>/dev/null >> /tmp/$WHOAMI-pvobcopy-PROBEDISK
+ls /dev/scd* 2>/dev/null >> /tmp/$WHOAMI-pvobcopy-PROBEDISK
+ls /dev/sr* 2>/dev/null >> /tmp/$WHOAMI-pvobcopy-PROBEDISK
+ls /media/cd* 2>/dev/null >> /tmp/$WHOAMI-pvobcopy-PROBEDISK
+ls /media/dvd* 2>/dev/null >> /tmp/$WHOAMI-pvobcopy-PROBEDISK
+fi
+
+##add the found drives to the combobox in the gui
+PROBEDRIVES=""
+for ONEDRIVE in `cat /tmp/$WHOAMI-pvobcopy-PROBEDISK`
+do
+ PROBEDRIVES="$PROBEDRIVES<item>$ONEDRIVE</item>"
+done
+
+export DIALOG="
+<hbox>
+<vbox>
+<frame dvd information:>
+<hbox>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pvobcopy-info</input> 
+      <width>400</width>
+      <height>500</height>
+    </edit>
+</hbox>
+</frame>
+<hbox>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"closewindow\">closewindow</action>
+      </button>
+</hbox>
+</vbox>
+</hbox>
+"
+
+##The gui is now ready to be built
+export RIPGUI="
+<window title=\"Pdvdrsab-$VERSION \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+
+<frame Rip dvd in selected drive>
+
+    <hbox>
+    <text><label>Select your DVD drive</label></text>
+    <combobox>
+     <variable>PROBECOMBO</variable>
+     <visible>enabled</visible>
+$PROBEDRIVES
+    </combobox>
+    </hbox>
+"
+if [ "`which vamps`" != "" ]; then
+RIPGUI="$RIPGUI
+	<frame Select an existing mpg or vob to shrink>
+	<hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <label>Select an Existing File</label>
+        <variable>VAMPSFILE</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">VAMPSFILE</action>
+      </button>
+      </hbox>
+	</frame>
+	
+      <hbox>
+      <text><label>enter the shrink to size:</label></text>
+      <entry>
+    <variable>SHRINKFACTOR</variable>
+    <input>echo 4485</input>
+    <visible>disabled</visible>
+    </entry>
+    </hbox> 
+
+"
+fi
+if [ "`which dvdauthor`" != "" ]; then
+RIPGUI="$RIPGUI
+	<frame Select your directory or file to author>
+	<hbox>
+    <radiobutton active=\"true\">
+      <label>Select a directory</label>
+      <variable>RADIO1</variable>
+      <visible>disabled</visible>
+		<action>if true enable:DIRENTRY</action>
+		<action>if true enable:FILE_BROWSE_DIRECTORY</action>
+      <action>if false disable:DIRENTRY</action>
+      <action>if false disable:FILE_BROWSE_DIRECTORY</action>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>or select a single file</label>
+      <variable>RADIO2</variable>
+      <visible>disabled</visible>
+		<action>if true enable:FILEENTRY</action>
+		<action>if true enable:FILE_BROWSE_FILENAME</action>
+      <action>if false disable:FILEENTRY</action>
+      <action>if false disable:FILE_BROWSE_FILENAME</action>
+    </radiobutton>
+    </hbox>
+	<hbox>
+      <entry editable=\"true\" accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>DIRENTRY</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">DIRENTRY</action>
+      </button>
+  </hbox>
+    <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <label>Select an Existing File</label>
+        <variable>FILEENTRY</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">FILEENTRY</action>
+      </button>
+    </hbox>
+      </frame>
+
+"
+fi
+if [ "`which growisofs`" != "" ]; then
+RIPGUI="$RIPGUI
+	<frame Select your VIDEO_TS folder to burn>
+	<hbox>
+      <entry editable=\"true\" accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>BURNDIR</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">BURNDIR</action>
+      </button>
+  </hbox>
+  </frame>
+"
+fi
+RIPGUI="$RIPGUI
+	<hbox>
+    <radiobutton active=\"true\">
+      <label>Rip</label>
+      <variable>RADIO3</variable>
+		<action>if true disable:VAMPSFILE</action>
+		<action>if true disable:SHRINKFACTOR</action>
+      <action>if true disable:RADIO1</action>
+      <action>if true disable:RADIO2</action>
+      <action>if true disable:DIRENTRY</action>
+      <action>if true disable:FILEENTRY</action>
+      <action>if true disable:BURNDIR</action>
+      <action>if true enable:PROBECOMBO</action>
+    </radiobutton>
+"
+if [ "`which vamps`" != "" ]; then
+RIPGUI="$RIPGUI
+    <radiobutton active=\"false\">
+      <label>Shrink</label>
+      <variable>RADIO4</variable>
+		<action>if true enable:VAMPSFILE</action>
+		<action>if true enable:SHRINKFACTOR</action>
+      <action>if true disable:RADIO1</action>
+      <action>if true disable:RADIO2</action>
+      <action>if true disable:DIRENTRY</action>
+      <action>if true disable:FILEENTRY</action>
+      <action>if true disable:BURNDIR</action>
+      <action>if true disable:PROBECOMBO</action>
+    </radiobutton>
+"
+fi
+if [ "`which dvdauthor`" != "" ]; then
+RIPGUI="$RIPGUI
+     <radiobutton active=\"false\">
+      <label>Author</label>
+      <variable>RADIO5</variable>
+		<action>if true disable:VAMPSFILE</action>
+		<action>if true disable:SHRINKFACTOR</action>
+      <action>if true enable:RADIO1</action>
+      <action>if true enable:RADIO2</action>
+      <action>if true enable:DIRENTRY</action>
+      <action>if true disable:PROBECOMBO</action>
+      <action>if true disable:BURNDIR</action>
+    </radiobutton>   
+"
+fi
+if [ "`which growisofs`" != "" ]; then
+RIPGUI="$RIPGUI
+     <radiobutton active=\"false\">
+      <label>Burn</label>
+      <variable>RADIO6</variable>
+		<action>if true disable:VAMPSFILE</action>
+		<action>if true disable:SHRINKFACTOR</action>
+      <action>if true disable:RADIO1</action>
+      <action>if true disable:RADIO2</action>
+      <action>if true disable:DIRENTRY</action>
+      <action>if true enable:PROBECOMBO</action>
+      <action>if true enable:BURNDIR</action>
+    </radiobutton>
+"
+fi
+RIPGUI="$RIPGUI
+	</hbox>
+
+	<hbox>
+    <button>
+      <input file icon=\"gtk-cdrom\"></input>
+	  <label>dvd info</label>
+      <action>vobcopy -i \$PROBECOMBO -I 2>/tmp/$WHOAMI-pvobcopy-info</action>
+      <action type=\"launch\">DIALOG</action>
+    </button>   
+      <button>
+			<input file icon=\"gtk-execute\"></input>
+        <label>Execute</label>
+        <action type=\"exit\">EXIT_NEXT</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+	</hbox>
+
+</frame>
+</vbox>
+</hbox>
+</window>
+"
+
+RESULTS=`$GTKDIALOG --program=RIPGUI --center`
+
+if [ "`echo $RESULTS | grep EXIT_NEXT`" != "" ]; then
+RADIO1=`echo "$RESULTS" | grep RADIO1 | sed 's/RADIO1=\"//' | sed 's/\"//'`
+RADIO2=`echo "$RESULTS" | grep RADIO2 | sed 's/RADIO2=\"//' | sed 's/\"//'`
+RADIO3=`echo "$RESULTS" | grep RADIO3 | sed 's/RADIO3=\"//' | sed 's/\"//'`
+RADIO4=`echo "$RESULTS" | grep RADIO4 | sed 's/RADIO4=\"//' | sed 's/\"//'`
+RADIO5=`echo "$RESULTS" | grep RADIO5 | sed 's/RADIO5=\"//' | sed 's/\"//'`
+RADIO6=`echo "$RESULTS" | grep RADIO6 | sed 's/RADIO6=\"//' | sed 's/\"//'`
+if [ "$RADIO3" = true ]; then
+DEVICE=`echo "$RESULTS" | grep PROBECOMBO | sed 's/PROBECOMBO=\"//' | sed 's/\"//'`
+vobcopy -i $DEVICE -I 2>/tmp/$WHOAMI-pvobcopy-info
+NAME=`cat /tmp/$WHOAMI-pvobcopy-info | grep DVD-name | cut -f 2 -d ':' | sed 's/^ //'`
+MOST="`cat /tmp/$WHOAMI-pvobcopy-info | grep 'Most chapters' | cut -f 2 -d ']' | sed 's/ Most chapters has //' | cut -f 1 -d '.'`"
+TITLE=`echo "$MOST" | sed 's/title //' | cut -f 1 -d ' '`
+fi
+if [ "$RADIO4" = true ]; then
+VAMPSFILE=`echo "$RESULTS" | grep VAMPSFILE | sed 's/VAMPSFILE=\"//' | sed 's/\"//'`
+SHRINKFACTOR=`echo "$RESULTS" | grep SHRINKFACTOR | sed 's/SHRINKFACTOR=\"//' | sed 's/\"//'`
+SIZE3=`du --apparent-size "$VAMPSFILE" | cut -f 1 | head -c 7`
+SIZE=`expr $SIZE3 / 1000`
+SIZE4=`expr $SIZE3 / 1145`
+NEWSHRINK=`echo "(( "$SIZE4" / "$SHRINKFACTOR" ))" | bc -l`
+echo vamps -e $NEWSHRINK -a 1 \< "$VAMPSFILE" \> "$VAMPSFILE"-shrank.vob > /tmp/$WHOAMI-pvobcopy-exec2
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec2
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>vamps is now shrinking your file.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_SHRINK</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+VAMPS=`$GTKDIALOG --program=MAIN_DIALOG --center` &
+/tmp/$WHOAMI-pvobcopy-exec2
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>vamps is finished shrinking your file.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_SHRINK</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+VAMPS=`$GTKDIALOG --program=MAIN_DIALOG --center` &
+rm -f /tmp/$WHOAMI-pvobcopy* 2>/dev/null
+exit 0
+fi
+
+if [ "$RADIO5" = true ]; then
+DIRENTRY=`echo "$RESULTS" | grep DIRENTRY | sed 's/DIRENTRY=\"//' | sed 's/\"//'`
+FILEENTRY=`echo "$RESULTS" | grep FILEENTRY | sed 's/FILEENTRY=\"//' | sed 's/\"//'`
+if [ "$RADIO2" = true ]; then
+DIR=`dirname "$FILEENTRY"`
+DIR2="$DIR"/ThIsIsYoUrNeWmOvIe
+echo dvdauthor -o "$DIR2" -t "$FILEENTRY" > /tmp/$WHOAMI-pvobcopy-exec3
+echo dvdauthor -o "$DIR2" -T >> /tmp/$WHOAMI-pvobcopy-exec3
+fi
+if [ "$RADIO1" = true ]; then
+DIR2="$DIRENTRY"/ThIsIsYoUrNeWmOvIe
+cd "$DIRENTRY"
+ls -1 | grep -i .mpg | while read files
+do
+new_file=`echo $files | sed "s/ /_/g" | sed "s/.MPG/.mpg/g"`
+if [ "$files" != "$new_file" ]; then
+mv "$files" "$new_file"
+fi
+done
+ls -1 | grep -i .vob | while read files
+do
+new_file=`echo $files | sed "s/ /_/g" | sed "s/.VOB/.mpg/g" | sed "s/.vob/.mpg/g"`
+if [ "$files" != "$new_file" ]; then
+mv "$files" "$new_file"
+fi
+done
+echo dvdauthor -o "$DIR2" -t *.mpg > /tmp/$WHOAMI-pvobcopy-exec3
+echo dvdauthor -o "$DIR2" -T >> /tmp/$WHOAMI-pvobcopy-exec3
+fi
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec3
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec3
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec3
+fi
+cd "$CURRENTDIR"
+rm -f /tmp/$WHOAMI-pvobcopy* 2>/dev/null
+exit 0
+fi
+
+if [ "$RADIO6" = true ]; then
+BURNDIR=`echo "$RESULTS" | grep BURNDIR | sed 's/BURNDIR=\"//' | sed 's/\"//'`
+DEVICE=`echo "$RESULTS" | grep PROBECOMBO | sed 's/PROBECOMBO=\"//' | sed 's/\"//'`
+echo growisofs -use-the-force-luke=tty -Z $DEVICE -J -r -dvd-compat -pad -graft-points VIDEO_TS/="$BURNDIR" > /tmp/$WHOAMI-pvobcopy-exec4
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec4
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec4
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec4
+fi
+rm -f /tmp/$WHOAMI-pvobcopy* 2>/dev/null
+exit 0
+fi
+
+##The gui is now ready to be built
+export RIPGUI="
+<window title=\"Pdvdrsab-$VERSION \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame dvd ripping gui>
+		<text><label>Title with the most chapters is $MOST</label></text>
+      <hbox>
+      <text><label>enter title to rip:</label></text>
+      <entry>
+    <variable>TITLETORIP</variable>
+    <input>echo $TITLE</input>
+    </entry>
+    </hbox> 
+    
+      <hbox>
+      <text><label>enter the name:</label></text>
+      <entry>
+    <variable>RIPNAME</variable>
+    <input>echo $NAME</input>
+    </entry>
+    </hbox> 
+"
+if [ "`which vamps`" != "" ]; then
+RIPGUI="$RIPGUI
+
+    <hbox>
+   <checkbox>
+      <label>Check here if you want to shrink with vamps</label>
+      <variable>SHRINKCHECK</variable>
+      <default>false</default>
+      <action>if true enable:SHRINKFACTOR</action>
+      <action>if false disable:SHRINKFACTOR</action>
+    </checkbox>
+    </hbox>
+    
+      <hbox>
+      <text><label>enter the shrink to size:</label></text>
+      <entry>
+    <variable>SHRINKFACTOR</variable>
+    <input>echo 4485</input>
+    <visible>disabled</visible>
+    </entry>
+    </hbox> 
+    
+"
+fi
+if [ "`which dvdauthor`" != "" ]; then
+RIPGUI="$RIPGUI
+    <hbox>
+   <checkbox>
+      <label>Check here if you want to author the file into a dvd</label>
+      <variable>AUTHORCHECK</variable>
+      <default>false</default>
+      <action>if true enable:BURNCHECK</action>
+      <action>if false disable:BURNCHECK</action>
+    </checkbox>
+    </hbox>    
+"
+fi
+if [ "`which growisofs`" != "" ]; then
+RIPGUI="$RIPGUI
+    <hbox>
+   <checkbox>
+      <label>Check here if you want to burn the dvd after authoring.</label>
+      <variable>BURNCHECK</variable>
+      <default>false</default>
+      <visible>disabled</visible>
+    </checkbox>
+    </hbox>    
+"
+fi
+RIPGUI="$RIPGUI
+</frame>
+
+<frame If mirror option is checked all above will be ignored>    
+    <hbox>
+   <checkbox>
+      <label>Check here for a mirror copy of the dvd</label>
+      <variable>MIRROR</variable>
+      <default>false</default>
+    </checkbox>
+    </hbox>
+</frame>
+
+	<frame Select your save to directory>
+	<hbox>
+      <entry accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>SAVEDIRECTORY</variable>
+			<input>echo $DIR</input>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">SAVEDIRECTORY</action>
+      </button>
+      </hbox>
+	</frame>
+
+	<hbox>
+    <button>
+      <input file icon=\"gtk-cdrom\"></input>
+	  <label>dvd info</label>
+      <action type=\"launch\">DIALOG</action>
+    </button>  
+      <button>
+			<input file icon=\"gtk-execute\"></input>
+        <label>Rip</label>
+        <action type=\"exit\">EXIT_RIP</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+	</hbox>
+</vbox>
+</hbox>
+</window>
+"
+
+RESULTS=`$GTKDIALOG --program=RIPGUI --center`
+
+if [ "`echo $RESULTS | grep EXIT_RIP`" != "" ]; then
+MIRROR=`echo "$RESULTS" | grep MIRROR | sed 's/MIRROR=\"//' | sed 's/\"//'`
+DIRECTORY=`echo "$RESULTS" | grep SAVEDIRECTORY | sed 's/SAVEDIRECTORY=\"//' | sed 's/\"//'`
+if [ "`echo \"$DIRECTORY\" | grep ' '`" != "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Your selected directory has spaces somewhere in the PATH. A shortcoming of vobcopy is that it converts all spaces to underscores. This of course results in an unknown PATH. Please save to a directory with no spaces in the PATH to it.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"closewindow\">closewindow</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOSPACE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+pvobcopy &
+exit 0
+fi
+if [ "$MIRROR" = false ]; then
+RIPNAME=`echo "$RESULTS" | grep RIPNAME | sed 's/RIPNAME=\"//' | sed 's/\"//' | sed 's/ /_/'`
+TITLETORIP=`echo "$RESULTS" | grep TITLETORIP | sed 's/TITLETORIP=\"//' | sed 's/\"//'`
+SHRINK=`echo "$RESULTS" | grep SHRINKCHECK | sed 's/SHRINKCHECK=\"//' | sed 's/\"//'`
+AUTHOR=`echo "$RESULTS" | grep AUTHORCHECK | sed 's/AUTHORCHECK=\"//' | sed 's/\"//'`
+BURN=`echo "$RESULTS" | grep BURNCHECK | sed 's/BURNCHECK=\"//' | sed 's/\"//'`
+echo vobcopy -i $DEVICE -n $TITLETORIP -t \"$RIPNAME\" -o \"$DIRECTORY\" -v -l -f > /tmp/$WHOAMI-pvobcopy-exec
+else
+echo vobcopy -i $DEVICE -m -o \"$DIRECTORY\" -v -l -f > /tmp/$WHOAMI-pvobcopy-exec
+fi
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec
+fi
+if [ "$SHRINK" = true ]; then
+if [ "$MIRROR" = false ]; then
+INPUT=`echo "$RESULTS" | grep SHRINKFACTOR | sed 's/SHRINKFACTOR=\"//' | sed 's/\"//'`
+SIZE2=`du -h "$DIRECTORY/$RIPNAME$TITLETORIP.vob" | cut -f 1`
+if [ "`grep -o M $SIZE2 2>/dev/null`" != "" ]; then
+CANFIT=YES
+SIZE=`echo "$SIZE2" | sed 's/M//'`
+else
+SIZE3=`du --apparent-size "$DIRECTORY/$RIPNAME$TITLETORIP.vob" | cut -f 1 | head -c 7`
+SIZE=`expr $SIZE3 / 1000`
+SIZE4=`expr $SIZE3 / 1145`
+if [ "`expr $SIZE - 4486 | grep '-'`" != "" ]; then
+CANFIT=YES
+fi
+fi
+NEWSHRINK=`echo "(( "$SIZE4" / "$INPUT" ))" | bc -l`
+echo vamps -e $NEWSHRINK -a 1 \< "$DIRECTORY/$RIPNAME$TITLETORIP.vob" \> "$DIRECTORY/$RIPNAME$TITLETORIP-shrank.vob" > /tmp/$WHOAMI-pvobcopy-exec2
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec2
+if [ "$CANFIT" = YES ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>It appears that your file is already small enough to fit onto a dvd without shrinking. Click OK to shrink anyways or click Quit to exit without shrinking.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_SHRINK</action>
+    </button>
+    <button>
+       <input file icon=\"gtk-quit\"></input>
+      <label>Quit</label>
+      <action type=\"exit\">EXIT_NOW</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+EXITSHRINK=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $EXITSHRINK | grep EXIT_SHRINK`" != "" ]; then
+CANFIT=NO
+fi
+fi
+if [ "$CANFIT" = NO ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>vamps is now shrinking your file.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_SHRINK</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+VAMPS=`$GTKDIALOG --program=MAIN_DIALOG --center` &
+/tmp/$WHOAMI-pvobcopy-exec2
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>vamps is finished shrinking your file.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_SHRINK</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+VAMPS=`$GTKDIALOG --program=MAIN_DIALOG --center` &
+fi
+fi
+fi
+fi
+if [ "$AUTHOR" = true ]; then
+if [ "$MIRROR" = false ]; then
+AUTHORDIR="$DIRECTORY/$RIPNAME/"
+FILE=$DIRECTORY/$RIPNAME$TITLETORIP-shrank.vob
+if ! [ -f "$FILE" ]; then
+FILE=$DIRECTORY/$RIPNAME$TITLETORIP.vob
+fi
+if ! [ -d "$AUTHORDIR" ]; then
+echo dvdauthor -o $AUTHORDIR -t $FILE > /tmp/$WHOAMI-pvobcopy-exec3
+else
+AUTHORDIR="$DIRECTORY/ThIsIsYoUrNeWmOvIe/"
+echo dvdauthor -o $AUTHORDIR -t $FILE > /tmp/$WHOAMI-pvobcopy-exec3
+fi
+echo dvdauthor -o $AUTHORDIR -T >> /tmp/$WHOAMI-pvobcopy-exec3
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec3
+if [ "`which ffmpeg`" != "" ]; then
+FILEINFO=`ffmpeg -i $FILE 2>&1`
+if [ "`echo $FILEINFO | grep 'Audio: pcm'`" != "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+"
+if [ "`which ffmpeg`" != "" ]; then
+MAIN_DIALOG="$MAIN_DIALOG
+    <label>Your video has pcm audio which may become corrupted during dvdauthoring. You may want to convert your audio to ac3 first. To convert click Convert - to continue anyways click OK - otherwise click Quit.</label>
+"
+else
+MAIN_DIALOG="$MAIN_DIALOG
+    <label>Your video has pcm audio which may become corrupted during dvdauthoring. You may want to convert your audio to ac3 first. To continue anyways click OK otherwise click Quit.</label>
+"
+fi
+MAIN_DIALOG="$MAIN_DIALOG
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_AUTHOR</action>
+    </button>
+"
+if [ "`which ffmpeg`" != "" ]; then
+MAIN_DIALOG="$MAIN_DIALOG
+    <button>
+       <input file icon=\"gtk-convert\"></input>
+      <label>Convert</label>
+      <action type=\"exit\">EXIT_CONVERT</action>
+    </button>
+"
+fi
+MAIN_DIALOG="$MAIN_DIALOG
+    <button>
+       <input file icon=\"gtk-quit\"></input>
+      <label>Quit</label>
+      <action type=\"exit\">EXIT_NOW</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+AUTHORTHEVIDEO=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $AUTHORTHEVIDEO | grep EXIT_NOW`" != "" ]; then
+CONTINUE=NO
+fi
+fi
+fi
+if [ "$CONTINUE" = YES ]; then
+if [ "`echo $AUTHORTHEVIDEO | grep EXIT_CONVERT`" != "" ]; then
+echo ffmpeg -i $FILE -target dvd -ab 448k -ar 48000 -ac 2 -acodec ac3 -vcodec copy -y $FILE.mpg > /tmp/$WHOAMI-pvobcopy-exec5
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec5
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec5
+fi
+rm -f $FILE 
+mv $FILE.mpg $FILE
+fi
+CANFIT=NO
+SIZE2=`du -h "$FILE" | cut -f 1`
+if [ "`grep -o M $SIZE2 2>/dev/null`" != "" ]; then
+CANFIT=YES
+else
+SIZE3=`du --apparent-size "$FILE" | cut -f 1 | head -c 7`
+SIZE=`expr $SIZE3 / 1023`
+if [ "`expr $SIZE - 4486 | grep '-'`" != "" ]; then
+CANFIT=YES
+fi
+fi
+if [ "$CANFIT" = NO ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>It appears that your file is too large to fit on a dvd without re-shrinking. Click OK to author anyways or click Quit to exit without authoring.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_AUTHORANYWAYS</action>
+    </button>
+    <button>
+       <input file icon=\"gtk-quit\"></input>
+      <label>Quit</label>
+      <action type=\"exit\">EXIT_NOW</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+EXITAUTHOR=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $EXITAUTHOR | grep EXIT_NOW`" != "" ]; then
+CONTINUE=NO
+fi
+fi
+if [ "$CONTINUE" = YES ]; then
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec3
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec3
+fi
+if [ "$BURN" = true ]; then
+BURNDIR="$AUTHORDIR"VIDEO_TS/
+echo growisofs -use-the-force-luke=tty -Z $DEVICE -J -r -dvd-compat -pad -graft-points VIDEO_TS/=$BURNDIR > /tmp/$WHOAMI-pvobcopy-exec4
+chmod a+x /tmp/$WHOAMI-pvobcopy-exec4
+umount $DEVICE 2>/dev/null
+eject $DEVICE 2>/dev/null
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>DVD tray should be ejected now. Place your blank dvd in the drive and click OK to burn.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_BURNNOW</action>
+    </button>
+    <button>
+       <input file icon=\"gtk-quit\"></input>
+      <label>Quit</label>
+      <action type=\"exit\">EXIT_NOW</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+BURNDVD=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $BURNDVD | grep EXIT_NOW`" != "" ]; then
+CONTINUE=NO
+fi
+if [ "$CONTINUE" = YES ]; then
+SIZE1=`du -h "$AUTHORDIR"VIDEO_TS/ | cut -f 1 | grep -o [A-Z]`
+SIZE2=`du -h $DIRECTORY/$RIPNAME$TITLETORIP-shrank.vob | cut -f 1 | grep -o [A-Z]`
+if [ "$SIZE1" = "$SIZE2" ]; then
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pvobcopy --geometry 79x20 -e /tmp/$WHOAMI-pvobcopy-exec4
+else
+"$TERMINAL" -e /tmp/$WHOAMI-pvobcopy-exec4
+fi
+else
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"60\">
+    <label>It appears the authoring process didn't work correctly. Program is now ending.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">EXIT_NOW</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+EXITPROGRAM=`$GTKDIALOG --program=MAIN_DIALOG --center`
+fi
+fi
+fi
+fi
+fi
+fi
+fi
+fi
+
+rm -f /tmp/$WHOAMI-pvobcopy* 2>/dev/null
+
+exit 0

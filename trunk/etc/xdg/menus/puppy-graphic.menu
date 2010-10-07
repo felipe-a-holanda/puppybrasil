@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Graphic</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Graphic.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="15">GraphicSub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="15">GraphicEdit</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="15">GraphicUtility</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>GraphicSub</Name>
+    <Directory>Puppy-GraphicSub.directory</Directory>
+    <Include>
+      <Category>X-Graphic</Category>
+      <Category>Graphics</Category>
+      <Category>2DGraphics</Category>
+      <Category>3DGraphics</Category>
+      <Category>Photography</Category>
+      <Category>Presentation</Category>
+      <Category>Chart</Category>
+      <Category>FlowChart</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>GraphicEdit</Name>
+    <Directory>Puppy-GraphicEdit.directory</Directory>
+    <Include>
+      <Category>VectorGraphics</Category>
+      <Category>RasterGraphics</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>GraphicUtility</Name>
+    <Directory>Puppy-GraphicUtility.directory</Directory>
+    <Include>
+      <Category>X-GraphicUtility</Category>
+    </Include>
+  </Menu>
+
+</Menu>

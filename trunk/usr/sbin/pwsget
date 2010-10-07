@@ -1,0 +1,60 @@
+#! /bin/bash
+
+# Pwget created by Lobster with thanks to Zigbert and Pwsget additions by gposil
+# for Puppy Dingo and Linux Tmxxine
+# Jan 2008 GPL v3 License
+# http://tmxxine.com
+
+LOGIN=""
+
+export Pwget='
+<window title="Pwget - File downloader utility" resizable="false">
+<vbox>
+ <frame>
+  <text><label>Copy and Paste URL location of required file into "Address". Add destination and click "OK". If the site requires it, you can enter "Login" and "Password".</label></text>
+ </frame>
+ <hbox>
+ <text><label>Login:       </label></text>
+ <entry><variable>LOGIN</variable></entry></hbox>
+ <hbox>
+ <text><label>Password:</label></text>
+ <entry><variable>PWORD</variable></entry></hbox>
+ <hbox>
+  <text><label>Address:  </label></text>
+  <entry accept="directory"><variable>SOURCE</variable><input>/tmp/pm_source_dir</input></entry>
+ </hbox>
+ <hbox>
+  <text><label>Dest Dir:  </label></text>
+  <entry accept="directory"><variable>DEST</variable><input>/tmp/pm_mirror_dir</input></entry>
+  <button>
+   <input file icon="gtk-open"></input>
+   <action type="fileselect">DEST</action>
+   <action>refresh:DEST</action>
+  </button>
+ </hbox>
+ <hbox>
+  <button help>
+   <action>`Xdialog --wrap --screencenter --left --title "Pwget - HELP" --msgbox "Pwget is a simple front end to the wget utility. Wget is used for downloading larger files from the internet such as ISOs. The files are verified during the download procedure. As ISO and other files are checked and downloads resumed, they do not require a md5sum check. Copy and paste the source file you wish to download. Use the file selector to choose the destination. \n\n Lobster, Jan 2008" 600x0`</action>
+  </button>
+  <button cancel></button>
+  <text><label>Download</label></text>
+  <button ok></button>
+ </hbox>
+</vbox>
+</window>'
+
+I=$IFS; IFS=""
+for STATEMENTS in  $(gtkdialog3 --program=Pwget --center ); do
+   eval $STATEMENTS
+done
+IFS=$I
+if [ $EXIT = OK ]; then
+  if [ -z $LOGIN ]; then
+  rxvt -name Xwget -bg "#F3F2DF" -e wget -c -P "$DEST" $SOURCE
+  rox -d "$DEST"
+  fi
+  if [ -n $LOGIN ]; then
+  rxvt -name Xwget -bg "#F3F2DF" -e wget -c --http-user=$LOGIN --http-password=$PWORD --ftp-user=$LOGIN --ftp-password=$PWORD -P "$DEST" $SOURCE
+  rox -d "$DEST"
+  fi
+fi 

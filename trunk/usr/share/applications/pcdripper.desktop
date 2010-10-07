@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pcdripper CD song ripper
+Icon=mini-cdlabel.xpm
+Comment=Pcdripper CD song ripper
+Exec=/usr/sbin/pcdripper
+Terminal=false
+Type=Application
+Categories=Audio
+GenericName=Pcdripper CD song ripper

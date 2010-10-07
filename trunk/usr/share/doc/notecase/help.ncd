@@ -1,0 +1,72 @@
+<!DOCTYPE NoteCase-File>
+<!--LastNote:0-->
+<HTML>
+<HEAD>
+<meta content="text/html;charset=UTF-8" http-equiv="Content-Type">
+<meta name="generator" content="NoteCase 1.9.1">
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+<DL>
+<DT>Online help</DT>
+<!--property:date_created=1211612430-->
+<!--property:date_modified=1211613027-->
+<DD>
+<b>Skeleton Help file for Puppy Linux</b><BR>
+<BR>
+Online help for NoteCase can be found at:<BR>
+<BR>
+<A href="http://notecase.sf.net/">http://notecase.sf.net</A><BR>
+<BR>
+Note also, the source package has 'help.ncd' with full <BR>
+help documentation that can replace this file at<BR>
+/usr/share/doc/notecase/help.ncd.<BR>
+<BR>
+<b>Concepts</b><BR>
+<BR>
+Notecase is an outliner program.<BR>
+<BR>
+Each document file stores one or more notes organized in a hierarchical manner.<BR>
+This hierarchy is displayed on screen within a tree window (widget). <BR>
+That's why sometimes a single note is being referred as a node (because it is also a node within a tree of notes).<BR>
+<BR>
+Each note basically consists of two main parts:<BR>
+	- note title (visible in the tree window, where it can be selected)<BR>
+	- note text (when the note is selected in the tree, you can view/edit the text in the text view window, usually placed on the right side of the main window)<BR>
+<BR>
+Additionally, each note has other information parts such as:<BR>
+	- text formatting (fonts, bold, italic, ...)<BR>
+	- attachments<BR>
+	- links<BR>
+	- pictures embedded in the text<BR>
+<BR>
+Notecase program can open more only one document at a time (Notecase Pro does not have this limitation). <BR>
+<BR>
+<b>Features</b><BR>
+<BR>
+  - unencrypted and encrypted document formats supported<BR>
+  - multiple text node operations are supported (moving up/down/...)<BR>
+  - import NoteCenter unencrpyted format (www.notecenter.net)<BR>
+  - import gjots2 documents (requires .gjots2 extension on document)<BR>
+  - import StickyNotes (http://loban.caltech.edu/stickynotes/) document (requires .xml extension on document)<BR>
+  - import MM/LX documents (http://www.dasoft.com/MMLX) <BR>
+  - multilanguage support<BR>
+  - multiple level undo/redo<BR>
+  - drag and drop for tree node reordering<BR>
+  - export document or nodes to another document, text or html file<BR>
+  - custom font settings<BR>
+  - document searching<BR>
+  - reloading last used document at startup<BR>
+  - maximizing on startup<BR>
+  - text wrapping option<BR>
+  - register application to start at login time (Win32 only)<BR>
+  - reload document from file<BR>
+  - support for external and internal links (links to external file and links to internal document nodes)<BR>
+  - both node text and node title can be a link source<BR>
+  - document supports rich text format (bold,italic,underline, custom color)<BR>
+  - you can insert pictures in the document nodes<BR>
+
+</DD>
+</DL>
+</BODY>
+</HTML>

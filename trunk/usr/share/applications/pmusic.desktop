@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Pmusic audio player
+Exec=pmusic
+Comment=audio player
+Icon=/usr/local/pmusic/pmusic20.png
+Categories=Audio

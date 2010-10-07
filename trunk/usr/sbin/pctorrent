@@ -1,0 +1,435 @@
+#!/bin/bash
+
+VERSION=1.4 ##by Jason Pline 2007-12-28
+
+##find a suitable version of gtkdialog (needs 0.7.20 or greater) currently (as of puppy 4 and maybe before)
+##the executable is named gtkdialog3. Exit with a warning incase gtkdialog isn't found.
+GTKDIALOG=""
+if [ "`which gtkdialog3`" != "" ]; then
+GTKDIALOG=gtkdialog3
+elif [ "`which gtkdialog`" != "" ]; then
+GTKDIALOG=gtkdialog
+elif [ "$GTKDIALOG" = "" ]; then
+echo "you need to install gtkdialog"
+exit 0
+fi
+
+##find a suitable terminal
+TERMINAL=""
+if [ "`which rxvt`" != "" ]; then
+TERMINAL=rxvt
+elif [ "`which urxvt`" != "" ]; then
+TERMINAL=urxvt
+elif [ "`which mrxvt`" != "" ]; then
+TERMINAL=mrxvt
+elif [ "`which aterm`" != "" ]; then
+TERMINAL=aterm
+elif [ "`which materm`" != "" ]; then
+TERMINAL=materm
+elif [ "`which xterm`" != "" ]; then
+TERMINAL=xterm
+elif [ "`which Eterm`" != "" ]; then
+TERMINAL=Eterm
+elif [ "`which sakura`" != "" ]; then
+TERMINAL=sakura
+elif [ "`which konsole`" != "" ]; then
+TERMINAL=konsole
+elif [ "`which gnome-terminal`" != "" ]; then
+TERMINAL=gnome-terminal
+elif [ "`which xfce4terminal`" != "" ]; then
+TERMINAL=xfce4terminal
+elif [ "`which xfce4term`" != "" ]; then
+TERMINAL=xfce4term
+elif [ "`which xfce4-term`" != "" ]; then
+TERMINAL=xfce4-term
+fi
+
+##find a suitable defaulthtmlviewer for the help html.
+DEFAULTHTMLVIEWER=""
+if [ "`which gtkmoz`" != "" ]; then
+DEFAULTHTMLVIEWER=`which gtkmoz`
+elif [ "`which netsurf`" != "" ]; then
+DEFAULTHTMLVIEWER=`which netsurf`
+elif [ "`which dillo`" != "" ]; then
+DEFAULTHTMLVIEWER=`which dillo`
+elif [ "`which hv3`" != "" ]; then
+DEFAULTHTMLVIEWER=`which hv3`
+elif [ "`which kazehakase`" != "" ]; then
+DEFAULTHTMLVIEWER=`which kazehakase`
+elif [ "`which links2`" != "" ]; then
+DEFAULTHTMLVIEWER="links2 -g"
+elif [ "`which opera`" != "" ]; then
+DEFAULTHTMLVIEWER=`which opera`
+elif [ "`which firefox`" != "" ]; then
+DEFAULTHTMLVIEWER=`which firefox`
+elif [ "`which seamonkey`" != "" ]; then
+DEFAULTHTMLVIEWER=`which seamonkey`
+elif [ "`which epiphany`" != "" ]; then
+DEFAULTHTMLVIEWER=`which epiphany`
+elif [ "`which konqueror`" != "" ]; then
+DEFAULTHTMLVIEWER=`which konqueror`
+elif [ "`which lynx`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e lynx"
+elif [ "`which links`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e links"
+elif [ "`which w3m`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e w3m"
+fi
+
+if [ "`which ctorrent`" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"50\">
+    <label>You need to install ctorrent</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+$GTKDIALOG --program=MAIN_DIALOG --center
+exit 0
+fi
+
+WHOAMI=`whoami`
+
+rm -f /tmp/$WHOAMI-pctorrent*
+
+if ! [ -d $HOME/.pctorrent ]; then
+mkdir $HOME/.pctorrent
+fi
+if ! [ -f $HOME/.pctorrent/down ]; then
+echo 500 > $HOME/.pctorrent/down
+fi
+if ! [ -f $HOME/.pctorrent/up ]; then
+echo 70 > $HOME/.pctorrent/up
+fi
+if ! [ -f $HOME/.pctorrent/port ]; then
+echo 6881 > $HOME/.pctorrent/port
+fi
+if ! [ -f $HOME/.pctorrent/exithr ]; then
+echo 24 > $HOME/.pctorrent/exithr
+fi
+if ! [ -f $HOME/.pctorrent/exitratio ]; then
+echo > $HOME/.pctorrent/exitratio 
+fi
+if ! [ -f $HOME/.pctorrent/cache ]; then
+echo 16 > $HOME/.pctorrent/cache 
+fi
+if ! [ -f $HOME/.pctorrent/size ]; then
+echo 16 > $HOME/.pctorrent/size
+fi
+if ! [ -f $HOME/.pctorrent/ipl ]; then
+echo > $HOME/.pctorrent/ipl 
+fi
+if ! [ -f $HOME/.pctorrent/dir ]; then
+echo / > $HOME/.pctorrent/dir 
+fi
+if ! [ -f $HOME/.pctorrent/torrfile ]; then
+echo > $HOME/.pctorrent/torrfile
+fi
+
+echo -CD0202-Ctorrent > /tmp/$WHOAMI-pctorrent-progs
+echo -AZ3022-Azureus >> /tmp/$WHOAMI-pctorrent-progs
+
+PROG=""
+for ONEPROG in `cat /tmp/$WHOAMI-pctorrent-progs`
+do
+ PROGS="$PROGS<item>$ONEPROG</item>"
+done
+
+cd /
+
+export Pctorrent="
+<window title=\"Pctorrent-$VERSION \"icon-name=\"gtk-network\">
+<hbox>
+<vbox>
+    
+  <menubar>
+    <menu>
+      <menuitem icon=\"gtk-ok\">
+      <label>Download torrent</label>
+      <action>echo \$PROGCOMBO | tee /tmp/$WHOAMI-pctorrent-progcombo</action>
+      <action type=\"exit\">Download_Torrent</action>
+		</menuitem>
+      <menuitem icon=\"gtk-execute\">
+      <label>Seed torrent</label>
+      <action>touch /tmp/$WHOAMI-pctorrent-seed</action>
+      <action>echo \$PROGCOMBO | tee /tmp/$WHOAMI-pctorrent-progcombo</action>
+      <action type=\"exit\">Download_Torrent</action>
+		</menuitem>
+      <menuitem icon=\"gtk-apply\">
+      <label>Check torrent completion</label>
+	<action type=\"exit\">Check_Torrent</action>
+		</menuitem>
+      <menuitem icon=\"gtk-info\">
+      <label>View torrent meta info</label>
+      <action type=\"exit\">Metainfo_Torrent</action>
+		</menuitem>
+      <menuitem icon=\"gtk-edit\">
+      <label>Create torrent</label>
+      <action>pcreatetorrent &</action>
+		</menuitem>
+      <menuitem icon=\"gtk-help\">
+      <label>Help</label>
+      <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pctorrent.html &</action>
+		</menuitem>
+      <menuitem icon=\"gtk-quit\">
+      <label>Quit</label>
+	<action>echo You selected the quit menu item</action>
+	<action type=\"exit\">exit by menu</action>
+	</menuitem>
+      <label>[ Click for options ]</label>
+    </menu>
+  </menubar>
+    
+	<frame Select your torrent file>
+    <hbox>
+      <entry accept=\"filename\">
+        <label>Select an Existing File</label>
+        <variable>FILE</variable>
+			<input>cat \$HOME/.pctorrent/torrfile</input>
+			<action>echo \$FILE | tee \$HOME/.pctorrent/torrfile</action>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+			<action type=\"fileselect\">FILE</action>			
+      </button>
+    </hbox>
+  </frame>
+
+	<frame Select your (save to / seed from) directory>
+	<hbox>
+      <entry accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>DIR</variable>
+			<input>cat \$HOME/.pctorrent/dir</input>
+			<action>echo \$DIR | tee \$HOME/.pctorrent/dir</action>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">DIR</action>
+      </button>
+  </hbox>
+  </frame>
+    
+    <frame Maximum block size is 128 kb's>
+    <hbox>
+    <vbox>
+      <text><label>Cache size in mb's</label></text>
+      <entry>
+        <variable>CACHE</variable>
+        <input>cat \$HOME/.pctorrent/cache</input>
+      <action>echo \$CACHE | tee \$HOME/.pctorrent/cache</action>
+      <action>refresh:CACHE</action>
+      </entry>
+		</vbox>
+		
+		<vbox>
+      <text><label>Block size in kb's</label></text>
+      <entry>
+        <variable>SIZE</variable>
+        <input>cat \$HOME/.pctorrent/size</input>
+      <action>echo \$SIZE | tee \$HOME/.pctorrent/size</action>
+      <action>refresh:SIZE</action>
+      </entry>
+      </vbox>
+      
+		</hbox>    
+    
+    <hbox>
+    <vbox>
+      <text><label>Max download rate:</label></text>
+      <entry>
+        <variable>DOWN</variable>
+        <input>cat \$HOME/.pctorrent/down</input>
+      <action>echo \$DOWN | tee \$HOME/.pctorrent/down</action>
+		<action>refresh:DOWN</action>
+      </entry>
+      </vbox>
+
+		<vbox>
+      <text><label>Max upload rate:</label></text>
+      <entry>
+        <variable>UP</variable>
+        <input>cat \$HOME/.pctorrent/up</input>
+      <action>echo \$UP | tee \$HOME/.pctorrent/up</action>
+      <action>refresh:UP</action>
+      </entry>
+      </vbox>
+      </hbox>
+      
+      <hbox>
+    <vbox>
+      <text><label>Port to listen on</label></text>
+      <entry>
+        <variable>PORT</variable>
+        <input>cat \$HOME/.pctorrent/port</input>
+      <action>echo \$PORT | tee \$HOME/.pctorrent/port</action>
+      <action>refresh:PORT</action>
+      </entry>
+    </vbox>      
+      
+    <vbox>
+      <text><label>File to download first</label></text>
+      <entry>
+        <variable>NUM</variable>
+      <action>refresh:NUM</action>
+      <action>echo \$NUM | tee /tmp/$WHOAMI-pctorrent-num</action>
+      </entry>
+		</vbox>     
+      
+	</hbox>
+	</frame>
+		    
+    <frame Exit after seeding>
+
+    <hbox>
+    <radiobutton active=\"true\">
+      <label>number of hours:            </label>
+      <variable>RADIOBUTTON1</variable>
+		<action>if true enable:EXITHR</action>
+      <action>if false disable:EXITHR</action>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>quotient (UL/DL):</label>
+      <variable>RADIOBUTTON2</variable>
+		<action>if true enable:EXITRATIO</action>
+      <action>if false disable:EXITRATIO</action>
+    </radiobutton>
+    </hbox>
+    
+    <hbox>
+      <entry>
+        <variable>EXITHR</variable>
+        <input>cat \$HOME/.pctorrent/exithr</input>
+      <action>echo \$EXITHR | tee \$HOME/.pctorrent/exithr</action>
+      <action>refresh:EXITHR</action>
+      </entry>
+
+      <entry>
+        <variable>EXITRATIO</variable>
+			<visible>disabled</visible>
+        <input>cat \$HOME/.pctorrent/exitratio</input>
+      <action>echo \$EXITRATIO | tee \$HOME/.pctorrent/exitratio</action>
+      <action>refresh:EXITRATIO</action>
+      </entry>
+      </hbox>
+
+		</frame>
+		
+    <frame Disguise ctorrent as another program (Peer ID)>
+    <hbox>
+    <combobox>	
+     <variable>PROGCOMBO</variable>
+      $PROGS
+    </combobox>
+    </hbox>
+    </frame>
+
+</vbox>
+</hbox>
+</window>
+"
+
+RESULTS=`$GTKDIALOG --program=Pctorrent --center`
+
+if [ "`echo $RESULTS | grep Check_Torrent`" != "" ]; then
+cd "`cat $HOME/.pctorrent/dir`"
+echo ctorrent -c \'`cat $HOME/.pctorrent/torrfile`\' > /tmp/$WHOAMI-pctorrent-check
+echo echo           >> /tmp/$WHOAMI-pctorrent-check
+echo echo hit enter or return to exit >> /tmp/$WHOAMI-pctorrent-check
+echo read anykey >> /tmp/$WHOAMI-pctorrent-check
+chmod a+x /tmp/$WHOAMI-pctorrent-check
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title Checking_Torrent_Completion --geometry 79x20 -e /tmp/$WHOAMI-pctorrent-check
+else
+$TERMINAL -e /tmp/$WHOAMI-pctorrent-check
+fi
+pctorrent &
+exit 0
+fi
+
+if [ "`echo $RESULTS | grep Metainfo_Torrent`" != "" ]; then
+ctorrent -x "`cat $HOME/.pctorrent/torrfile`" > /tmp/$WHOAMI-pctorrent
+export METAINFO="
+<window title=\"torrent metainfo \"icon-name=\"gtk-network\">
+<hbox>
+<vbox>
+<frame info:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pctorrent</input>
+      <width>500</width>
+      <height>400</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+RESULTS=`$GTKDIALOG --program=METAINFO --center`
+pctorrent &
+exit 0
+fi
+
+if [ "`echo $RESULTS | grep Download_Torrent`" != "" ]; then
+DIR="`cat $HOME/.pctorrent/dir`"
+FILE="`cat $HOME/.pctorrent/torrfile`"
+	cd "$DIR"
+	FILE2=`basename "$FILE"`
+	FILE3=`echo "$FILE2" | sed 's/.torrent//g'`
+	DOWN="-D `cat $HOME/.pctorrent/down`"
+	UP="-U `cat $HOME/.pctorrent/up`"
+	EXITHR=""
+	if [ "`cat $HOME/.pctorrent/exithr`" != "" ]; then
+	EXITRATIO=""
+	EXITHR="-e `cat $HOME/.pctorrent/exithr`"
+	fi
+	if [ "$EXITHR" = "" ]; then
+	EXITRATIO="-E `cat $HOME/.pctorrent/exitratio`"
+	fi
+	PORT2=`cat $HOME/.pctorrent/port`
+	PORT="-p "$PORT2""
+	CACHE="-C `cat $HOME/.pctorrent/cache`"
+	SIZE="-z `cat $HOME/.pctorrent/size`"
+	if [ "`cat /tmp/$WHOAMI-pctorrent-num | grep [0-9]`" != "" ]; then
+	NUM2=" -n `cat /tmp/$WHOAMI-pctorrent-num` "
+	else
+	NUM2=" "
+	fi
+	PROG=`cat /tmp/$WHOAMI-pctorrent-progcombo | cut -f 2 -d '-'`
+	PROG2="-P -"$PROG"-"
+	if [ -f /tmp/$WHOAMI-pctorrent-seed ]; then
+	rm -f /tmp/$WHOAMI-pctorrent-seed
+	echo ctorrent "$DOWN" "$UP" "$EXITHR" "$EXITRATIO" "$PORT" "$CACHE""$NUM2""$SIZE" "$PROG2" -f \'"$FILE"\' | tr -s ' ' > /tmp/$WHOAMI-pctorrentexec
+	else
+	echo ctorrent "$DOWN" "$UP" "$EXITHR" "$EXITRATIO" "$PORT" "$CACHE""$NUM2""$SIZE" "$PROG2" \'"$FILE"\' | tr -s ' ' > /tmp/$WHOAMI-pctorrentexec
+	fi
+	chmod a+x /tmp/$WHOAMI-pctorrentexec
+	if [ "$TERMINAL" = rxvt ]; then
+	rxvt -bg black -fg green -title "$FILE3"-port-"$PORT2" --geometry 79x20 -e /tmp/$WHOAMI-pctorrentexec &
+	else
+	$TERMINAL -e /tmp/$WHOAMI-pctorrentexec &
+	fi
+sleep 2
+pctorrent &
+exit 0
+fi
+
+rm -f /tmp/$WHOAMI-pctorren*
+
+exit 0

@@ -1,0 +1,18 @@
+#!/bin/sh
+#Lesser GPL licence v2 (/usr/share/doc/legal/lgpl-2.1.txt). 2007 www.puppylinux.com
+
+#if [ "`/etc/rc.d/rc.alsa status | grep "not loaded"`" = "" ];then
+# Xdialog --title "ALSA sound Wizard" --yesno "ALSA sound modules are currently loaded and active.\n
+#If you answer Yes here, modules will be unloaded,\nand the Wizard will continue.\nAnswer No, Wizard will exit..." 0 0
+# [ ! $? -eq 0 ] && exit
+# /etc/rc.d/rc.alsa stop
+#fi
+
+#...above not necessary, alsaconf does it.
+
+#100501 weird, nvidia xorg pet pkg seems to need the files created by busybox depmod,
+#however alsaconf has been modified to run depmod-FULL. so, rerun busybox depmod after...
+
+#exec rxvt -e /usr/sbin/alsaconf
+rxvt -e /usr/sbin/alsaconf
+depmod

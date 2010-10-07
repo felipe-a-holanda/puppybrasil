@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=pCD CD-audio player
+Icon=mini-cd.xpm
+Comment=pCD CD-audio player
+Exec=pcd
+Terminal=false
+Type=Application
+Categories=Audio
+GenericName=pCD CD-audio player

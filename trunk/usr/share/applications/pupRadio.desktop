@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=pupRadio streaming audio
+Icon=mini-sound.xpm
+Comment=pupRadio streaming audio
+Exec=pupradio
+Terminal=false
+Type=Application
+Categories=Audio
+GenericName=pupRadio streaming audio

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Setup</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Setup.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="5">SetupEntry</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="20">SetupWizard</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">SetupUtility</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>SetupEntry</Name>
+    <Directory>Puppy-SetupEntry.directory</Directory>
+    <Include>
+      <Category>X-SetupEntry</Category>
+      <Category>PackageManager</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>SetupWizard</Name>
+    <Directory>Puppy-SetupWizard.directory</Directory>
+    <Include>
+      <Category>X-SetupWizard</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>SetupUtility</Name>
+    <Directory>Puppy-SetupUtility.directory</Directory>
+    <Include>
+      <Category>X-SetupUtility</Category>
+    </Include>
+  </Menu>
+
+</Menu>

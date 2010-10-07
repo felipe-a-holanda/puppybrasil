@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=CPU Frequency Scaling Tool
+Icon=so.xpm
+Comment=CPU Frequency Scaling Tool
+Exec=/usr/local/cpu-freq/cpu_freq -start
+Terminal=false
+Type=Application
+Categories=Utility
+GenericName=CPU Frequency Scaling Tool

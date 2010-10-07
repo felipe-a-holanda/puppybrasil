@@ -1,0 +1,112 @@
+
+SetVol 1.1
+==========
+
+Are you kidding me??  A readme file is not required for this :)
+
+This is just an extremely simple utility that I wrote in order to set
+the sound card to the levels i like from the command line.  To be honest
+I never understood how linux was doing it on bootup, and just wrote this
+to set it in the rc.d files so that I wasn't getting something ludicrous
+after a reboot.
+
+Compilation
+===========
+
+To compile this puppy, just type
+
+	gcc -o setvol setvol.c
+
+If you have any problems, just email me.  This code should not
+cause a single problem to anyone... It's almost embarassing to submit :)
+
+
+Usage
+=====
+
+Just type "setvol" alone to get a usage output from setvol.  But basically
+you just give it a device number from this list,
+
+SOUND_MIXER_VOLUME      0
+SOUND_MIXER_BASS        1
+SOUND_MIXER_TREBLE      2
+SOUND_MIXER_SYNTH       3
+SOUND_MIXER_PCM         4
+SOUND_MIXER_SPEAKER     5
+SOUND_MIXER_LINE        6
+SOUND_MIXER_MIC         7
+SOUND_MIXER_CD          8
+SOUND_MIXER_IMIX        9
+SOUND_MIXER_ALTPCM      10
+SOUND_MIXER_RECLEV      11
+SOUND_MIXER_IGAIN       12
+SOUND_MIXER_OGAIN       13
+
+If you give only a device by itself, like
+
+    setvol 0
+
+the status of that device is returned.  Both the left and right channels
+will come out alone.  Nothing else is displayed.  This is easy for
+setting variables, like
+
+    LEFT_VOLUME=`setvol 0 | awk '{print $1}'`
+    RIGHT_VOLUME=`setvol 0 | awk '{print $2}'`
+
+This will store the left and right values for the volume. 
+
+If you want to set the value of a device, call it like this
+
+    setvol 0 50
+
+to set the value of the mixer volume to half of its maximum.  If there is a
+left and right channel then this will set both to 50.
+
+To set the two channels of a device individually, call like this,
+
+    setvol 0 20 50
+
+to set the value of the left channel to 20 and the right to 50.
+
+
+Bugs
+====
+
+I don't know of any.  If you find any, send me a patch, or at least a good
+description.  SetVol should decide if your device is supported or not, and
+should also know if that device is stereo or not.  There have been some
+other 'preventative error' methods taken, but there are bound to be some
+bugs.
+
+
+License
+=======
+
+Licensing is GPL... you have all rights to do whatever you want with this.  
+I just don't care. :)
+
+For information about GPL goto http://www.gnu.org
+
+
+Thanks to
+=========
+
+Phil Pennock
+Valerica Vatafu
+
+These two guys submitted some cool stuff, in the beginning of 1999.  I was
+just VERY slow to get it out.  Sorry about that.  Some stuff I kept, some I 
+tossed. 
+
+Regardless, the combination of the two generated some useful stuff.  Thanks
+guys.  We all appreciate it.
+
+
+Bye
+===
+
+Take care,
+
+Derek Wyatt
+derek@scar.utoronto.ca
+

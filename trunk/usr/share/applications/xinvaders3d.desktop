@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Xinvaders3d Arcade Game  
+Icon=xinvaders.png
+Comment=xinvaders
+Exec=xinv3d
+Terminal=false
+Type=Application
+Categories=Game
+GenericName=xinvaders

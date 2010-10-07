@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=NicoEdit text editor
+Icon=nicoedit.png
+Comment=NicoEdit text editor
+Exec=nicoedit
+Terminal=false
+Type=Application
+Categories=TextEditor
+GenericName=NicoEdit

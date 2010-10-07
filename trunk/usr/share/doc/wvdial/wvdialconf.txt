@@ -1,0 +1,103 @@
+Content-type: text/html
+
+
+  WVDIALCONF
+
+Section: User Commands (1)
+Updated: August 1998
+Index <#index> Return to Main Contents
+<http://localhost/cgi-bin/man/man2html>
+------------------------------------------------------------------------
+
+ 
+
+
+    NAME
+
+wvdialconf - build a configuration file for *wvdial
+<http://localhost/cgi-bin/man/man2html?1+wvdial>*(1)
+
+ 
+
+
+    SYNOPSIS
+
+*wvdialconf* //etc/wvdial.conf/
+
+ 
+
+
+    DESCRIPTION
+
+*wvdialconf* detects your modem, its maximum baud rate, and a good
+initialization string and generates or updates the *wvdial
+<http://localhost/cgi-bin/man/man2html?1+wvdial>*(1) configuration file
+based on this information.
+
+*wvdialconf* is completely non-interactive. You still need to edit
+//etc/wvdial.conf/ to specify the phone number, login name, and password
+of your internet account in order for *wvdial
+<http://localhost/cgi-bin/man/man2html?1+wvdial>*(1) to work.
+
+It is safe to run *wvdialconf* if a configuration file already exists.
+In that case, only the /Modem/, /Baud/, /Init/, and /Init2/ options are
+changed in the /[Dialer Defaults]/ section, and only if autodetection is
+successful.
+
+ 
+
+
+    BUGS
+
+We're willing to entertain the possibility. Let us know if you have any
+problems by sending an e-mail to *<wvdial@nit.ca <mailto:wvdial@nit.ca>>*.
+
+Also, there is now a mailing list for discussion about *wvdial*. If you
+are having problems, or have anything else to say, send e-mail to
+*<wvdial-list@lists.nit.ca <mailto:wvdial-list@lists.nit.ca>>*.
+
+ 
+
+
+    DIAGNOSTICS
+
+An exit status of 0 means that a modem was detected and the
+configuration file was updated successfully.
+
+Any other value means that something went wrong and the configuration
+file was unchanged.
+
+ 
+
+
+    AUTHORS
+
+Dave Coombs and Avery Pennarun for Net Integration Technologies, as part
+of the Worldvisions Weaver project.
+
+ 
+
+
+    SEE ALSO
+
+*wvdial <http://localhost/cgi-bin/man/man2html?1+wvdial>*(1),
+*wvdial.conf <http://localhost/cgi-bin/man/man2html?5+wvdial.conf>*(5).
+
+------------------------------------------------------------------------
+ 
+
+
+    Index
+
+NAME <#lbAB>
+SYNOPSIS <#lbAC>
+DESCRIPTION <#lbAD>
+BUGS <#lbAE>
+DIAGNOSTICS <#lbAF>
+AUTHORS <#lbAG>
+SEE ALSO <#lbAH>
+
+------------------------------------------------------------------------
+This document was created by man2html
+<http://localhost/cgi-bin/man/man2html>, using the manual pages.
+Time: 09:47:28 GMT, May 02, 2005

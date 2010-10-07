@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Calculate</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Calculate.directory</Directory>
+  <Layout>
+    <Menuname inline="true" inline_limit="99">CalculateSub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">Calculators</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">CalculateUtility</Menuname>
+   </Layout>
+
+  <Menu>
+    <Name>CalculateSub</Name>
+    <Directory>Puppy-CalculateSub.directory</Directory>
+    <Include>
+      <Category>X-Calculate</Category>
+      <Category>Finance</Category>
+      <Category>Spreadsheet</Category>
+      <Category>ProjectManagement</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>Calculators</Name>
+    <Directory>Puppy-Calculators.directory</Directory>
+    <Include>
+      <Category>Calculator</Category>
+    </Include>
+  </Menu>
+  
+  <Menu>
+    <Name>CalculateUtility</Name>
+    <Directory>Puppy-CalculateUtility.directory</Directory>
+    <Include>
+      <Category>X-CalculateUtility</Category>
+    </Include>
+  </Menu>
+
+</Menu>

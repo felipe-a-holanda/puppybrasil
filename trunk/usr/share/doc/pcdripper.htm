@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+
+
+
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>pcdripper.htm</title></head><body>Pcdripper instructions:<br>
+<br>
+the script depends on:<br>1 ripping program (cdparanoia, icedax, or cdda2wav)<br>
+gtkdialog (version 0.7.20 or greater - named gtkdialog or gtkdialog3)<br>
+a terminal (preferably rxvt)<br>
+lame (optional)<br>
+flac (optional)<br>
+shorten (optional) (doesn't allow meta tagging)<br>
+faac (optional)<br>
+mac (optional)<br>
+ffmpeg (optional)<br>
+cddb_query (optional)<br>
+cd-info (optional)<br>
+cddetect (optional)<br>
+<br>
+Click on the "rip program cd scan" button (from the Click for options menu box) to display audio cd information in a popup box.<br>
+The information is detected by your selected ripping program. <br>
+
+<br>
+
+You could also click on the cddb_query scan, found in the same menu, if you are connected to the internet and want to <br>
+
+view the cddb database information.<br>
+<br>
+Same thing goes for the cddetect &amp; cd-info scan options.<br>
+
+<br>
+
+This step isn't necessary but it's nice to see what's on the disc before ripping.<br>
+<br>
+Select your cd drive from the combobox.<br>
+<br>
+Click on the folder button
+to select your save to directory (where files will be ripped to).<br>
+<br>
+
+Fill in the box "Enter preceding name for tracks" (if not tagging files).<br>
+
+The tracks will be ripped as 01, 02, 03 etc... whatever you put in the box will precede all track numbers.<br>
+
+Make sure you don't use any funny symbols, spaces will automatically be converted to underscores.<br>
+
+You can use:<br>
+
+- or _ <br>
+
+This step is only necessary if you don't want the default track names or if you're not tagging your files.<br>
+<br>
+If you're not ripping the full cd you'll need to uncheck the rip full cd box and fill in the entry box for the file(s) you want.<br>
+
+You can enter a range like:<br>
+
+2-4<br>
+
+This will rip tracks 2 thru 4<br>
+
+Or you could enter a single track like:<br>
+
+3<br>
+
+This will rip track 3<br>
+And now you can enter various tracks seperated by commas like:<br>
+1,3,5,8<br>
+This will rip tracks 1,3,5,&amp;8<br>
+<br>
+The radiobuttons:<br>
+1) cddb_query tags = Will use cddb_query (if found in your $PATH) to find the information to automatically tag the files.<br>
+You will of course need to be connected to the internet for this to work.<br>
+2) manual id3 tags = the gui I wrote to manually tag your files.<br>
+3) no id3 tags = use the entry from "Enter preceding name for tracks" instead of the tagging name format.<br>
+<br>
+
+The checkboxes:<br>
+--cdparanoia only options (1-4)--<br>
+
+1) disable paranoia = -Z --disable-paranoia (disable all paranoia checking)<br>
+
+2) disable extra paranoia = -Y --disable-extra-paranoia (only do cdda2wav-style overlap checking)<br>
+3) output to a single track = all ripped wav files will be output to a
+single track (only possible if not tagging the output file)<br>
+
+4) exit on bad read = -X --abort-on-skip (abort on imperfect reads/skips)<br>
+---------------------------------------<br>
+
+
+5) rip full cd = check this if you want to rip the full cd, otherwise leave unchecked and fill in the range box<br>
+
+6) eject when done = when all work is done the cd will eject when the box is checked.<br>
+
+7) Play a sound when finished = a suitable cli wav player will play /usr/share/audio/2barks.wav<br>
+<br>
+When tagging your files you'll be able to fill in the box "Enter track name format".<br>
+As shown in the gui, T=track(number) N=(track)name A=artist Y=year L=album G=genre<br>
+If you want your track to be named (track number)-(track name) then you would put TN in the box.<br>
+The hyphen is automatically placed between the various options. All the info will of course be tagged <br>
+in the file but this is just how the file will be named. <br>
+<br>
+Select audio format output from the upper right menubar. After you select rip you'll get a popup or 2<br>
+for encoding options.<br>
+<br>
+
+Click the "RIP" button (from the Click for options menu box) when you're happy with all your settings.<br>
+
+At this point rxvt will popup and execute your chosen commands.<br>
+<br>
+I did away with the set defaults script in favor of how the app now works. Most options will show up as the last used<br>
+options when the app is restarted.<br>
+<br>
+I added a safeguard if lame is installed on your system and your
+tagging your files. If the genre can't be found from the list of<br>
+available genres in lame than "other" will be used instead. Lame will choke if an invalid genre is entered.<br>
+
+<a href="http://www.murga-linux.com/puppy/viewtopic.php?p=157790"><br>
+A link to the Puppy forum thread about this application.</a><br>
+<br>
+
+</body></html>

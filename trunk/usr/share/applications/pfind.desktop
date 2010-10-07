@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pfind file finder
+Icon=mini-search.xpm
+Comment=Pfind file finder
+Exec=pfind
+Terminal=false
+Type=Application
+Categories=X-FilesystemFind
+GenericName=Pfind file finder

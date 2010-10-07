@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Psip VOIP + IM client
+Icon=phone16.xpm
+Comment=Psip VOIP + IM client
+Exec=psip
+Terminal=false
+Type=Application
+Categories=Telephony
+GenericName=Psip VOIP + IM client

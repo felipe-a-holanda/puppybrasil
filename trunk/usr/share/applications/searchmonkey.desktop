@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Searchmonkey file finder
+Icon=searchmonkey.png
+Comment=Searchmonkey file finder
+Exec=searchmonkey
+Terminal=false
+Type=Application
+Categories=X-FilesystemFind
+GenericName=Searchmonkey

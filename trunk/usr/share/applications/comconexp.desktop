@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Complete Configuration Experience
+Icon=prompt16.xpm
+Comment=ALSA Sound Wizard
+Exec=completeconfig
+Terminal=false
+Type=Application
+Categories=X-SetupWizard
+GenericName=Complete Configuration Experience

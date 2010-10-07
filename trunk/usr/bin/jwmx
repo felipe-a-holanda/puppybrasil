@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "jwm" > /etc/windowmanager
+jwmx2 & #script to kick off retrovol and some startup apps
+. /etc/windowmanager #will start jwm

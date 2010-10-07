@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>QUISP and SHSQL HOWTO</title>
+
+  <meta content="Barry Kauler" name="author"></head><body>
+<h1><img style="width: 96px; height: 96px;" alt="puppylogo" src="puppylogo96.png" align="middle"> HOWTO: QUISP and SHSQL</h1>
+<br>
+<h2>Introduction</h2>
+QUISP is a tool for serving any kind of content into web pages, by
+means of simple tags in HTML pages. It is an extremely sophisticated
+tool for creating web-based applications, dynamic web-pages, or even to
+serve a complete website, including use as a frontend to the SHSQL
+database backend. Read this page for an overview:<br>
+<br>
+<big style="font-weight: bold;"><a href="file:///usr/share/doc/quisp/quisp_overview.html">Overview of QUISP and SHSQL</a></big> <br>
+<br>
+The QUISP pet package 'quisp-128-p4.pet' is 217KB, or 904KB expanded,
+but half of that is a tutorial, so it really is tiny. That includes the
+SHSQL backend and a heap of CLI utilities.<br>
+<br>
+The great thing about QUISP is that it is not just a frontend for
+SHSQL, it is a frontend for anything. It enables you to easily put
+anything into a web page, and have all kinds of interactivity.<br>
+<br>
+There is a product called <span style="font-style: italic;">Ploticus</span> that adds sophisticated real-time graphs to QUISP-generated web pages. There is also another product called <span style="font-style: italic;">EasyTimeline</span> for adding timeline graphs. I intend to add these in the future.<br>
+<h2>Tutorial</h2>
+Puppy has a built-in tutorial, launched from the menu.<br>
+<br>
+The tutorial is quite good. The menu <span style="font-style: italic; font-weight: bold;">Business --&gt; QUISP dynamic web interface</span> runs <span style="font-style: italic;">/usr/sbin/quisp_shell</span>
+which launches the Hiawatha web-server and brings up the QUISP
+tutorial. I have described it as a "dynamic web interface" in the menu
+as SHSQL is only a small part of what QUISP can do.<br>
+<br>
+The above-mentioned tutorial is a nice set of examples of what QUISP
+and SHSQL can do, but there are step-by-step examples given in the
+complete HTML documention that I have placed in the 'devx' file -- see
+links in Documentation section below.<br>
+<h2>Documentation<br>
+</h2>
+There is complete documentation online, however the 'devx' file (the
+SFS file that converts Puppy into a complete C/C++/Vala/Genie compiling
+environment) has extensive documentation on QUISP and SHSQL in HTML
+format.<br>
+<br>
+These links will be valid if the 'devx' file is loaded:<br>
+<br>
+<big style="font-weight: bold;"><a href="file:///usr/share/doc/quisp/quisp_home.html">/usr/share/doc/quisp/quisp_home.html</a></big> <br>
+<big style="font-weight: bold;"><a href="file:///usr/share/doc/shsql/shsql_home.html">/usr/share/doc/shsql/shsql_home.html</a></big> <br>
+<br>
+There are exercises in <span style="font-style: italic;">/usr/share/doc/quisp/basics.html</span> that are a series of simple HTML pages that you can create. You have to create these in <span style="font-style: italic;">/root/Web-Server/Quisp/pages</span> and point the web browser at them -- for example, when Hiawatha is running, the URL would be <span style="font-style: italic;">http://127.0.0.1/cgi-bin/quisp.bin?rtn=example1</span> which will serve the web page <span style="font-style: italic;">/root/Web-Server/Quisp/pages/example1</span>.<br>
+<br>
+<div style="margin-left: 40px;">Note, it would be nice if we could serve our web pages with a URL like <span style="font-style: italic;">http://127.0.0.1/example1</span> -- well, this can be done as Hiawatha supports URL-rewriting. It's just that I haven't learn't how to do that yet.<br>
+Note also, if you are new to setting up a web server, the <span style="font-style: italic;">127.0.0.1</span> is the IP address of the local (in same PC) web server (the URL name <span style="font-style: italic;">localhost</span> is equivalent to <span style="font-style: italic;">127.0.0.1</span>). Over the Internet it would of course be some domain name, like <span style="font-style: italic;">http://puppysite.com/example1</span>.<br>
+</div>
+
+<br>
+QUISP homepage: <big style="font-weight: bold;"><a href="http://quisp.sourceforge.net/">http://quisp.sourceforge.net/</a></big> <br>
+Ploticus homepage: <big style="font-weight: bold;"><a href="http://ploticus.sourceforge.net/">http://ploticus.sourceforge.net/</a></big><br>
+EasyTimeline homepage: <big style="font-weight: bold;"><a href="http://infodisiac.com/Wikipedia/EasyTimeline/Introduction.htm">http://infodisiac.com/Wikipedia/EasyTimeline/Introduction.htm</a></big> <br>
+<h2>Files</h2>
+If you would like to poke around with ROX-Filer and see where QUISP is installed, look here:<br>
+<br>
+<span style="font-weight: bold;">/usr/bin</span><br>
+This has all of the commandline executables, <span style="font-style: italic;">buildix
+catofs dataedit dbcat newproject.sh quisputil shsql shsql_alter
+shsql_create shsql_fldsel shsql_join tabdef tabmaint tabo</span>.<br>
+<br>
+<span style="font-weight: bold;">/usr/sbin</span><br>
+This has script <span style="font-style: italic;">quisp_shell</span>,
+which is run from the menu. This takes care of correct startup and
+stopping of Hiawatha and launches QUISP pages in a web browser.<br>
+<br>
+<span style="font-weight: bold;">/root/Web-Server</span><br>
+The QUISP project files are installed here. The files that are
+presented in a web browser when QUISP is launched from the menu are at <span style="font-style: italic;">/root/Web-Server/Quisp/pages</span>.<br>
+<br>
+There is one commandline executable that I moved from /usr/bin to /root/Web-Server/cgi-bin, <span style="font-style: italic;">quisp</span>, and I renamed it to <span style="font-style: italic;">quisp.bin</span>.
+The reason for renaming it is that one way of getting Hiawatha to
+execute it as a CGI is to give it an extension. The configuration file
+for Hiawatha is <span style="font-style: italic;">/root/Web-Server/httpd.conf</span>
+-- note that Hiawatha has a default configuration file at
+/etc/hiawatha/httpd.conf but the /usr/sbin/quisp_shell script makes
+Hiawatha use the latter config file.<br>
+<br>
+Regards,<br>
+Barry Kauler<br>
+August 2009<br>
+</body></html>

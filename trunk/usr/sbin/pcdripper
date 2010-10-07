@@ -1,0 +1,2146 @@
+#!/bin/bash
+
+#script depends on:
+#1 cd ripping program (cdparanoia, cdda2wav, icedax)
+#gtkdialog(3)
+#a terminal (preferably rxvt)
+#cddb_query (optional) (cddb database support for automatically tagging files)
+#lame (optional) (support for .mp3 files)
+#flac (optional) (support for .flac files)
+#metaflac (optional) (support for tagging .flac files)
+#shorten (optional) (doesn't allow meta tagging) (support for .shn files)
+#faac (optional) (support for .aac, .m4a, & .mp4 files)
+#mac (optional) (support for lossless Monkey's audio .ape files)
+#mppenc (optional) (support for musepack .mpc & mpeg plus .mpp files)
+#apetag (optional) (support for tagging .ape, .mpc, & .mpp files)
+#cddetect (optional) (a cli program that will find number of audio tracks on a disc)
+#cd-info (optional) (a cli program that will find number of audio tracks on a disc)
+
+##TODO
+#figure out how ffmpeg & mac accept stdin
+#add select audio file to be played upon completion of rip
+
+VERSION=3.7 ##by Jason Pline 2008-05-27
+
+VTAG=""
+EXTRATAGS=""
+APETAG=""
+MUSEPACK=""
+
+##remove any temp files incase they weren't removed previously
+rm -f /tmp/$WHOAMI-pcdripper* 
+
+##find a suitable version of gtkdialog (needs 0.7.20 or greater) currently (as of puppy 4 and maybe before)
+##the executable is named gtkdialog3. Exit with a warning incase gtkdialog isn't found.
+GTKDIALOG=""
+if [ "`which gtkdialog3`" != "" ]; then
+GTKDIALOG=gtkdialog3
+elif [ "`which gtkdialog`" != "" ]; then
+GTKDIALOG=gtkdialog
+elif [ "$GTKDIALOG" = "" ]; then
+echo "you need to install gtkdialog"
+exit 0
+fi
+
+##find a suitable terminal
+TERMINAL=""
+if [ "`which rxvt`" != "" ]; then
+TERMINAL=rxvt
+elif [ "`which urxvt`" != "" ]; then
+TERMINAL=urxvt
+elif [ "`which mrxvt`" != "" ]; then
+TERMINAL=mrxvt
+elif [ "`which aterm`" != "" ]; then
+TERMINAL=aterm
+elif [ "`which materm`" != "" ]; then
+TERMINAL=materm
+elif [ "`which xterm`" != "" ]; then
+TERMINAL=xterm
+elif [ "`which Eterm`" != "" ]; then
+TERMINAL=Eterm
+elif [ "`which sakura`" != "" ]; then
+TERMINAL=sakura
+elif [ "`which konsole`" != "" ]; then
+TERMINAL=konsole
+elif [ "`which gnome-terminal`" != "" ]; then
+TERMINAL=gnome-terminal
+elif [ "`which xfce4terminal`" != "" ]; then
+TERMINAL=xfce4terminal
+elif [ "`which xfce4term`" != "" ]; then
+TERMINAL=xfce4term
+elif [ "`which xfce4-term`" != "" ]; then
+TERMINAL=xfce4-term
+fi
+
+##find a suitable defaulthtmlviewer for the help html.
+DEFAULTHTMLVIEWER=""
+if [ "`which gtkmoz`" != "" ]; then
+DEFAULTHTMLVIEWER=`which gtkmoz`
+elif [ "`which dillo`" != "" ]; then
+DEFAULTHTMLVIEWER=`which dillo`
+elif [ "`which hv3`" != "" ]; then
+DEFAULTHTMLVIEWER=`which hv3`
+elif [ "`which netsurf`" != "" ]; then
+DEFAULTHTMLVIEWER=`which netsurf`
+elif [ "`which kazehakase`" != "" ]; then
+DEFAULTHTMLVIEWER=`which kazehakase`
+elif [ "`which skipstone`" != "" ]; then
+DEFAULTHTMLVIEWER="skipstone"
+elif [ "`which links2`" != "" ]; then
+DEFAULTHTMLVIEWER="links2 -g"
+elif [ "`which opera`" != "" ]; then
+DEFAULTHTMLVIEWER=`which opera`
+elif [ "`which firefox`" != "" ]; then
+DEFAULTHTMLVIEWER=`which firefox`
+elif [ "`which seamonkey`" != "" ]; then
+DEFAULTHTMLVIEWER=`which seamonkey`
+elif [ "`which epiphany`" != "" ]; then
+DEFAULTHTMLVIEWER=`which epiphany`
+elif [ "`which konqueror`" != "" ]; then
+DEFAULTHTMLVIEWER=`which konqueror`
+elif [ "`which lynx`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e lynx"
+elif [ "`which links`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e links"
+elif [ "`which w3m`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e w3m"
+fi
+
+##find a suitable cli wavplayer to play a sound when script is finished
+PLAY=""
+if [ "`which mplayer`" != "" ]; then
+PLAY=mplayer
+elif [ "`which wavplay`" != "" ]; then
+PLAY=wavplay
+elif [ "`which aplay`" != "" ]; then
+PLAY=aplay
+elif [ "`which sox`" != "" ]; then
+PLAY=play
+fi
+
+##set the wav to be played (will probably add this to the gui so you can 
+##select the file to be played)
+AUDIOFILE=/usr/share/audio/2barks.wav
+
+##exit program incase a terminal isn't in your $PATH
+if [ "$TERMINAL" = "" ]; then	
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>You need to install a suitable terminal, like rxvt</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NORXVT=`$GTKDIALOG --program=MAIN_DIALOG --center`
+exit 0
+fi
+
+##exit program incase a supported cdripper isn't in your $PATH
+CDRIPPER2=""
+if [ "`which cdparanoia`" != "" ]; then	
+CDRIPPER2=cdparanoia
+echo true > $HOME/.config/pcdripper/cdparanoia
+fi
+if [ "`which cdda2wav`" != "" ]; then
+CDRIPPER2=cdda2wav
+echo true > $HOME/.config/pcdripper/cdda2wav
+fi
+if [ "`which icedax`" != "" ]; then
+CDRIPPER2=icedax
+echo true > $HOME/.config/pcdripper/icedax
+fi
+if [ "$CDRIPPER2" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>You need to install either cdparanoia, cdda2wav, or icedax to rip a cd</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOCDRIPPER=`$GTKDIALOG --program=MAIN_DIALOG --center`
+exit 0
+fi
+
+##this will write the tmp files in /tmp/ using your user as the beginning of the files
+##not really necessary in puppy since your running in root mode but this should make the 
+##script more portable to other multiuser distros.
+WHOAMI=`whoami`
+
+##make the home config directory (incase it doesn't already exist)
+mkdir -p $HOME/.config/pcdripper
+
+##I wanted to make the script not depend on probedisk to find your cd drives
+##so I scanned /dev/ & /media/ (used in other distros) for cd & dvd
+rm -f /tmp/$WHOAMI-pcdripper-PROBEDISK
+if [ "`which probedisk`" != "" ]; then
+probedisk | grep -i cd-*rom | cut -f 1 -d '|' 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+else
+ls /dev/cd* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+ls /dev/dvd* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+ls /dev/scd* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+ls /dev/sr* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+ls /media/cd* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+ls /media/dvd* 2>/dev/null >> /tmp/$WHOAMI-pcdripper-PROBEDISK
+fi
+
+##add the found drives to the combobox in the gui
+PROBEDRIVES=""
+for ONEDRIVE in `cat /tmp/$WHOAMI-pcdripper-PROBEDISK`
+do
+ PROBEDRIVES="$PROBEDRIVES<item>$ONEDRIVE</item>"
+done
+
+##find the encoders for the supported file formats 
+echo wav > /tmp/$WHOAMI-pcdripper-formats
+if [ "`which flac`" != "" ]; then
+echo flac >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which shorten`" != "" ]; then
+echo shn >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which lame`" != "" ]; then
+echo mp3 >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which oggenc`" != "" ]; then
+echo ogg >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which ffmpeg`" != "" ]; then
+echo wma >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which mac`" != "" ]; then
+echo ape >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which faac`" != "" ]; then
+echo mp4 >> /tmp/$WHOAMI-pcdripper-formats
+echo m4a >> /tmp/$WHOAMI-pcdripper-formats
+echo aac >> /tmp/$WHOAMI-pcdripper-formats
+fi
+if [ "`which mppenc`" != "" ]; then
+echo mpp >> /tmp/$WHOAMI-pcdripper-formats
+echo mpc >> /tmp/$WHOAMI-pcdripper-formats
+fi
+cat /tmp/$WHOAMI-pcdripper-formats | sort -u > /tmp/$WHOAMI-pcdripper-formats
+if ! [ -f $HOME/.config/pcdripper/chosenformat ]; then
+echo wav > $HOME/.config/pcdripper/chosenformat
+fi
+
+##add the found encoders to the gui
+FORMATS=""
+for ONEFORMAT in `cat /tmp/$WHOAMI-pcdripper-formats`
+do
+FORMATS="$FORMATS  
+      <menuitem>
+      <label>$ONEFORMAT</label>
+      <action>echo $ONEFORMAT | tee $HOME/.config/pcdripper/chosenformat</action>
+      <action>refresh:WORD</action>
+		</menuitem>"
+done
+
+##this part is for the config directory so the gui will be populated with these defaults
+##and after you make changes & restart the program your options from the last session will
+##be the same as last time
+if ! [ -f $HOME/.config/pcdripper/cbox1 ]; then
+echo false > $HOME/.config/pcdripper/cbox1
+else
+if [ "`cat $HOME/.config/pcdripper/cbox1 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox1 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox1
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox2 ]; then
+echo false > $HOME/.config/pcdripper/cbox2
+else
+if [ "`cat $HOME/.config/pcdripper/cbox2 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox2 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox2
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox3 ]; then
+echo false > $HOME/.config/pcdripper/cbox3
+else
+if [ "`cat $HOME/.config/pcdripper/cbox3 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox3 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox3
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox4 ]; then
+echo false > $HOME/.config/pcdripper/cbox4
+else
+if [ "`cat $HOME/.config/pcdripper/cbox4 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox4 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox4
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox5 ]; then
+echo false > $HOME/.config/pcdripper/cbox5
+else
+if [ "`cat $HOME/.config/pcdripper/cbox5 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox5 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox5
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox6 ]; then
+echo true > $HOME/.config/pcdripper/cbox6
+else
+if [ "`cat $HOME/.config/pcdripper/cbox6 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox6 | grep false`" = "" ]; then
+echo true > $HOME/.config/pcdripper/cbox6
+fi
+fi
+fi
+if ! [ -f $HOME/.config/pcdripper/cbox8 ]; then
+echo false > $HOME/.config/pcdripper/cbox8
+else
+if [ "`cat $HOME/.config/pcdripper/cbox8 | grep true`" = "" ]; then
+if [ "`cat $HOME/.config/pcdripper/cbox8 | grep false`" = "" ]; then
+echo false > $HOME/.config/pcdripper/cbox8
+fi
+fi
+fi
+
+if [ "`which cddb_query`" != "" ]; then
+echo true > $HOME/.config/pcdripper/cddb_query
+fi
+
+cbox1=`cat $HOME/.config/pcdripper/cbox1`
+cbox2=`cat $HOME/.config/pcdripper/cbox2`
+cbox3=`cat $HOME/.config/pcdripper/cbox3`
+cbox4=`cat $HOME/.config/pcdripper/cbox4`
+cbox5=`cat $HOME/.config/pcdripper/cbox5`
+cbox6=`cat $HOME/.config/pcdripper/cbox6`
+cbox8=`cat $HOME/.config/pcdripper/cbox8`
+if [ $cbox6 = true ]; then
+cbox6depend=disabled
+else
+cbox6depend=enabled
+fi
+
+if ! [ -f $HOME/.config/pcdripper/savedir ]; then
+echo $HOME > $HOME/.config/pcdripper/savedir
+fi
+
+if [ "`cat $HOME/.config/pcdripper/savedir`" = "" ]; then
+echo $HOME > $HOME/.config/pcdripper/savedir
+fi
+
+if ! [ -f $HOME/.config/pcdripper/nameformat ]; then
+echo TN > $HOME/.config/pcdripper/nameformat
+fi
+
+touch /tmp/$WHOAMI-pcdripper-0
+
+export DIALOG="
+  <vbox>
+    <text selectable=\"true\">
+      <label>http://www.murga-linux.com/puppy/viewtopic.php?t=24157</label>
+    </text>
+    <button>
+      <label>Close</label>
+      <action type=\"closewindow\">DIALOG</action>
+    </button>
+  </vbox>
+"
+
+##The main gui is now ready to be built
+export RIPGUI="
+<window title=\"Pcdripper-$VERSION \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<hbox>
+  <menubar>
+    <menu>
+      <menuitem icon=\"gtk-execute\">
+      <label>Rip</label>
+      <action type=\"exit\">TIME_TO_RIP</action>
+		</menuitem>
+      <menuitem icon=\"gtk-cdrom\">
+      <label>rip program cd scan</label>
+      <action type=\"exit\">SCAN_CD_NOW</action>
+		</menuitem>
+"
+if [ "`which cddb_query`" != "" ]; then
+RIPGUI="$RIPGUI
+      <menuitem icon=\"gtk-cdrom\">
+      <label>cddb_query scan</label>
+      <action type=\"exit\">CDDB_SCAN_NOW</action>
+		</menuitem>"
+fi
+if [ "`which cddetect`" != "" ]; then
+RIPGUI="$RIPGUI
+      <menuitem icon=\"gtk-cdrom\">
+      <label>cddetect scan</label>
+      <action type=\"exit\">CDDETECT_SCAN</action>
+		</menuitem>"
+fi
+if [ "`which cd-info`" != "" ]; then
+RIPGUI="$RIPGUI
+      <menuitem icon=\"gtk-cdrom\">
+      <label>cd-info scan</label>
+      <action type=\"exit\">CD-INFO_SCAN</action>
+		</menuitem>"
+fi
+if [ "$DEFAULTHTMLVIEWER" != "" ]; then
+RIPGUI="$RIPGUI
+      <menuitem icon=\"gtk-help\">
+      <label>Help</label>
+      <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pcdripper.htm &</action>
+		</menuitem>
+"
+fi
+RIPGUI="$RIPGUI
+      <menuitem icon=\"gtk-index\">
+      <label>Web link</label>
+      <action type=\"launch\">DIALOG</action>
+		</menuitem>
+      <menuitem icon=\"gtk-quit\">
+      <label>Quit</label>
+	<action type=\"exit\">EXIT_NOW</action>
+	</menuitem>
+      <label>[ Click for options ]</label>
+    </menu>
+  </menubar>
+  
+	<menubar>
+	<menu>
+      $FORMATS
+	<label>[ Select audio format ]</label>
+	</menu>
+    </menubar>
+    	<button>
+	<input file stock=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+</hbox>
+
+<frame Pcdripper cd ripping gui>
+
+    <hbox>
+    <text><label>Select your CD drive</label></text>
+    <combobox>
+     <variable>PROBECOMBO</variable>
+$PROBEDRIVES
+    </combobox>
+    </hbox>
+    
+	<frame Select your save to directory>
+	<hbox>
+      <entry accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>ENTRY1</variable>
+			<input>cat $HOME/.config/pcdripper/savedir</input>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">ENTRY1</action>
+      </button>
+
+  </hbox>
+  </frame>
+  
+<frame Ripping options>
+	<hbox>
+"
+if [ "`which cdda2wav`" != "" ]; then
+RIPGUI="$RIPGUI
+     <radiobutton active=\"`cat $HOME/.config/pcdripper/cdda2wav`\">
+      <label>use cdda2wav</label>
+      <variable>CDDA2WAV</variable>
+    </radiobutton>
+"
+fi
+if [ "`which icedax`" != "" ]; then
+RIPGUI="$RIPGUI
+     <radiobutton active=\"`cat $HOME/.config/pcdripper/icedax`\">
+      <label>use icedax</label>
+      <variable>ICEDAX</variable>
+    </radiobutton>
+"
+fi
+if [ "`which cdparanoia`" != "" ]; then
+RIPGUI="$RIPGUI
+    <radiobutton active=\"`cat $HOME/.config/pcdripper/cdparanoia`\">
+      <label>use cdparanoia</label>
+      <variable>CDPARANOIA</variable>
+      <action>if false disable:CHECKBOX1</action>
+      <action>if false disable:CHECKBOX2</action>
+      <action>if false disable:CHECKBOX3</action>
+      <action>if false disable:CHECKBOX4</action>
+      <action>if true enable:CHECKBOX1</action>
+      <action>if true enable:CHECKBOX2</action>	      
+      <action>if true enable:CHECKBOX4</action>
+    </radiobutton>
+"
+fi
+RIPGUI="$RIPGUI
+	</hbox>
+	<hbox>
+     <radiobutton active=\"true\">
+      <label>manual id3 tags</label>
+      <variable>MANUAL</variable>
+      <action>if true disable:CHECKBOX3</action>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>no id3 tags</label>
+      <variable>NOTAGS</variable>
+      <action>if true enable:ENTRY2</action>
+      <action>if false disable:ENTRY2</action>
+      <action>if true disable:ENTRY4</action>
+      <action>if false enable:ENTRY4</action>
+      <action>if true enable:CHECKBOX3</action>
+    </radiobutton>
+    <radiobutton active=\"`cat $HOME/.config/pcdripper/cddb_query`\">
+      <label>cddb_query tags</label>
+      <variable>CDDBQUERY</variable>
+      <action>if true disable:CHECKBOX3</action>
+    </radiobutton>
+	</hbox>
+"
+if [ "`which cdparanoia`" != "" ]; then
+RIPGUI="$RIPGUI
+    <hbox>
+       <checkbox>
+      <label>disable paranoia               </label>
+      <variable>CHECKBOX1</variable>
+      <default>$cbox1</default>
+    </checkbox>
+   <checkbox>
+      <label>disable extra paranoia</label>
+      <variable>CHECKBOX2</variable>
+      <default>$cbox2</default>
+    </checkbox>
+    </hbox>
+    <hbox>
+       <checkbox>
+      <label>output to a single track           </label>
+      <variable>CHECKBOX3</variable>
+      <default>$cbox3</default>
+      <visible>disabled</visible>
+    </checkbox>
+   <checkbox>
+      <label>exit on a bad read</label>
+      <variable>CHECKBOX4</variable>
+      <default>$cbox4</default>
+    </checkbox>
+   </hbox>
+"
+fi
+RIPGUI="$RIPGUI
+	<hbox>
+       <checkbox>
+      <label>eject when done                              </label>
+      <variable>CHECKBOX5</variable>
+      <default>$cbox5</default>
+    </checkbox>
+       <checkbox>
+      <label>rip the full cd</label>
+      <variable>CHECKBOX6</variable>
+      <default>$cbox6</default>
+		<action>if true disable:ENTRY3</action>
+      <action>if false enable:ENTRY3</action>
+    </checkbox>
+	</hbox>
+"
+if [ "$PLAY" != "" ]; then
+RIPGUI="$RIPGUI
+	<hbox>
+       <checkbox>
+      <label>play a sound when finished                                         </label>
+      <variable>CHECKBOX8</variable>
+      <default>$cbox8</default>
+    </checkbox>
+	</hbox>
+"
+fi
+RIPGUI="$RIPGUI
+	</frame>
+    
+       <hbox>
+      <text><label>Enter preceding name for tracks</label></text>
+      <entry>
+    <variable>ENTRY2</variable>
+    <visible>disabled</visible>
+      </entry>
+    </hbox>
+   
+   	<frame Enter range, single file, or various multiple files>
+    <hbox>
+      <text><label>See the help file for more info</label></text>
+      <entry>
+        <variable>ENTRY3</variable>
+			<visible>$cbox6depend</visible>
+      </entry>
+    </hbox>  
+    </frame>
+
+	<frame T=track N=name A=artist Y=year L=album G=genre>
+    <hbox>
+      <text><label>Enter track name format</label></text>
+      <entry>
+        <variable>ENTRY4</variable>
+        <input>cat $HOME/.config/pcdripper/nameformat</input>
+			<visible>enabled</visible>
+      </entry>
+    </hbox>  
+    </frame>
+    
+    <hbox>
+      <text><label>Selected file format:</label></text>
+      <entry editable=\"false\">
+        <variable>WORD</variable>
+        <input>cat $HOME/.config/pcdripper/chosenformat</input>
+      </entry>
+      </hbox>
+
+</frame>
+</vbox>
+</hbox>
+</window>
+
+"
+
+RESULTS="`$GTKDIALOG --program=RIPGUI --center`"
+
+###exit the program if the X button is pushed - This doesn't work because there is a gtkdialog bug that won't let you X out the app when the menu function is used in the gui
+if [ "`echo $RESULTS | grep abort`" != "" ]; then
+rm /tmp/$WHOAMI-pcdripper* 2>/dev/null
+exit 0
+fi
+
+##incase quit was selected, let's exit the program
+if [ "`echo $RESULTS | grep EXIT_NOW`" != "" ]; then
+rm /tmp/$WHOAMI-pcdripper* 2>/dev/null
+exit 0
+fi
+
+##these variables are used for ripping individual tracks only
+TRACKTOTAL=""
+ENDLOOP=""
+STARTTRACK=1
+
+echo $RESULTS | tr -s '\"' '\n' | sed 's/^ //g' > /tmp/$WHOAMI-pcdripper-RESULTS
+
+##find the selected device from the gui
+DEVICE=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep PROBECOMBO= -A 1 | grep -v PROBECOMBO=`
+if [ "`echo $DEVICE | grep =`" != "" ]; then
+DEVICE=/dev/cdrom
+fi 
+
+##find all the other results from the gui
+if [ "`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CDPARANOIA= -A 1 | grep -v CDPARANOIA=`" != false ]; then CDRIPPER=cdparanoia
+	elif [ "`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CDDA2WAV= -A 1 | grep -v CDDA2WAV=`" != false ]; then CDRIPPER=cdda2wav
+	elif [ "`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep ICEDAX= -A 1 | grep -v ICEDAX=`" != false ]; then CDRIPPER=icedax
+fi
+CDDBQUERY=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CDDBQUERY= -A 1 | grep -v CDDBQUERY=`
+NOTAGS=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep NOTAGS= -A 1 | grep -v NOTAGS=`
+MANUAL=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep MANUAL= -A 1 | grep -v MANUAL=`
+CHECKBOX1=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX1= -A 1 | grep -v CHECKBOX1=`
+echo $CHECKBOX1 > $HOME/.config/pcdripper/cbox1
+CHECKBOX2=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX2= -A 1 | grep -v CHECKBOX2=`
+echo $CHECKBOX2 > $HOME/.config/pcdripper/cbox2
+CHECKBOX3=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX3= -A 1 | grep -v CHECKBOX3=`
+echo $CHECKBOX3 > $HOME/.config/pcdripper/cbox3
+CHECKBOX4=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX4= -A 1 | grep -v CHECKBOX4=`
+echo $CHECKBOX4 > $HOME/.config/pcdripper/cbox4
+CHECKBOX5=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX5= -A 1 | grep -v CHECKBOX5=`
+echo $CHECKBOX5 > $HOME/.config/pcdripper/cbox5
+CHECKBOX6=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX6= -A 1 | grep -v CHECKBOX6=`
+echo $CHECKBOX6 > $HOME/.config/pcdripper/cbox6
+CHECKBOX8=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep CHECKBOX8= -A 1 | grep -v CHECKBOX8=`
+echo $CHECKBOX8 > $HOME/.config/pcdripper/cbox8
+ENTRY1=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep ENTRY1= -A 1 | grep -v ENTRY1=`
+if [ "`echo $ENTRY1 | grep =`" != "" ]; then
+ENTRY1=$HOME
+fi
+echo "$ENTRY1" > $HOME/.config/pcdripper/savedir
+if [ "$NOTAGS" = false ]; then
+ENTRY2=""
+else
+ENTRY2=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep ENTRY2= -A 1 | grep -v ENTRY2= | sed 's/ /_/g'`
+fi
+if [ "`echo $ENTRY2 | grep =`" != "" ]; then
+ENTRY2=""
+fi
+if [ "$CHECKBOX6" = true ]; then
+ENTRY3=""
+else
+ENTRY3="`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep ENTRY3= -A 1 | grep -v ENTRY3= | sed 's/ //g'`"
+fi
+if [ "`echo $ENTRY3 | grep =`" != "" ]; then
+ENTRY3=""
+fi 
+if [ "$ENTRY3" = "" ]; then
+CHECKBOX6=true
+echo $CHECKBOX6 > $HOME/.config/pcdripper/cbox6
+fi
+if [ "$NOTAGS" = false ]; then
+ENTRY4=`cat /tmp/$WHOAMI-pcdripper-RESULTS | grep ENTRY4= -A 1 | grep -v ENTRY4=`
+else
+ENTRY4=""
+fi
+if [ "`echo $ENTRY4 | grep -o [A-Z]`" != "" ]; then
+echo $ENTRY4 | grep -o [A-Z] | tr -s '\n' ' ' | sed 's/ //g' > $HOME/.config/pcdripper/nameformat
+fi
+WORD=`cat $HOME/.config/pcdripper/chosenformat`
+
+##Check for various taggers
+VTAGGER=""
+if [ "`which apetag`" != "" ]; then
+VTAGGER=apetag
+elif [ "`which id3tag`" != "" ]; then
+VTAGGER=id3tag
+elif [ "`which mp3info`" != "" ]; then
+VTAGGER=mp3info
+fi
+
+##non-supported tagging formats
+NONTAG=""
+if [ "$WORD" = aac ]; then
+NONTAG=yes
+fi
+if [ "$WORD" = wav ]; then
+NONTAG=yes
+fi
+if [ "$WORD" = shn ]; then
+VTAG=true
+if [ "$VTAGGER" = "" ]; then
+NONTAG=yes
+fi
+fi
+if [ "$WORD" = mpp ]; then
+VTAG=true
+MUSEPACK=yes
+if [ "$VTAGGER" = "" ]; then
+NONTAG=yes
+fi
+fi
+if [ "$WORD" = mpc ]; then
+VTAG=true
+MUSEPACK=yes
+if [ "$VTAGGER" = "" ]; then
+NONTAG=yes
+fi
+fi
+if [ "$WORD" = ape ]; then
+VTAG=true
+if [ "$VTAGGER" = "" ]; then
+NONTAG=yes
+fi
+fi
+##incase output to a single track was selected & tagging is to be performed
+##we'll get rid of the output to a single file since that can't be tagged correctly.
+if [ "$CHECKBOX3" = true ]; then
+if [ "$NOTAGS" = false ]; then
+CHECKBOX3=false
+echo $CHECKBOX3 > $HOME/.config/pcdripper/cbox3
+fi
+fi
+
+if [ "$CDDBQUERY" = true ]; then
+##cddb_query was selected now lets make sure it's found in your $PATH
+if [ "`which cddb_query`" = "" ]; then	
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>cddb_query not found in your PATH</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOCDDB=`$GTKDIALOG --program=MAIN_DIALOG --center`
+pcdripper &
+exit 0
+fi
+fi
+
+#cddetect scan
+if [ "`echo $RESULTS | grep CDDETECT_SCAN`" != "" ]; then
+cddetect -d $DEVICE  > /tmp/$WHOAMI-pcdripper-cdscan
+export SCANBOX="
+<window title=\"CDDETECT_SCAN \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame cddetect information:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-cdscan</input> 
+      <width>400</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+SCAN=`$GTKDIALOG --program=SCANBOX --center`
+pcdripper &
+exit 0
+fi
+
+#cd-info scan
+if [ "`echo $RESULTS | grep CD-INFO_SCAN`" != "" ]; then
+cd-info -C $DEVICE > /tmp/$WHOAMI-pcdripper-cdscan
+export SCANBOX="
+<window title=\"CD-INFO_SCAN \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame cd-info information:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-cdscan</input> 
+      <width>400</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+SCAN=`$GTKDIALOG --program=SCANBOX --center`
+pcdripper &
+exit 0
+fi
+
+##paranoia scan cd gui
+if [ "`echo $RESULTS | grep SCAN_CD_NOW`" != "" ]; then
+if [ "$CDRIPPER" = cdparanoia ]; then
+cdparanoia -Q -d $DEVICE 2> /tmp/$WHOAMI-pcdripper-cdscan
+else
+$CDRIPPER dev=$DEVICE -info-only 2> /tmp/$WHOAMI-pcdripper-cdscan
+fi
+export SCANBOX="
+<window title=\"$CDRIPPER CD-SCAN \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame $CDRIPPER CD information:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-cdscan</input> 
+      <width>400</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+SCAN=`$GTKDIALOG --program=SCANBOX --center`
+pcdripper &
+exit 0
+fi
+
+if [ "`echo $RESULTS | grep CDDB_SCAN_NOW`" != "" ]; then
+
+##message dialog so the user knows the program is working
+export CDDATABASESCAN="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>cddb_query is checking the online database</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+MESSAGE=`$GTKDIALOG --program=CDDATABASESCAN --center` &
+
+##cddb_query scan gui
+cddb_query -i $DEVICE read > /tmp/$WHOAMI-pcdripper-cddb
+NUM2KILL=`ps aux | grep "gtkdialog3 --program=CDDATABASESCAN --center" | tr -s ' ' | cut -f 2 -d ' ' | grep -v grep | head -n 1`
+kill -9 "$NUM2KILL" 2>/dev/null
+export CDDB="
+<window title=\"CDDB INFO \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame CD information:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-cddb</input> 
+      <width>400</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+cddbscan=`$GTKDIALOG --program=CDDB --center`
+rm -f /tmp/$WHOAMI-pcdripper-cddb
+pcdripper &
+exit 0
+fi
+
+##if rip is selected from the main gui
+if [ "`echo $RESULTS | grep TIME_TO_RIP`" != "" ]; then
+
+##if cddb_query is selected from the main gui
+if [ "$CDDBQUERY" = true ]; then 
+
+if [ "$NONTAG" = yes ]; then
+
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>The selected file format doesn't accept tagging but it will use the cddb_query results in naming the tracks.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NORXVT=`$GTKDIALOG --program=MAIN_DIALOG --center`
+
+fi
+
+##message dialog so the user knows the program is working
+export CDDATABASESCAN="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>cddb_query is checking the online database</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+MESSAGE=`$GTKDIALOG --program=CDDATABASESCAN --center` &
+
+##enter the cddb_query results into a temp file
+cddb_query -i $DEVICE read | tr -s ' ' | sed 's/^ //g' > /tmp/$WHOAMI-pcdripper-cddb
+NUM2KILL=`ps aux | grep "gtkdialog3 --program=CDDATABASESCAN --center" | tr -s ' ' | cut -f 2 -d ' ' | grep -v grep | head -n 1`
+kill -9 "$NUM2KILL" 2>/dev/null
+cat /tmp/$WHOAMI-pcdripper-cddb | grep "\[" | grep "\]" | grep "(" | grep ")" | sed "s/' by /' /g" > /tmp/$WHOAMI-pcdripper-cddb2
+
+##find the desired results from the cddb_query temp file
+ARTIST="`cat /tmp/$WHOAMI-pcdripper-cddb | grep ^Artist: | sed 's/Artist: //g'`"
+ALBUM="`cat /tmp/$WHOAMI-pcdripper-cddb | grep ^Title: | sed 's/Title: //g'`"
+GENRE="`cat /tmp/$WHOAMI-pcdripper-cddb | grep ^Genre: | sed 's/Genre: //g'`"
+YEAR=`cat /tmp/$WHOAMI-pcdripper-cddb | grep ^Year: | sed 's/Year: //g' | head -c 5`
+
+##show the cddb_query results. If this info is wrong, uncheck the box and go back to the main gui to start over.
+export CDDB="
+<window title=\"CDDB INFO \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame CD information:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-cddb</input> 
+      <width>400</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+   <checkbox>
+      <label>Check here if this information is correct?</label>
+      <variable>CBOX</variable>
+      <default>true</default>
+    </checkbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+RESULTS2=`$GTKDIALOG --program=CDDB --center`
+
+CBOX=`echo $RESULTS2 | tr -s ' ' '\n' | grep CBOX= | cut -f 2 -d "\"" | sed 's/\"$//g'`
+
+if [ $CBOX = false ]; then
+pcdripper &
+exit 0
+fi
+
+fi ##end cddb_query portion
+
+##musepack compression gui
+if [ "$MUSEPACK" = yes ]; then
+EXTRATAGS=yes
+APETAG=yes
+export MAIN_DIALOG="
+<frame Select your desired compression ratio>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>thumb - 58-86 Kbps</label>
+      <variable>thumb</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>radio - 112-152 Kbps</label>
+      <variable>radio</variable>
+    </radiobutton>
+     <radiobutton active=\"true\">
+      <label>standard - 142-184 Kbps</label>
+      <variable>standard</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>xtreme - 168-212 Kbps</label>
+      <variable>xtreme</variable>
+    </radiobutton>
+   
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '='`
+
+fi ##end musepack compression gui
+
+##mac (ape) compression gui
+if [ "$WORD" = ape ]; then
+EXTRATAGS=yes
+APETAG=yes
+export MAIN_DIALOG="
+<frame Select your desired compression ratio>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>c1000 - fastest</label>
+      <variable>c1000</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>c2000</label>
+      <variable>c2000</variable>
+    </radiobutton>
+     <radiobutton active=\"true\">
+      <label>c3000</label>
+      <variable>c3000</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>c4000</label>
+      <variable>c4000</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>c5000 - highest compression</label>
+      <variable>c5000</variable>
+    </radiobutton>
+   
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '='`
+
+fi ##end mac compression gui
+
+##flac compression gui
+if [ "$WORD" = flac ]; then
+EXTRATAGS=yes
+export MAIN_DIALOG="
+<frame Select your desired compression ratio>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>0 - fastest</label>
+      <variable>R0</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>1</label>
+      <variable>R1</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>2</label>
+      <variable>R2</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>3</label>
+      <variable>R3</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>4</label>
+      <variable>R4</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>5</label>
+      <variable>R5</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>6</label>
+      <variable>R6</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>7</label>
+      <variable>R7</variable>
+    </radiobutton>
+    <radiobutton active=\"true\">
+      <label>8 - highest compression</label>
+      <variable>R8</variable>
+    </radiobutton>
+
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+ENCODE="flac -f -$ENCODE2"
+
+fi ##end flac compression gui
+
+FAAC=""
+if [ "$WORD" = mp4 ]; then
+FAAC=yes
+fi
+if [ "$WORD" = m4a ]; then
+FAAC=yes
+fi
+if [ "$WORD" = aac ]; then
+FAAC=yes
+fi
+##faac (mp4, m4a, aac) encoding
+if [ "$FAAC" = yes ]; then
+export MAIN_DIALOG="
+<frame Select your desired bitrate>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>60</label>
+      <variable>R60</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>96</label>
+      <variable>R96</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>112</label>
+      <variable>R112</variable>
+    </radiobutton>
+    <radiobutton active=\"true\">
+      <label>128</label>
+      <variable>R128</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>152</label>
+      <variable>R152</variable>
+    </radiobutton>
+   
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+ENCODE="faac -b $ENCODE2"
+
+fi ##end faac encoding
+
+##ogg/wma encoding
+ENCODEBITRATE=""
+if [ "$WORD" = ogg ]; then
+ENCODEBITRATE=yes
+fi
+if [ "$WORD" = wma ]; then
+ENCODEBITRATE=yes
+fi
+
+if [ "$ENCODEBITRATE" = yes ]; then
+export MAIN_DIALOG="
+<frame Select your desired bitrate>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>32 lowest quality</label>
+      <variable>R32</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>40</label>
+      <variable>R40</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>48</label>
+      <variable>R48</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>56</label>
+      <variable>R56</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>64</label>
+      <variable>R64</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>80</label>
+      <variable>R80</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>96</label>
+      <variable>R96</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>112</label>
+      <variable>R112</variable>
+    </radiobutton>
+    <radiobutton active=\"true\">
+      <label>128</label>
+      <variable>R128</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>160</label>
+      <variable>R160</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>192</label>
+      <variable>R192</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>224</label>
+      <variable>R224</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>256</label>
+      <variable>R256</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>320 highest quality</label>
+      <variable>R320</variable>
+    </radiobutton>
+
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+ENCODE="oggenc -b $ENCODE2"
+
+fi ##end ogg/wma encoding
+
+##mp3 encoding
+if [ "$WORD" = mp3 ]; then
+export MAIN_DIALOG="
+<vbox>
+<frame Constant or Varying bit rates?>
+    <radiobutton active=\"true\">
+      <label>Constant Bit Rate</label>
+      <variable>Rb</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>Varying Bit Rate</label>
+      <variable>RV</variable>
+    </radiobutton>
+    </frame>
+    <frame Mono or Stereo mp3s?>
+     <radiobutton active=\"true\">
+      <label>Stereo</label>
+      <variable>Rms</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>Mono</label>
+      <variable>Rmm</variable>
+    </radiobutton>
+    </frame>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+  </vbox>
+
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+ENCODE2=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+
+##find stereo or mono
+if [ "`echo $ENCODE2 | grep ms`" = "" ]; then
+CHANNELS=mm
+else
+CHANNELS=mj
+fi
+##find "varying bit ratio" or "constant bit ratio"
+if [ "`echo $ENCODE2 | grep V`" = "" ]; then
+BR=b
+else
+BR=V
+fi
+
+##if "constant bit ratio"
+if [ "$BR" = b ]; then
+export MAIN_DIALOG="
+<frame Select your desired bitrate>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>32 lowest quality</label>
+      <variable>R32</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>40</label>
+      <variable>R40</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>48</label>
+      <variable>R48</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>56</label>
+      <variable>R56</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>64</label>
+      <variable>R64</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>80</label>
+      <variable>R80</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>96</label>
+      <variable>R96</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>112</label>
+      <variable>R112</variable>
+    </radiobutton>
+    <radiobutton active=\"true\">
+      <label>128</label>
+      <variable>R128</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>160</label>
+      <variable>R160</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>192</label>
+      <variable>R192</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>224</label>
+      <variable>R224</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>256</label>
+      <variable>R256</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>320 highest quality</label>
+      <variable>R320</variable>
+    </radiobutton>
+
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+ENCODE3=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+fi
+
+##if "varying bit ratio"
+if [ "$BR" = V ]; then
+export MAIN_DIALOG="
+<frame Select your desired Quality>
+ <vbox>
+    <radiobutton active=\"false\">
+      <label>0 - highest quality</label>
+      <variable>R0</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>1</label>
+      <variable>R1</variable>
+    </radiobutton>
+     <radiobutton active=\"false\">
+      <label>2</label>
+      <variable>R2</variable>
+    </radiobutton>
+     <radiobutton active=\"true\">
+      <label>3</label>
+      <variable>R3</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>4</label>
+      <variable>R4</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>5</label>
+      <variable>R5</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>6</label>
+      <variable>R6</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>7</label>
+      <variable>R7</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>8</label>
+      <variable>R8</variable>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>9 - lowest quality</label>
+      <variable>R9</variable>
+    </radiobutton>
+
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+     </frame>
+"
+
+ENCODE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+ENCODE3=`echo $ENCODE | tr -s ' ' '\n' | grep true | cut -f 1 -d '=' | sed 's/R//g'`
+fi
+
+fi ##end mp3 encoding
+
+##cdparanoia options from the main gui checkboxes
+if [ "$CHECKBOX1" = true ]; then
+DP=-Z
+fi
+if [ "$CHECKBOX2" = true ]; then
+DEP=-Y
+fi
+if [ "$CHECKBOX4" = true ]; then
+EBR=-X
+fi
+OPTIONS="`echo $DP $DEP $EBR | tr -s ' '`"
+if [ "`echo $ENTRY3 | grep [0-9]`" = "" ]; then
+ENTRY3=""
+fi
+if [ "`echo $ENTRY3 | grep [0-9]`" = "" ]; then
+ENTRY3=""
+fi
+
+##scan number of tracks on the disc
+TOTALTRACKS=""
+if [ "`which cddetect`" != "" ]; then
+cddetect -d $DEVICE > /tmp/$WHOAMI-pcdripper-cddetect
+TOTALTRACKS=`cat /tmp/$WHOAMI-pcdripper-cddetect | grep audio | sed 's/ //g' | cut -f 1 -d ':' | grep ^[0-9] | tail -n 1`
+fi
+if [ "$TOTALTRACKS" = "" ]; then
+if [ "`which cd-info`" != "" ]; then
+TOTALTRACKS=`cd-info -C $DEVICE | grep leadout -B 5 | grep audio | sed 's/ //g' | cut -f 1 -d ':' | tail -n 1 | grep [0-9]`
+fi
+fi
+if [ "$TOTALTRACKS" = "" ]; then
+if [ "`which cdparanoia`" != "" ]; then
+cdparanoia -Q -d $DEVICE 2> /tmp/$WHOAMI-pcdripper-tracks1
+cat /tmp/$WHOAMI-pcdripper-tracks1 | sed 's/ //g' | grep ^[1-9] > /tmp/$WHOAMI-pcdripper-tracks2
+TOTALTRACKS=`wc -l /tmp/$WHOAMI-pcdripper-tracks2 | sed -e "s/ *//" | sed -e "s/ .*//g" | grep [0-9]`
+fi
+fi
+if [ "$TOTALTRACKS" = "" ]; then
+if [ "`which icedax`" != "" ]; then
+icedax dev=$DEVICE -info-only 2> /tmp/$WHOAMI-pcdripper-icedax
+TOTALTRACKS=`cat /tmp/$WHOAMI-pcdripper-icedax | grep AUDIOtrack -A 1 | tr -s ' ' | cut -f 2 -d '-' | sed 's/^ //g' | cut -f 1 -d ' ' | tail -n 1 | grep [0-9]`
+fi
+fi
+if [ "$TOTALTRACKS" = "" ]; then
+if [ "`which cdda2wav`" != "" ]; then
+cdda2wav dev=$DEVICE -info-only 2> /tmp/$WHOAMI-pcdripper-cdda2wav
+TOTALTRACKS=`cat /tmp/$WHOAMI-pcdripper-cdda2wav | grep AUDIOtrack -A 1 | tr -s ' ' | cut -f 2 -d '-' | sed 's/^ //g' | cut -f 1 -d ' ' | tail -n 1 | grep [0-9]`
+fi
+fi
+
+if [ "$TOTALTRACKS" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Program can not detect any audio tracks on the cd.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NOAUDIO=`$GTKDIALOG --program=MAIN_DIALOG --center`
+pcdripper &
+exit 0
+fi
+
+if [ "$ENTRY3" != "" ]; then
+##Rip designated range
+if [ "`echo $ENTRY3 | grep '-'`" != "" ]; then
+TRACKS=`echo $ENTRY3 | cut -f 1 -d '-' | grep -o [0-9] | tr '\n' ' ' | sed 's/ //g'`
+LASTTRACK=`echo $ENTRY3 | cut -f 2 -d '-' | grep -o [0-9] | tr '\n' ' ' | sed 's/ //g'`
+TOOMUCH=`expr $LASTTRACK + 1`
+
+if [ "$LASTTRACK" -gt "$TOTALTRACKS" ]; then
+LASTTRACK=`echo $TOTALTRACKS`
+TOOMUCH=`expr $LASTTRACK + 1`
+fi
+
+if [ "$TRACKS" -gt "$LASTTRACK" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Your last track needs to be greater than the first track in the requested range, or the range you selected is greater than the total number of tracks.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NORXVT=`$GTKDIALOG --program=MAIN_DIALOG --center`
+pcdripper &
+exit 0
+fi
+fi
+
+##Rip single track
+if [ "`echo $ENTRY3 | grep '-'`" = "" ]; then
+if [ "`echo $ENTRY3 | grep ','`" = "" ]; then
+TRACKS=`echo $ENTRY3 | grep -o [0-9] | tr '\n' ' ' | sed 's/ //g'`
+TOOMUCH=`expr $TRACKS + 1`
+
+##make sure track is less than the total tracks on the disc, otherwise go back to the main gui to re-enter
+if [ "$TRACKS" -gt "$TOTALTRACKS" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Requested track $TRACKS is more than the total number - $TOTALTRACKS - on the disc</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NORXVT=`$GTKDIALOG --program=MAIN_DIALOG --center`
+pcdripper &
+exit 0
+fi
+fi
+fi
+
+##Rip designated selections (not range) (i.e. 1,3,5)
+if [ "`echo $ENTRY3 | grep '-'`" = "" ]; then
+if [ "`echo $ENTRY3 | grep ','`" != "" ]; then
+NUMCOMMAS=`echo $ENTRY3 | grep -o , | wc -l`
+TOOMANY=`expr $NUMCOMMAS + 2`
+TOOMUCH=`expr $TOTALTRACKS + 1`
+STARTLOOP=1
+rm -f /tmp/$WHOAMI-pcdripper-DESIGNATED
+while [ "$STARTLOOP" != "$TOOMANY" ]; do
+TRACKTOADD=`echo $ENTRY3 | cut -f $STARTLOOP -d ',' | grep [0-9]`
+if [ "`echo $TRACKTOADD`" -lt "`echo $TOOMUCH`" ]; then 
+echo $TRACKTOADD >> /tmp/$WHOAMI-pcdripper-DESIGNATED
+fi
+STARTLOOP=`expr $STARTLOOP + 1`
+done
+TRACKTOTAL=`cat /tmp/$WHOAMI-pcdripper-DESIGNATED | wc -l`
+fi
+fi
+
+fi 
+
+if [ "$ENTRY3" = "" ]; then
+##Rip all tracks
+LASTTRACK=$TOTALTRACKS
+TOOMUCH=`expr $LASTTRACK + 1`
+TRACKS=1
+fi
+
+##if a rip directory was not selected the files will rip to your home directory
+if [ "$ENTRY1" = "" ]; then
+ENTRY1=$HOME
+fi
+cd "$ENTRY1"
+
+##just incase for some unknown reason the rip/encode script is already in /tmp/ it will be removed
+##so the new one can be created.
+rm -f /tmp/$WHOAMI-pcdripper-ripcli
+
+##while loop to build the rip/encode script
+while [ "$TRACKS" != "$TOOMUCH" ]; do
+
+##this is the code necessary to rip individual tracks (i.e. 1,3,5,9) 2,4,7,10
+if [ "$TRACKTOTAL" != "" ]; then
+TRACKS=`cat /tmp/$WHOAMI-pcdripper-DESIGNATED | sed -n "$STARTTRACK"p` 
+TOOMUCH=999
+if [ "$TRACKS" = "" ]; then
+TRACKS=`expr $TOOMUCH - 1`
+ENDLOOP=yes
+fi
+fi
+
+if [ "$CHECKBOX3" = true ]; then
+TRACKS2=$LASTTRACK
+if [ "$TRACKS2" = "" ]; then
+TRACKS2=$TRACKS
+fi
+else
+TRACKS2=$TRACKS
+fi
+
+##add a zero before single digit track numbers
+if [ "`echo $TRACKS | wc -c | sed 's/ //g'`" = 2 ]; then
+NUM=0"$TRACKS"
+else
+NUM=$TRACKS
+fi
+
+##more cddb only stuff
+if [ "$CDDBQUERY" = true ]; then 
+
+##get the trackname from the cddb_query temp file
+TRACKNAME=`cat /tmp/$WHOAMI-pcdripper-cddb2 | tail -n $TOTALTRACKS | cut -f 2 -d "]" | cut -f 1 -d "(" | sed 's/^ //g' | sed "s/'//g" | sed "s/ $ARTIST //g" | sed -n "$TRACKS"p | sed 's/[ \t]*$//'`
+
+fi ##end of cddb only stuff
+
+##if the trackname is "" it will be renamed to the choosen name from within the gui
+if [ "$TRACKNAME" = "" ]; then
+TRACKNAME="$ENTRY2"
+fi
+
+##the manual tagging gui (incase cddb_query doesn't work and you want to tag your files)
+if [ "$MANUAL" = true ]; then
+
+if [ "$NONTAG" = yes ]; then
+
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>The selected file format doesn't accept tagging but it will use your entries in naming the tracks.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+NORXVT=`$GTKDIALOG --program=MAIN_DIALOG --center`
+
+fi
+
+if [ "$TRACKS" != 998 ]; then
+
+export RIPGUI2="
+<window title=\"ID_tags \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+		<text use-markup=\"true\"><label>Track number $TRACKS</label></text>   
+     <text><label>___________________________________________________</label></text>
+     
+      <text><label>Enter track title</label></text>
+      <hbox>
+      <entry>
+    <variable>NAME</variable>
+      </entry>
+    </hbox>
+
+      <text><label>Enter track Year</label></text>
+      <hbox>
+      <entry>
+    <variable>YEAR</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep date= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+      </hbox>
+   
+      <text><label>Enter album name</label></text>
+      <hbox>
+      <entry>
+    <variable>ALBUM</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep album= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter artist name</label></text>
+      <hbox>
+      <entry>
+    <variable>ARTIST</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep artist= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter track genre</label></text>
+      <hbox>
+      <entry>
+    <variable>GENRE</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep genre= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter a comment</label></text>
+      <hbox>
+      <entry>
+    <variable>COMMENT</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep comment= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+"
+if [ "$EXTRATAGS" = yes ]; then
+RIPGUI2="$RIPGUI2
+      <text><label>Enter track composer</label></text>
+      <hbox>
+      <entry>
+    <variable>COMPOSER</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep composer= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter track lyricist</label></text>
+      <hbox>
+      <entry>
+    <variable>LYRICIST</variable>
+    <input>cat /tmp/$WHOAMI-pcdripper-[0-9] | tail -n 8 | grep lyricist= | tail -n 1 | cut -f 2 -d '='</input>
+      </entry>
+    </hbox>
+"
+fi
+RIPGUI2="$RIPGUI2
+ 
+    <text><label>___________________________________________________</label></text>
+    
+    <hbox>
+    <button>
+      <input file icon=\"gtk-ok\"></input>
+      <label>NEXT</label>
+      <action>echo date=\$YEAR | tee /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo title=\$NAME | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo album=\$ALBUM | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo artist=\$ARTIST | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo genre=\$GENRE | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo comment=\$COMMENT | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo composer=\$COMPOSER | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+      <action>echo lyricist=\$LYRICIST | tee -a /tmp/$WHOAMI-pcdripper-$TRACKS</action>
+		<action type=\"exit\">Exit by button</action>
+    </button>   
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+    </hbox>
+    
+</vbox>
+</hbox>
+</window>
+"
+IDTAGS=`$GTKDIALOG --program=RIPGUI2 --center`
+if [ "`echo $IDTAGS | grep EXIT_NOW`" != "" ]; then
+pcdripper &
+exit 0
+fi
+##find the results from the manual tagging gui
+ARTIST="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep artist= | sed 's/artist=//g' | tr -s ' '`"
+ALBUM="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep album= | sed 's/album=//g' | tr -s ' '`"
+TRACKNAME="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep title= | sed 's/title=//g' | tr -s ' '`"
+GENRE="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep genre= | sed 's/genre=//g' | tr -s ' '`"
+COMMENT="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep comment= | sed 's/comment=//g' | tr -s ' '`"
+COMPOSER="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep composer= | sed 's/composer=//g' | tr -s ' '`"
+LYRICIST="`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep lyricist= | sed 's/lyricist=//g' | tr -s ' '`"
+YEAR=`cat /tmp/$WHOAMI-pcdripper-$TRACKS | grep date= | sed 's/date=//g' | sed 's/ //g'`
+fi
+fi
+
+##if no tagging is selected or the results aren't populated from the other options than
+##unknown results will be encoded into the files
+if [ "$YEAR" = "" ]; then
+YEAR=0000
+fi
+if [ "$YEAR" = 0 ]; then
+YEAR=0000
+fi
+if [ "$ARTIST" = "" ]; then
+ARTIST=unknown
+fi
+if [ "$ALBUM" = "" ]; then
+ALBUM=unknown
+fi
+if [ "$TRACKNAME" = "" ]; then
+TRACKNAME=unknown
+fi
+if [ "$GENRE" = "" ]; then
+GENRE=other
+fi
+if [ "$GENRE" = unknown ]; then
+GENRE=other
+fi
+
+##use lame to find a suitable genre list and use the "other" category if selected not found
+##this way lame won't choke on an unknown genre
+lame --genre-list | grep -i "$GENRE" | sed 's/[0-9]//g' | tr -s ' ' | sed 's/^ //g' > /tmp/$WHOAMI-pcdripper-genrelist
+GENRELINES=`wc -l /tmp/$WHOAMI-pcdripper-genrelist`
+if [ "$GENRELINES" != 1 ]; then
+BYTES=`echo "$GENRE" | wc -c`
+cat /tmp/$WHOAMI-pcdripper-genrelist | while read GENRE1
+do
+BYTES2=`echo "$GENRE1" | wc -c`
+if [ "$BYTES" = "$BYTES2" ]; then
+echo "$GENRE1" >> /tmp/$WHOAMI-pcdripper-genre
+fi
+done
+if [ "`cat /tmp/$WHOAMI-pcdripper-genre | grep -i -o \"$GENRE\"`" != "" ]; then
+GENRE=`cat /tmp/$WHOAMI-pcdripper-genre | grep -i -o "$GENRE"`
+else
+GENRE=`cat /tmp/$WHOAMI-pcdripper-genre | sed -n 1p`
+fi
+else
+GENRE=`cat /tmp/$WHOAMI-pcdripper-genrelist`
+fi
+if [ "$GENRE" = "" ]; then
+GENRE=other
+fi
+
+
+##if no tags is not selected
+if [ "$NOTAGS" = false ]; then
+rm -f /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+##get the info from the main gui in regards to the file naming scheme
+NUMLINES=`echo "$ENTRY4" | grep -o [A-Z] | wc -l`
+START=1
+END=`expr $NUMLINES + 1`
+##while loop to build the file name format into the rip/encode script
+while [ "$START" != "$END" ]; do
+LETTER=`echo "$ENTRY4" | grep -o [A-Z] | sed -n "$START"p`
+if [ "$LETTER" = T ]; then
+echo "$NUM" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+if [ "$LETTER" = N ]; then
+echo "$TRACKNAME" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+if [ "$LETTER" = A ]; then
+echo "$ARTIST" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+if [ "$LETTER" = Y ]; then
+echo "$YEAR" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+if [ "$LETTER" = L ]; then
+echo "$ALBUM" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+if [ "$LETTER" = G ]; then
+echo "$GENRE" >> /tmp/$WHOAMI-pcdripper-NAMEFORMAT
+fi
+START=`expr $START + 1`
+done
+LINE=`cat /tmp/$WHOAMI-pcdripper-NAMEFORMAT | tr -s '\n' '-' | sed 's/-*$//g'`
+else
+##if no tagging is selected this will name the files with whatever is put in the entrybox then the track number
+LINE="$TRACKNAME""$NUM"
+fi
+
+##another safeguard incase the naming scheme wasn't populated
+if [ "$LINE" = "" ]; then
+LINE="$NUM"-"$TRACKNAME"
+fi
+
+##set the encoding options for the various formats for the rip/encode script
+if [ "$WORD" = flac ]; then
+ENCODE2="$ENCODE - -o \"$LINE\".flac"
+fi
+
+if [ "$WORD" = ogg ]; then
+ENCODE2="$ENCODE -a \"$ARTIST\" -l \"$ALBUM\" -t \"$TRACKNAME\" -G \"$GENRE\" -d \"$YEAR\" -N \"$TRACKS\" -c \"$COMMENT\" - -o \"$LINE\".ogg"
+fi
+
+if [ "$WORD" = shn ]; then
+ENCODE2="shorten - \"$LINE\".shn"
+fi
+
+if [ "$WORD" = mp3 ]; then
+ENCODE2="lame - --ty \"$YEAR\" --tn \"$TRACKS\" --ta \"$ARTIST\" --tl \"$ALBUM\" --tt \"$TRACKNAME\" --tg \"$GENRE\" --tc \"$COMMENT\" -\"$BR\" \"$ENCODE3\" -\"$CHANNELS\" \"$LINE\".mp3"
+fi
+
+if [ "$WORD" = ape ]; then
+ENCODELINE="mac \"$LINE\".wav \"$LINE\".ape -\"$ENCODE2\""
+fi
+
+if [ "$MUSEPACK" = yes ]; then
+ENCODE2="mppenc --$ENCODE2 - \"$LINE\".$WORD"
+fi
+
+if [ "$WORD" = wma ]; then
+ENCODELINE="ffmpeg -i \"$LINE\".wav -ab \"$ENCODE2\"k -year \"$YEAR\" -track \"$TRACKS\" -author \"$ARTIST\" -album \"$ALBUM\" -title \"$TRACKNAME\" -comment \"$COMMENT\" \"$LINE\".wma"
+fi
+
+if [ "$FAAC" = yes ]; then
+if [ "$WORD" != aac ]; then
+ENCODE2="$ENCODE --artist \"$ARTIST\" --title \"$TRACKNAME\" --genre \"$GENRE\" --album \"$ALBUM\" --year \"$YEAR\" --track \"$TRACKS\" --comment \"$COMMENT\" - -o \"$LINE\".\"$WORD\""
+fi
+fi
+
+if [ "$WORD" = aac ]; then
+ENCODE2="$ENCODE - -o \"$LINE\".aac"
+fi
+##encoding options done
+
+if [ "$ENDLOOP" != yes ]; then
+
+NOSTDIN=""
+if [ "$WORD" = wma ]; then
+VTAG=true
+NOSTDIN=yes
+fi
+if [ "$WORD" = ape ]; then
+NOSTDIN=yes
+fi
+if [ "$WORD" = wav ]; then
+NOSTDIN=yes
+fi
+
+##wavs aren't encoded so they get their own part of the script to create the rip/encode script
+if [ "$NOSTDIN" = yes ]; then
+if [ "$CDRIPPER" = cdparanoia ]; then
+echo cdparanoia "$OPTIONS" "$TRACKS"-"$TRACKS2" -d "$DEVICE" \"$LINE\".wav >> /tmp/$WHOAMI-pcdripper-ripcli
+echo mv "track\"$NUM\".\"$LINE\".wav" "\"$LINE\".wav" >> /tmp/$WHOAMI-pcdripper-ripcli
+else
+echo $CDRIPPER dev="$DEVICE" -t "$TRACKS" \"$LINE\".wav >> /tmp/$WHOAMI-pcdripper-ripcli
+echo rm -f \"$LINE\".inf >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+if [ "$WORD" != wav ]; then
+echo "$ENCODELINE" >> /tmp/$WHOAMI-pcdripper-ripcli
+echo rm -f \"$LINE\".wav >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+else
+##incase any other format besides wav was chosen here is where the rip/encode script is built
+if [ "$CDRIPPER" = cdparanoia ]; then
+echo cdparanoia "$OPTIONS" "$TRACKS"-"$TRACKS2" -d "$DEVICE" - \| "$ENCODE2"  >> /tmp/$WHOAMI-pcdripper-ripcli
+else
+echo $CDRIPPER dev="$DEVICE" -t "$TRACKS" - \| "$ENCODE2" >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+fi
+
+if [ "$NOTAGS" = false ]; then
+if [ "$CHECKBOX3" = false ]; then
+
+if [ "$WORD" = flac ]; then
+if [ "`which metaflac`" != "" ]; then
+##tagging flac files is done post encoding with metaflac
+echo metaflac --set-tag=TRACKNUMBER=$TRACKS --set-tag=ARTIST=\"$ARTIST\" --set-tag=ALBUM=\"$ALBUM\" --set-tag=TITLE=\"$TRACKNAME\" --set-tag=GENRE=\"$GENRE\" --set-tag=DATE=$YEAR --set-tag=COMMENT=\"$COMMENT\" --set-tag=COMPOSER=\"$COMPOSER\" --set-tag=LYRICIST=\"$LYRICIST\" \"$LINE\".flac >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+fi
+
+if [ "$VTAG" = true ]; then
+if [ "$VTAGGER" != "" ]; then
+
+if [ "$VTAGGER" = apetag ]; then
+echo apetag -i \"$LINE\".$WORD -m overwrite -p TRACK=\"$TRACKS\" -p ARTIST=\"$ARTIST\" -p ALBUM=\"$ALBUM\" -p TITLE=\"$TRACKNAME\" -p GENRE=\"$GENRE\" -p YEAR=\"$YEAR\" -p LYRICIST=\"$LYRICIST\" -p COMMENT=\"$COMMENT\" -p COMPOSER=\"$COMPOSER\" >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+
+if [ "$VTAGGER" = id3tag ]; then
+echo id3tag -1 --artist=\"$ARTIST\" --album=\"$ALBUM\" --song=\"$TRACKNAME\" --year=\"$YEAR\" --track=\"$TRACKS\" --genre=\"$GENRE\" --comment=\"$COMMENT\" \"$LINE\".$WORD >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+
+if [ "$VTAGGER" = mp3info ]; then
+echo mp3info -d -f \"$LINE\".$WORD >> /tmp/$WHOAMI-pcdripper-ripcli
+echo mp3info -a \"$ARTIST\" -g \"$GENRE\" -l \"$ALBUM\" -n \"$TRACKS\" -t \"$TRACKNAME\" -y \"$YEAR\" -c \"$COMMENT\" -f \"$LINE\".$WORD >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+
+fi
+fi
+
+fi
+fi
+
+fi
+
+if [ "$TRACKS2" != "$TRACKS" ]; then
+TRACKS=$TOOMUCH
+else
+TRACKS=`expr $TRACKS + 1`
+STARTTRACK=`expr $STARTTRACK + 1`
+fi
+done ##big loop to create the rip/encode script is complete
+
+##rip/encode complete now eject the cd incase option was selected
+if [ "$CHECKBOX5" = true ]; then
+echo eject $DEVICE >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+
+##rip/encode complete now play a sound incase option was selected
+if [ "$CHECKBOX8" = true ]; then
+echo $PLAY "$AUDIOFILE" >> /tmp/$WHOAMI-pcdripper-ripcli
+fi
+
+echo exit 0 >> /tmp/$WHOAMI-pcdripper-ripcli
+
+##show the script that is going to be executed
+export RIPCLI="
+<window title=\"pcdripper script to be executed - you can edit if necessary \"icon-name=\"gtk-cdrom\">
+<hbox>
+<vbox>
+<frame INFO:>
+    <edit>
+      <variable>INFO</variable>
+      <input file>/tmp/$WHOAMI-pcdripper-ripcli</input> 
+      <width>600</width>
+      <height>320</height>
+    </edit>
+</frame>
+<hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action>echo \"\$INFO\" | tee /tmp/$WHOAMI-pcdripper-ripcli2</action>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+</hbox>
+</vbox>
+</hbox>
+</window>
+"
+RIPCLI2=`$GTKDIALOG --program=RIPCLI --center` 
+
+##make the script executable & run it in rxvt
+chmod a+x /tmp/$WHOAMI-pcdripper-ripcli2
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green -title pcdripper --geometry 79x20 -e /tmp/$WHOAMI-pcdripper-ripcli2
+else
+$TERMINAL -e /tmp/$WHOAMI-pcdripper-ripcli2
+fi
+fi ##end cd rip/encode portion
+
+##remove all the temp files
+rm -f /tmp/$WHOAMI-pcdripper* 
+
+##Ask to rip another disc
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Would you like to rip another disc?</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-RIP</action>
+    </button>
+    	<button>
+	<input file stock=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+  </hbox>
+ </vbox>
+"
+RIPAGAIN=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $RIPAGAIN | grep Exit-RIP`" != "" ]; then
+pcdripper &
+else
+exit 0
+fi
+
+exit 0 ##all done

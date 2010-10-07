@@ -1,0 +1,130 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of MODEM-STATS</TITLE>
+</HEAD><BODY>
+<H1>MODEM-STATS</H1>
+Section: User Commands  (1)<BR>Updated: 20 August 1995<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<B>modem-stats</B> -
+send a command to a modem,
+and copy the modem's response to standard output
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>modem-stats</B>
+[ <B>-c</B> <I>command</I> ]
+[ <B>-e</B> <I>end_string</I> ]
+<I>device</I>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>modem-stats</B> is typically used to document a modem's status after a
+connection, and may also be used to gather accounting statistics.
+<BR>
+
+<B>modem-stats</B> may be used to send an initialization string to a modem.
+<BR>
+
+<B>modem-stats</B> may also be used to reset a modem.
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT>
+<B>-c</B> <I>command</I>
+<DD>sets the command to send to the modem.
+<BR>
+
+The default is <B>AT I6</B>
+<BR>
+
+Even if the modem echoes <I>command</I>, it will not be copied to the output.
+<DT>
+<B>-e</B> <I>end_string</I>
+<DD>sets the modem's final response string.
+<BR>
+
+The default is <B>OK</B>
+<BR>
+
+All of the modem's response to <I>command</I>, up to but not including
+<I>end_string</I>, will be copied to the output.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>modem-stats</B> reqires both read and write access to <I>device</I>.
+<BR>
+
+<B>modem-stats</B> exits if <I>device</I> doesn't respond in 5 seconds.
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Record Modem Status</H3>
+
+date &gt;&gt; status
+<BR>
+
+modem-stats /dev/cua1 &gt;&gt; status
+<A NAME="lbAI">&nbsp;</A>
+<H3>Initialize Modem</H3>
+
+modem-stats -c &quot;AT &amp;F1&quot; /dev/cua1 &gt; /dev/null
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Reset Modem</H3>
+
+modem-stats -c ATZ /dev/cua1 &gt; /dev/null
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+The manual for your modem.
+<A NAME="lbAL">&nbsp;</A>
+<H2>BUGS</H2>
+
+<B>modem-stats</B> fails badly if <I>end_string</I> is not correct.
+<BR>
+
+Not all modems provide useful link statistics.
+<BR>
+
+<B>modem-stats</B> won't work with <A HREF="http://localhost/cgi-bin/man/man2html?1+mgetty">mgetty</A>(1).
+<A NAME="lbAM">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Kenneth J. Hendrickson
+<BR>
+
+<A HREF="mailto:kjh@usc.edu">kjh@usc.edu</A>, <A HREF="mailto:kjh@seas.smu.edu">kjh@seas.smu.edu</A>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">EXAMPLES</A><DD>
+<DL>
+<DT><A HREF="#lbAH">Record Modem Status</A><DD>
+<DT><A HREF="#lbAI">Initialize Modem</A><DD>
+<DT><A HREF="#lbAJ">Reset Modem</A><DD>
+</DL>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">AUTHOR</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 14:09:40 GMT, May 19, 2006
+</BODY>
+</HTML>

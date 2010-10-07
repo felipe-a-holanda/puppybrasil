@@ -1,0 +1,21 @@
+#!/bin/bash
+#ptooltips 0.2
+#Sigmund Berglund
+
+if [ "$1" = "-end" ]; then
+	for I in `ps | grep -E "ptooltips|yaf-splash -bw 1 -timeout 2 -bg lightgrey -outline 0" | awk '{print $1}'`; do kill -9 $I; done
+	exit
+fi
+
+MOUSE_X="`getcurpos | awk '{print $1}'`"
+MOUSE_Y="`getcurpos | awk '{print $2}'`"
+SCREEN_Y=`xrandr -q | grep '*' | egrep "[0-9]+[ ]*x[ ]*[0-9]+" -o | cut -d "x" -f 2`
+SCREEN_X=`xrandr -q | grep '*' | egrep "[0-9]+[ ]*x[ ]*[0-9]+" -o | cut -d "x" -f 1`
+X=`expr $MOUSE_X + 15`
+Y=`expr $MOUSE_Y + 10`
+[ $MOUSE_X -gt `expr $SCREEN_X - 100` ] && X=`expr $MOUSE_X - 80`
+[ $MOUSE_Y -gt `expr $SCREEN_Y - 60` ] && Y=`expr $MOUSE_Y - 30`
+
+[ ! "`ps | grep 'yaf-splash -bw 1 -timeout 2 -bg lightgrey -outline 0'`" ] && sleep 0.8
+for I in `ps | grep 'yaf-splash -bw 1 -timeout 2 -bg lightgrey -outline 0' | awk '{print $1}'`; do kill -9 $I; done
+yaf-splash -bw 1 -timeout 2 -bg lightgrey -outline 0 -margin 2 -geometry +$X+$Y -text "$1" &

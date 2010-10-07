@@ -1,0 +1,115 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of waitmax</TITLE>
+</HEAD><BODY>
+<H1>waitmax</H1>
+Section: User commands (1)<BR>Updated: March 2008<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+waitmax - allow program to run at most a specified amount of time
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>waitmax</B>
+
+[-s 
+<I>signum</I>]
+
+<I>maxtime</I>
+
+<I>programm</I>
+
+[
+<I>args...</I>]
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>waitmax</B>
+
+executes 
+<I>program</I>
+
+in a new process. If that process
+does not exit within at most
+<I>maxtime</I>
+
+seconds, it is being killed with signal TERM.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-s, --signal </B><I>signum</I>
+
+<DD>
+Use <I>signum</I> to kill the program instead of TERM.
+<DT><B>-h, --help</B>
+
+<DD>
+Show short help and exit.
+<DT><B>-V, --version</B>
+
+<DD>
+Show version and exit.
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXIT VALUES</H2>
+
+<P>
+<P>
+
+<DL COMPACT>
+<DT><B>255</B><DD>
+The program has been signalled and terminated, because
+the time has elapsed, before the program has exited itself.
+<DT><B>254</B><DD>
+The program has exited neither by signal nor 
+normally. Strange. This should never happen.
+<DT><B>253</B><DD>
+The program couldn't be executed.
+<DT><B>128</B>+<I>signum</I><DD>
+The program has terminated with
+signal <I>signum</I> <B>before</B> the time has elapsed (not
+by waitmax, but by itself or some other process).
+<DT><B>1</B><DD>
+Waitmax has been called with illegal options.
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CREDITS</H2>
+
+Many thanks to Jürgen Kuchenbecker, who had the idea of
+writing such a program and who assisted me in coding and
+testing it.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+waitmax was written by Mathias Kettner. The most current source code
+is located at <A HREF="http://mathias-kettner.de/waitmax.html.">http://mathias-kettner.de/waitmax.html.</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">EXIT VALUES</A><DD>
+<DT><A HREF="#lbAG">CREDITS</A><DD>
+<DT><A HREF="#lbAH">AUTHOR</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 03:09:30 GMT, March 16, 2008
+</BODY>
+</HTML>

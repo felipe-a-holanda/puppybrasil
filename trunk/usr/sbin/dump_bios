@@ -1,0 +1,4 @@
+#!/bin/sh
+
+dd if=/dev/mem of=vbios.dmp bs=16384 skip=48 count=4
+

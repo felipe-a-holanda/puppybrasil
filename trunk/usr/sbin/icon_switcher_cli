@@ -1,0 +1,45 @@
+#!/bin/sh
+#(c) Copyright Nov 2009 Barry Kauler puppylinux.com
+#2009 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#code taken out of the icon_switcher gui app.
+#i created this script for desk_icon_theme_jq8flat-1 pet pkg, called from pinstall.sh
+#w002 first creation.
+#w477 record name of theme in /etc/desktop_icon_theme
+
+NEWTHEME="$1"
+
+[ "$NEWTHEME" = "" ] && exit
+[ ! -d /usr/local/lib/X11/themes/${NEWTHEME} ] && exit
+
+for ONESVG in `find /usr/local/lib/X11/themes/${NEWTHEME}/ -maxdepth 1 -type f -name \*.svg | tr '\n' ' '`
+do
+ ONEBASENAME="`basename $ONESVG .svg`"
+ rm -f /usr/local/lib/X11/pixmaps/${ONEBASENAME}48.png
+ rsvg-convert -w 48 -h 48 -o /usr/local/lib/X11/pixmaps/${ONEBASENAME}48.png $ONESVG
+ rm -f /usr/local/lib/X11/pixmaps/${ONEBASENAME}24.png
+ #rsvg-convert -w 24 -h 24 -o /tmp/${ONEBASENAME}24.png $ONESVG
+ ##if svg has transparency, JWM does not render properly in x16 bit color, screen out...
+ #pngtopnm -mix /tmp/${ONEBASENAME}24.png | pnmtopng > /usr/local/lib/X11/pixmaps/${ONEBASENAME}24.png
+ rsvg-convert -w 24 -h 24 -o /usr/local/lib/X11/pixmaps/${ONEBASENAME}24.png $ONESVG
+done
+for ONEPNG in `find /usr/local/lib/X11/themes/${NEWTHEME}/ -maxdepth 1 -type f -name \*.png | tr '\n' ' '`
+do
+ ONEBASENAME="`basename $ONEPNG .png`"
+ cp -f $ONEPNG /usr/local/lib/X11/pixmaps/
+ touch -m /usr/local/lib/X11/pixmaps/${ONEBASENAME}.png #v3.98
+ xONEBASENAME="`basename $ONEBASENAME 48`"
+ if [ "$xONEBASENAME" != "$ONEBASENAME" ];then #scale to 24 pixels...
+  pngtopnm -alpha $ONEPNG > /tmp/temp.pbm #separate transparency channel.
+  pnmscale -reduce 2 /tmp/temp.pbm > /tmp/temp2.pbm 2> /dev/null
+  pngtopnm $ONEPNG | pnmscale -reduce 2 2>/dev/null | pnmtopng -alpha=/tmp/temp2.pbm > /usr/local/lib/X11/pixmaps/${xONEBASENAME}24.png
+  touch -m /usr/local/lib/X11/pixmaps/${xONEBASENAME}24.png #v3.98
+ fi
+done
+ 
+#w477 record current theme...
+echo -n "$NEWTHEME" > /etc/desktop_icon_theme
+
+# rox -p=/root/Choices/ROX-Filer/PuppyPin
+# jwm -restart
+
+###END###

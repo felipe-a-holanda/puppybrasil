@@ -1,0 +1,144 @@
+#!/bin/sh
+#Barry Kauler, April 2009. GPL v3 licence.
+#gui for 'bcrypt' file encrypt/decrypt.
+#$1 is normally invoked by clicking on a .bfe file in rox, $1 has full path.
+#also supports drag and drop.
+#most of this code was written by coolpup, I have just butchered it a bit.
+#w482 dogone: password must be 8 chars, logic fixed.
+
+if [ "`which bcrypt`" = "" ];then
+ xmessage -center -bg red "The 'bcrypt' package must be installed first."
+ exit
+fi
+
+#if [ ! $1 ];then
+ #run from the menu. this section was originally created by 'coolpup', jan. 2009.
+ #modified by BK april 2009.
+ SOURCEFILE=""
+ if [ $1 ];then
+  SOURCEFILE="$1"
+  [ ! -f "$SOURCEFILE" ] && exit
+ fi
+ 
+ MSG2="<text><label>\"  \"</label></text>"
+ while [ 1 ];do
+  if [ "$SOURCEFILE" = "" ];then
+   DEFAULT=""
+  else
+   DEFAULT="<default>${SOURCEFILE}</default>"
+  fi
+  export BCRYPT="
+<window title=\"Bcrypt file encryption\" icon-name=\"gtk-file\">
+<vbox>
+  <text><label>Welcome, this is a GUI for the 'bcrypt' utility, to encrypt or decrypt a file</label></text>
+   <text use-markup=\"true\"><label>\"<b>For file encryption or decryption, drag the file here ↓    </b>\"</label></text>          
+  <hbox>
+  <entry accept=\"directory\">${DEFAULT}<variable>SOURCEFILE</variable></entry>
+  </hbox>
+  ${MSG2}
+  <hbox>
+   <text><label>Enter password:</label></text>
+   <entry invisible_char=\"x\" visibility=\"false\">
+    <variable>PASSWORD1</variable>
+   </entry>
+  </hbox>
+  <hbox>
+   <text><label>Reenter password:</label></text>
+   <entry invisible_char=\"x\" visibility=\"false\">
+    <variable>PASSWORD2</variable>
+   </entry>
+  </hbox>
+
+  <hbox> 
+  <button help>
+   <action>Xdialog --wrap --screencenter --left --title \"Pcrypt - HELP\" --msgbox \"Bcrypt is a cross-platform file encryption utility which means that encrypted files are portable across all supported operating systems and processors, of which Linux and Win32 are two of them.\n\nIt is used for encrypting files, and can be used for secure deletion, which is better than any common file shredder since the deleted file has been encrypted beforehand. It is available from the main menu and from the right-click context menu by default for most of the basic text, image, and audio file types.\n\nPassphrases must be between 8 and 56 characters and are hashed internally to a 448 bit key (the largest keysize supported by the blowfish algorithm) regardless of the passphrase size. However, all characters supplied are significant since the stronger your passphrase, the more secure your data will be. WARNING: If you forget the encryption key (passphrase) your file can never be opened again in your lifetime and probably never will.\n\nBy default, bcrypt will compress input files before encryption, remove input files after they are processed (assuming they are processed successfully), and overwrite the original input files with random data three times before deleting them in order to prevent data recovery by unauthorized persons.\n\nEncrypted files will be saved with an extension of .bfe. Any files ending in .bfe will be assumed to be encrypted with bcrypt, and so bcrypt will attempt to decrypt them. Any other input files will be encrypted.\n\nBcrypt uses the blowfish encryption algorithm published by Bruce Schneier in 1993.\n\nPcrypt was created by coolpup for Puppy Linux, February 2009 GPL v3 Licence.\nBcrypt_gui based on Pcrypt, by Barry Kauler, April 2009.\n\nBcrypt copyright (c) 2002 Johnny Shelley All rights reserved. Licence supplied.\" 600x0</action>
+  </button>
+  <button cancel></button>
+  <button ok></button>
+  </hbox>
+</vbox>
+</window>"
+
+  RETVALS="`gtkdialog3 --program=BCRYPT --center`"
+  eval "$RETVALS"
+  [ "$EXIT" != "OK" ] && break
+  [ "$PASSWORD1" = "" ] && break
+  [ "$PASSWORD2" = "" ] && break
+  [ "$SOURCEFILE" = "" ] && break
+  [ ! -f "$SOURCEFILE" ] && break
+  BYTES1=`echo -n "$PASSWORD1" | wc -c`
+  if [ $BYTES1 -lt 8 ];then #w482 dogone advised, change from -le.
+   MSG2="Password needs to be at least 8 characters!"
+   MSG2="<text use-markup=\"true\"><label>\"<b>${MSG2}</b>\"</label></text>"
+   continue
+  fi
+  if [ "$PASSWORD1" != "$PASSWORD2" ];then
+   MSG2="The password entries do not match!"
+   MSG2="<text use-markup=\"true\"><label>\"<b>${MSG2}</b>\"</label></text>"
+   continue
+  fi
+  
+  DIRNAME="`dirname "$SOURCEFILE"`"
+  BASENAME="`basename "$SOURCEFILE"`"
+  cd "$DIRNAME"
+  if [ "`echo "$BASENAME" | grep '\.bfe$'`" != "" ];then
+   echo "$PASSWORD1" | bcrypt $BASENAME 2>/tmp/bcrypt_error
+  else
+   echo "$PASSWORD1
+$PASSWORD2" | bcrypt $BASENAME 2>/tmp/bcrypt_error
+  fi
+  if [ $? -ne 0 ];then
+   MSG2="`cat /tmp/bcrypt_error | tail -n 1`"
+   MSG2="<text use-markup=\"true\"><label>\"<b>${MSG2}</b>\"</label></text>"
+   continue
+  fi
+  
+  break
+ done
+
+ exit
+#fi
+
+#NOT USING BELOW HERE ANY MORE
+###################################################################
+#this section entered when click on an encrypted file in rox.
+
+DIRNAME="`dirname $1`"
+NAMEONLY="`basename $1`"
+cd $DIRNAME
+STATUS=1
+
+MSG1="To unencrypt this file, enter the password:"
+while [ $STATUS -ne 0 ];do
+ export MAIN_DIALOG="
+<window title=\"Bcrypt decryption\" icon-name=\"gtk-file\">
+ <vbox>
+  <text>
+   <label>${MSG1}</label>
+  </text>
+  <entry invisible_char=\"x\" visibility=\"false\">
+    <variable>PASSWORD1</variable>
+  </entry>
+  <hbox>
+   <button ok></button>
+   <button cancel></button>
+  </hbox>
+ </vbox>
+</window>
+"
+
+ RETVALS="`gtkdialog3 --program=MAIN_DIALOG`"
+
+ eval "$RETVALS"
+
+ [ "$EXIT" != "OK" ] && break
+ [ "$PASSWORD1" = "" ] && break
+
+ echo "$PASSWORD1" | bcrypt "$NAMEONLY"
+ STATUS=$?
+ if [ $STATUS -ne 0 ];then
+  MSG1="Wrong password! try again:"
+ fi
+done
+
+###END###

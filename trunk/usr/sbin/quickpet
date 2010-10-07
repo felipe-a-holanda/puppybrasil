@@ -1,0 +1,18 @@
+#!/bin/bash
+case $1 in
+ BI) exec /usr/local/quickpet/quickpet.sh BI "$@" ;;
+ -h)echo "Quickpet options"
+    echo "     -h --print this help message and exit"
+    echo "     -v --print the the version number and exit"
+    echo "     BI --starts Browser Installer"
+    echo ""
+    echo "==========================================="
+    echo "Quickpet is a GUI script to install programs easily"
+    echo "It is not designed to replace the PPM"
+    echo "Licensed under the GPL 2010"
+    exit ;;
+  -v)VER=`cat $HOME/.quickpet/version`
+    echo "Quickpet Version-$VER"
+    exit ;;
+   *)exec /usr/local/quickpet/quickpet.sh "$@" ;;
+esac

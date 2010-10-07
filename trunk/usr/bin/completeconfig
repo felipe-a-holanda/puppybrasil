@@ -1,0 +1,53 @@
+#!/bin/sh
+
+ICONDIR="/usr/local/lib/X11/mini-icons"
+
+. /usr/local/graphics-test/graphix_test
+DISPLAY_TEXT=`cat /tmp/luci_recomend`
+export DISPLAY_TEXT
+
+export firstrunwiz="
+<window title=\"Welcome to Lucid Puppy\">
+
+ <vbox>
+ 
+ 
+
+ <frame Change Video Resolution and Language & Locale>
+   <hbox width-request=\"600\">
+    <vbox><text width-request=\"560\"><label>\"Click here to change the video resolution, then Right-Click, Menu -> Shutdown -> Restart X server.\"</label></text>
+   
+    </vbox><vbox>
+    <button>
+     <input file>$ICONDIR/mini-display.xpm</input>
+     <action>exec xrandrshell</action>
+    </button>
+   </vbox></hbox>
+  <hbox width-request=\"600\">
+    <vbox><text width-request=\"560\"><label>\"Click here to change the Language and Locale so that Puppy will speak your language\"</label></text>
+   
+    </vbox><vbox>
+    <button>
+     <input file>$ICONDIR/mini-chinese.xpm</input>
+     <action>exec chooselocale</action>
+    </button>
+   </vbox></hbox></frame>
+<frame Classic Configuration Experience>
+   <hbox width-request=\"600\">
+    <vbox><text width-request=\"560\"><label>\"Click here to change Keyboard Layout, Timezone, and Video Driver.  The screen will blank so please save any work that is open.  The CCE and other programs to personalize Puppy are also available from the Desktop and Setup Menus.\"</label></text>
+   
+    </vbox><vbox>
+    <button>
+     <input file>$ICONDIR/prompt16.xpm</input>
+     <action>exec comconexp</action>
+    </button>
+   </vbox></hbox></frame>
+   
+ </vbox> 
+</window>"
+gtkdialog3 -p firstrunwiz -c
+
+unset firstrunwiz
+
+
+

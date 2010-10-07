@@ -1,0 +1,93 @@
+#!/bin/sh
+# select a program from a list
+
+#########################################
+# Get nls translations
+#
+MYPATH="`which $0`"
+MYBINDIR="`dirname $MYPATH`"
+PREFIX="`dirname $MYBINDIR`"
+export SHAREDIR="$PREFIX/share/programchooser"
+
+# Get translations
+ENVIRONMENT_LANG=`echo $LANG | sed "s/\(..\).*/\1/"` #detect environment language 
+case $ENVIRONMENT_LANG in
+	de)	export LANGUAGE="german" ;;
+	en)	export LANGUAGE="english" ;;
+	es)	export LANGUAGE="spanish" ;;
+	fr)	export LANGUAGE="french" ;;
+	it)	export LANGUAGE="italian" ;;
+	nb)	export LANGUAGE="norwegian" ;; #translation is norwegian bokmål
+	nl)	export LANGUAGE="dutch" ;;
+	nn)	export LANGUAGE="norwegian" ;; #Use norwegian bokmål, since there is no norwegian nynorsk
+	ru)	export LANGUAGE="russian" ;;
+	*)	export LANGUAGE="english" ;; #english for contries without translation
+esac
+. $SHAREDIR/locale/english.po #always run to fill gaps in translation
+[ -f "$SHAREDIR/locale/${LANGUAGE}.po" ] && . $SHAREDIR/locale/${LANGUAGE}.po 2> /dev/null
+#
+# end language section
+#######################################################################
+
+
+# our arguments
+DEFAULT="$1"
+IMG="$2"
+INCLUDE="$3"
+EXCLUDE="$4"
+
+# set up the dialog
+ echo $DEFAULT > $HOME/.config/tmp/program
+ 
+ for FILE in `ls /usr/share/applications`
+ do
+  if [ ! "`cat /usr/share/applications/$FILE | grep --extended-regexp "$INCLUDE" | grep -v $EXCLUDE`" = "" ];then   
+   NAME="`cat /usr/share/applications/$FILE | grep 'Name=' | grep -v GenericName | cut -f 2 -d "="`"
+   if [ ! "`cat /usr/share/applications/$FILE | grep -v GenericName | grep "Name\[$ENVIRONMENT_LANG\]="`" = "" ];then
+    NAME="`cat /usr/share/applications/$FILE | grep -v GenericName | grep "Name\[$ENVIRONMENT_LANG\]=" | cut -f 2 -d "="`"
+   fi
+   CMD="`cat /usr/share/applications/$FILE | grep Exec | grep -v TryExec | cut -f 2 -d "="`"
+   ICON="`cat /usr/share/applications/$FILE | grep Icon | cut -f 2 -d '=' | cut -f 1 -d "."`"
+   PROGRAMS="$PROGRAMS
+   <item icon=\"$ICON\">$NAME | $CMD</item>"
+  fi
+ done
+ 
+ export PROGRAM_DLG="
+ <window title=\"$LOC_MAIN\" icon_name=\"$IMG\">
+  <vbox>
+   <hbox>
+    <entry>
+     <variable>PROGRAM</variable>
+     <input>cat $HOME/.config/tmp/program</input>
+    </entry>
+    <button>
+     <input file stock=\"gtk-open\"></input>
+     <action type=\"fileselect\">PROGRAM</action>
+    </button>
+   </hbox>
+   <text>
+    <label>\"$LOC_HINT\"</label>
+   </text>
+   <tree exported_column=\"1\">
+    <label>$LOC_HEADERS</label>
+    <width>400</width><height>200</height>
+    <variable>TREE</variable>
+    $PROGRAMS
+    <action signal=\"cursor_changed\">echo \$TREE > $HOME/.config/tmp/program</action>
+    <action signal=\"cursor_changed\" type=\"refresh\">PROGRAM</action>
+   </tree>
+   <hbox>
+    <button>
+     <input file stock=\"gtk-close\"></input>
+     <label>$LOC_CLOSE</label>
+    </button>
+   </hbox>
+  </vbox>
+ </window>
+ "
+ gtkdialog3 --program PROGRAM_DLG > $HOME/.config/tmp/prgm
+ . $HOME/.config/tmp/prgm
+ rm -f $HOME/.config/tmp/program
+ rm -f $HOME/.config/tmp/prgm
+ echo $PROGRAM

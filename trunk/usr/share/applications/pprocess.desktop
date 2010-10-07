@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pprocess process manager
+Icon=mini-run.xpm
+Comment=Pprocess process manager
+Exec=/usr/local/pprocess/pprocess
+Terminal=false
+Type=Application
+Categories=System
+GenericName=Pprocess process manager

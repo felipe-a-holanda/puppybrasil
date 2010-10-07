@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd /usr/local/sys-freedos
+exec ./sys-freedos.pl $@

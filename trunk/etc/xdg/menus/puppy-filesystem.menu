@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Filesystem</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Filesystem.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="10">FilesystemManager</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">FilesystemMount</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">FilesystemUtility</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">FilesystemFind</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>FilesystemManager</Name>
+    <Directory>Puppy-FilesystemManager.directory</Directory>
+    <Include>
+      <Category>FileSystem</Category>
+      <Category>FileManager</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>FilesystemMount</Name>
+    <Directory>Puppy-FilesystemMount.directory</Directory>
+    <Include>
+      <Category>X-FilesystemMount</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>FilesystemUtility</Name>
+    <Directory>Puppy-FilesystemUtility.directory</Directory>
+    <Include>
+      <Category>X-FilesystemUtility</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>FilesystemFind</Name>
+    <Directory>Puppy-FilesystemFind.directory</Directory>
+    <Include>
+      <Category>X-FilesystemFind</Category>
+    </Include>
+  </Menu>
+
+</Menu>

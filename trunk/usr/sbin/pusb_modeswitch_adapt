@@ -1,0 +1,29 @@
+#!/bin/sh
+#To be run inside build directory for module or data update
+cd usb_modeswitch.d
+#grep -v -H -E '^ *$|^#? *$' 0* | tr -s \#
+grep -v -H -E '^ *$|^#* *$' 0* | tr -s \# | tee /tmp/usb_modeswitch.d.conf | grep ':#' | sed -e 's/^\([^\#]*\)\# \(.*\)/\2@  Config file: \1/' -e 's/:$//' | sort | tr @ '\n' > /tmp/usb_modeswitch.d.lst
+cd ..
+
+#exit 0
+
+[ ! -d /usr/share/man ] && mkdir /usr/share/man
+[ ! -d /usr/share/man/man1 ] && mkdir /usr/share/man/man1
+
+cp -f ./Makefile ./Makefile.bak
+sed -i \
+ -e 's%/lib/udev%/etc/udev%' \
+ -e 's%.UDEVDIR./usb_modeswitch%\(SBINDIR\)/usb_modeswitch.sh%' \
+ ./Makefile
+
+cp -f ./40-usb_modeswitch.rules ./40-usb_modeswitch.rules.bak
+sed -i \
+ -e 's%RUN+=\"usb_modeswitch %RUN+=\"/usr/sbin/pusb_modeswitch.sh %' \
+ ./40-usb_modeswitch.rules
+
+[ -e ./usb_modeswitch.conf ] \
+ && sed -i \
+  -e 's%EnableLogging=0%EnableLogging=1%' \
+  ./usb_modeswitch.conf
+
+echo -e "Now install into target directories:\n 1. Directory usb_modeswitch.d into the target /etc/\n 2. File 40-usb_modeswitch.rules into the target /etc/udev/rules.d/\n 3. File usb_modeswitch.sh into the target /usr/sbin/\n 4. File usb_modeswitch (if present) into the target /usr/sbin/\n 5. File usb_modeswitch.conf (if present) into the target /etc/"

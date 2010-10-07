@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Network</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Network.directory</Directory>
+  
+  <Layout>
+    <Menuname inline="true" inline_limit="5">NetworkDialup</Menuname>
+<!--    <Separator/> -->
+    <Menuname inline="true" inline_limit="30">NetworkSub</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>NetworkDialup</Name>
+    <Directory>Puppy-NetworkDialup.directory</Directory>
+    <Include>
+      <Category>Dialup</Category>
+    </Include>
+  </Menu>
+  
+  <Menu>
+    <Name>NetworkSub</Name>
+    <Directory>Puppy-NetworkSub.directory</Directory>
+    <Include>
+      <Category>Network</Category>
+      <Category>HamRadio</Category>
+      <Category>RemoteAccess</Category>
+    </Include>
+  </Menu>
+
+</Menu>

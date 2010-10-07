@@ -1,0 +1,77 @@
+#!/bin/sh
+#change tray icons for network_tray #01micko
+#5 types: standard, puppy, business, ttuuxxx, traditional
+
+ICONDIR="/usr/share/network_tray"
+rm -f /tmp/neticontheme
+
+THEMELIST=`ls $ICONDIR|grep -v README`
+for i in $THEMELIST;do echo "
+  <hbox>
+   <text><label>$i Icons</label></text>
+   <button>
+    <input file>$ICONDIR/$i/networkin.xpm</input>
+    <action>echo \"$i\" > /tmp/neticontheme</action> 
+    <action>RUN &</action>
+    <action>EXIT:$i</action>
+   </button>
+  </hbox>" >> /tmp/buttongui
+done
+BUTTON=`cat /tmp/buttongui`
+COUNT=`ls /usr/share/network_tray|grep -v README|wc -l`
+NUMBER=`echo $(($COUNT * 37))`
+echo $NUMBER
+GUIHEIGT=`echo $(($NUMBER + 100))`
+SCREEN=`xwininfo -root | grep ' \-geometry ' | tr -s ' ' | cut -f 3 -d ' ' | cut -f 1 -d '+' | tr 'x' ' '`
+HEIGHT=`echo -n "$SCREEN" | cut -f 2 -d ' '`
+WIDTH=`echo -n "$SCREEN" | cut -f 1 -d ' '`
+YDIMENSION=`echo $(($HEIGHT - $GUIHEIGT))`
+XDIMENSION=`echo $(($WIDTH - 300))`
+echo $XDIMENSION $YDIMENSION $GUIHEIGHT
+
+RUN(){
+	ICONDIR="/usr/share/network_tray"
+	DESTINATIONDIR="/usr/local/lib/X11/mini-icons"
+	THEME=`cat /tmp/neticontheme`
+	cp -f ${ICONDIR}/$THEME/networkblank.xpm $DESTINATIONDIR/networkblank.xpm
+	cp -f ${ICONDIR}/$THEME/networkdead.xpm $DESTINATIONDIR/networkdead.xpm
+	cp -f ${ICONDIR}/$THEME/networkin.xpm $DESTINATIONDIR/networkin.xpm
+	cp -f ${ICONDIR}/$THEME/networkout.xpm $DESTINATIONDIR/networkout.xpm
+	cp -f ${ICONDIR}/$THEME/networkboth.xpm $DESTINATIONDIR/networkboth.xpm
+	sleep 0.5
+	killall network_tray 2>/dev/null
+	$HOME/Startup/network_tray &
+	rm -f /tmp/buttongui
+	rm -f /tmp/neticontheme
+}
+export -f RUN
+
+#decorated=\"false\" 
+
+export changenet="
+<window decorated=\"false\">
+ <vbox>
+  $BUTTON
+  <hbox>
+  <text><label>README</label></text>
+   <button>
+    <input file stock=\"gtk-info\"></input>
+    <action>defaulttextviewer $ICONDIR/README &</action> 
+   </button>
+  </hbox>
+  <hbox>
+  <text><label>OK</label></text>
+   <button>
+    <input file stock=\"gtk-ok\"></input>
+    <action>rm -f /tmp/buttongui</action> 
+    <action>rm -f /tmp/neticontheme</action> 
+    <action>EXIT:OK</action> 
+   </button>
+  </hbox>
+ </vbox>
+</window>"
+gtkdialog3 --class="nolist" -p changenet --geometry +$XDIMENSION+$YDIMENSION
+unset GUI 
+
+exit
+

@@ -1,0 +1,372 @@
+#!/bin/sh
+#(c)copyright Barry Kauler modem wizard 2003,2004,2005. www.puppylinux.org
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#v405 updated. not currently being used.
+
+KERNVER="`uname -r`"
+DEVM=""
+IRQM=""
+
+MYCOUNTRY=0 #use modem default.
+countryfunc() {
+ MYCOUNTRY="`Xdialog --wmclass "smartlinkwizard" --title "Smart-Link Modem Wizard" --stdout --no-tags --menubox "Please choose your country:"  0 0 0 0 'MODEM DEFAULT' 1 USA 2 France 3 Germany 4 Italy 5 Sweden 6 UK 7 Japan 8 Australia 9 Spain 10 Taiwan 11 Singapore 12 Korea 13 Switzerland 14 Norway 15 Netherlands 16 Belgium 17 Canada 18 Ireland 19 Portugal 20 Poland 21 Hungary 22 Finland 23 Denmark 24 Austria 25 'South Africa' 26 'CTRL21 countries' 27 China 28 Malaysia 29 Luxumburg 30 Greece 31 Iceland 32 'New Zealand' 33 Brazil 2>/dev/null`"
+ [ ! "$MYCOUNTRY" = "" ] && echo "$MYCOUNTRY" > /etc/countrycode
+ [ "$MYCOUNTRY" = "" ] && MYCOUNTRY=0
+ [ "$MYCOUNTRY" = "0" ] && rm -f /etc/countrycode
+}
+
+# return the IRQ that respond to a given device
+irq_from_device()
+{
+ local dev=$1
+ #v1.0.2 it seems that setserial may be more trouble than its worth...
+ #in the case of linmodems it often doesn't work...
+ set -- `setserial -v -b $dev auto_irq skip_test autoconfig session_lockout`
+ [ "$6" ] && echo $6 | tr -d \) 
+}
+
+# kill processing attached to device
+kill_users()
+{
+ fuser -k $1 2>/dev/null
+}
+
+#talk to modem, wait for response
+chat_with() {
+ rm -f /tmp/answer.txt
+ #hangs if modem unplugged or turned off (contrary to what docs say)...
+ modem-stats -c "ATZ" $1 > /tmp/answer.txt &
+ sleep 3
+ killall modem-stats
+ if [ -e /tmp/answer.txt ];then
+  if [ -s /tmp/answer.txt ];then
+   #...filesize is nonzero.
+   #the modem should have answered with "OK"...
+   grep "^OK" /tmp/answer.txt > /dev/null 2>&1
+   [ $? -eq 0 ] && return 1 #success
+  fi
+ fi
+ return 0
+}
+
+testmodem() {
+ dev=$1
+ DEVM=$1
+ local irq
+ echo -n "" >/tmp/modemtest.txt
+ irq=$(irq_from_device $dev)
+ if [ -z "$irq" ];then
+  echo "FAIL, $dev does not seem to have an irq assigned" >>/tmp/modemtest.txt
+  echo "There is probably nothing on that port so try another..." >>/tmp/modemtest.txt
+  echo "HOWEVER, for linmodems, maybe some other types, this irq" >>/tmp/modemtest.txt
+  echo "test may have failed but the modem may still work, so" >>/tmp/modemtest.txt
+  echo "continuing with testing port $dev..." >>/tmp/modemtest.txt
+  echo " "  >>/tmp/modemtest.txt
+  IRQM="unknown"
+ fi
+ IRQM="$irq"
+ kill_users $dev
+ chat_with $dev
+ if [ $? -eq 1 ];then
+  wavplay -q /usr/share/audio/generic.wav &
+  echo "SUCCESS, $dev seems to be a modem, using irq=$irq" >>/tmp/modemtest.txt
+  echo "however if uncertain check the others" >>/tmp/modemtest.txt
+  echo -n -e "(if confident modem found, press \"SAVE\" button)"  >>/tmp/modemtest.txt
+ else
+  wavplay -q /usr/share/audio/error.wav &
+  echo -e "FAIL: $dev does not seem to be a modem. Try another \"tty*\" port..." >>/tmp/modemtest.txt
+  echo -n -e "(or, if you really want to use this one, press \"SAVE\")" >>/tmp/modemtest.txt
+ fi
+}
+
+TTYLT0='ttyLT0:20,'
+TTYSL0='ttySL0:21,'
+TTYSESS0='ttyS_ESS0:22,'
+TTYSPCTEL0='ttyS_PCTEL0:23,'
+
+BUTTONS="ttyS0":10,"ttyS1":11,"ttyS2":12,"ttyS3":13,"ttyS4":14,${TTYLT0}${TTYSL0}${TTYSESS0}${TTYSPCTEL0}"SAVE":15,"ERASE":16,"HELP":17,"EXIT":18
+
+if [ -e /etc/modemdevice ];then
+ DEVM="`cat /etc/modemdevice`"
+ echo "You previously selected $DEVM" >/tmp/modemtest.txt
+ echo -e "...if you do not want to use a modem anymore press \"ERASE\"" >>/tmp/modemtest.txt
+ echo >>/tmp/modemtest.txt
+ if [ "`echo "$DEVM" | grep --extended-regexp "ttyLT0|ttySL0"`" = "" ];then
+  echo "Note, $DEVM is for a true hardware modem, but Puppy does support" >>/tmp/modemtest.txt
+  echo "some software modems." >>/tmp/modemtest.txt
+  echo  >>/tmp/modemtest.txt
+ fi
+ echo -e "If uncertain, press the \"HELP\" button, otherwise" >>/tmp/modemtest.txt
+ echo -n -e "Press a \"tty*\" button to test if a modem is present..." >>/tmp/modemtest.txt
+else
+ DEVM=""
+ echo "WELCOME! Try your luck with Puppy analog Modem Wizard
+
+If you think that this is a Lucent Linmodem (Linux-compatible
+software modem), press the 'ttyLT0' button to test it.
+
+If you think that this is a Smart Link HAMR5600 based AMR/CNR/
+MDC/ACR PCI linmodem, SmartPCI56/561/562/563 based PCI linmodem,
+or SmartUSB56 based USB linmodem, press the 'ttySL0' button.
+
+For a ESS 2898 soft-modem, click 'ttyS_ESS0'.
+
+For a PCTEL pct789 soft-modem, click 'ttyS_PCTEL0'
+
+If you have a hardware modem, PCI, ISA bus or external serial,
+you can press one of the 'ttyS*' buttons to find out which
+port it is on. Note, ttyS0 is COM1, ttyS1 is COM2, etc." >/tmp/modemtest.txt
+
+fi
+
+while :; do
+xmessage -bg "#c0c0ff" -center -name "xutilities" -title "Puppy Modem Wizard" -buttons \
+ "$BUTTONS" -file /tmp/modemtest.txt
+
+case ${?} in
+   10)# ttyS0
+     testmodem /dev/ttyS0
+     ;;
+   11)# 
+     testmodem /dev/ttyS1
+     ;;
+   12)# 
+     testmodem /dev/ttyS2
+     ;;
+   13)# 
+     testmodem /dev/ttyS3
+     ;;
+   14)# 
+     testmodem /dev/ttyS4
+     ;;
+   15)# = save
+     if [ ! "$DEVM" ];then
+      wavplay -q /usr/share/audio/error.wav &
+      xmessage -bg "#ffc0c0" -center -name "xutilities" -title "Puppy Modem Wizard" -file -<<MSG1
+Huh? You have not yet selected a modem port,
+so nothing to save.
+MSG1
+     else
+      echo -n "$DEVM" >/etc/modemdevice
+      rm -f /dev/modem
+      ln -s $DEVM /dev/modem
+      wavplay -q /usr/share/audio/ok.wav &
+      echo "You have configured Puppy for $DEVM (and irq=$IRQM)" >/tmp/modemtest.txt
+      echo "Note, there is a 'connect' icon on the desktop." >>/tmp/modemtest.txt
+      echo -n -e "Press \"EXIT\" to get out..." >>/tmp/modemtest.txt
+      BUTTONS="EXIT:18"
+      echo '#!/bin/sh' > /usr/local/bin/defaultconnect
+      echo 'exec pupdial' >> /usr/local/bin/defaultconnect
+     fi
+     ;;
+   16)# = erase
+     echo "All configuration of the modem, if any, has been erased" >/tmp/modemtest.txt
+     echo -n -e "Press \"EXIT\" to get out..." >>/tmp/modemtest.txt
+     rm -f /dev/modem
+     rm -f /etc/modemdevice
+     grep -v --extended-regexp "ltserial|slamr|slusb" /etc/modprobe.conf > /tmp/modprobe.conf
+     sync
+     mv -f /tmp/modprobe.conf /etc/modprobe.conf
+     BUTTONS="EXIT:18"
+     ;;
+   17)# HELP
+     defaulthtmlviewer file:///usr/share/doc/HOWTO_Internet.htm &
+     ;;
+   18)# = exit
+     break;;
+   0)# exit
+     break;;
+   1)# exit
+     break;;
+   20) #Lucent Linmodem
+      lsmod | grep "ltserial" > /dev/null 2>&1
+      if [ ! $? -eq 0 ];then #=0 found.
+       if [ "`cat /etc/modprobe.conf | grep "ltserial"`" = "" ];then
+        echo "alias char-major-62 ltserial" >> /etc/modprobe.conf
+        echo "alias /dev/ttyLT0 ltserial" >> /etc/modprobe.conf
+        echo "alias /dev/modem ltserial" >> /etc/modprobe.conf
+       fi
+       modprobe ltmodem
+       modprobe ltserial
+       sleep 1
+      fi    
+      testmodem /dev/ttyLT0
+     ;;
+   21) #smartlink linmodem (refer rc.network)
+      #need to choose country...
+      SLCOUNTRY="`Xdialog --wmclass "smartlinkwizard" --title "Smart-Link Modem Wizard" --stdout --no-tags \
+ --menubox "Please choose your country:"  0 0 0 \
+ ALGERIA Algeria \
+ ARGENTINA Argentina \
+ AUSTRALIA Australia \
+ AUSTRIA Austria \
+ BAHREIN Bahrein \
+ BELGIUM Belgium \
+ BRAZIL Brazil \
+ BRUNEI Brunei \
+ BULGARIA Bulgaria \
+ CANADA Canada \
+ CHILE Chile \
+ CHINA China \
+ CTR21EUROPE CTR21_Europe \
+ CYPRUS Cyprus \
+ CZECH_REPUBLIC Czech_Replublic \
+ DENMARK Denmark \
+ EGYPT Egypt \
+ ESTONIA Estonia \
+ FINLAND Finland \
+ FRANCE France \
+ GERMANY Germany \
+ GREECE Greece \
+ HONG_KONG Hong_Kong \
+ HUNGARY Hungary \
+ ICELAND Iceland \
+ INDIA India \
+ INDONESIA Indonesia \
+ IRELAND Ireland \
+ ISRAEL Israel \
+ ITALY Italy \
+ JAPAN Japan \
+ JORDAN Jordan \
+ KOREA Korea \
+ KUWAIT Kuwait \
+ LATVIA Latvia \
+ LEBANON Lebanon \
+ LITHUANIA Lithuania \
+ LUXEMBOURG Luxembourg \
+ MALAYSIA Malaysia \
+ MALTA Malta \
+ MEXICO Mexico \
+ MOROCCO Morocco \
+ NETHERLANDS Netherlands \
+ NEW_ZEALAND New_Zealand \
+ NORWAY Norway \
+ OMAN Oman \
+ PAKISTAN Pakistan \
+ PERU Peru \
+ PHILIPPINES Philippines \
+ POLAND Poland \
+ PORTUGAL Portugal \
+ ROMANIA Romania \
+ RUSSIA Russia \
+ SAUDIARABIA Saudi_Arabia \
+ SINGAPORE Singapore \
+ SLOVAKIA Slovakia \
+ SLOVENIA Slovenia \
+ SOUTHAFRICA South_Africa \
+ SOUTHKOREA South_Korea \
+ SPAIN Spain \
+ SRILANKA Sr_Lanka \
+ SWEDEN Sweden \
+ SWITZERLAND Switzerland \
+ TAIWAN Taiwan \
+ THAILAND Thailand \
+ TUNISIA Tunisia \
+ TURKEY Turkey \
+ UAE UAE \
+ UK UK \
+ URUGUAY Uruguay \
+ USA USA \
+ VIETNAM Vietnam 2> /dev/null`"
+
+      if [ ! $? -eq 0 ];then
+       xmessage "ABORT: You did not select a country!!!"
+      else
+       #v2.02 rerwin, code block moved down...
+       if [ "`cat /etc/modprobe.conf | grep "slamr"`" = "" ];then
+        echo "alias char-major-242 slamr" >> /etc/modprobe.conf
+        echo 'install slamr modprobe --ignore-install ungrab-winmodem ; modprobe --ignore-install slamr' >> /etc/modprobe.conf
+        echo "alias char-major-243 slusb" >> /etc/modprobe.conf
+       fi
+       #v2.01 bug, rerwin found needs ungrab-winmodem before load slamr...
+       rmmod slamr #unload for ungrab, in case slamr misloaded as serial driver.
+       modprobe ungrab-winmodem
+       modprobe slamr
+       [ ! $? -eq 0 ] && xmessage -center "Failed to load slamr module."
+       if [ ! "`lsmod | grep '^usbcore'`" = "" ];then #v2.01
+        modprobe slusb
+        [ ! $? -eq 0 ] && xmessage -center "Failed to load slusb module."
+       fi
+       #choose usb or pci modem...
+       MYSLMODEM="`Xdialog --wmclass "smartlinkwizard" --title "Smart Link Modem Wizard" --stdout --no-tags \
+ --menubox "Please choose type of Smart-Link modem:"  0 0 0 \
+ slusb "USB" \
+ slamr "PCI (internal card)" 2> /dev/null`"
+       if [ ! $? -eq 0 ];then
+        xmessage "ABORT: You did not choose modem type!!!"
+       else
+        #start slmodemd...
+        echo "#/bin/sh" > /usr/sbin/slmodemdshell
+        echo "/usr/sbin/slmodemd --country=$SLCOUNTRY /dev/${MYSLMODEM}0" >> /usr/sbin/slmodemdshell
+        sync
+        chmod 755 /usr/sbin/slmodemdshell
+        /usr/sbin/slmodemdshell &
+        sleep 1
+        #test modem...
+        testmodem /dev/ttySL0
+       fi
+      fi     
+     ;;
+    22) #ESS modem
+      #avoid clashes with pctel modules...
+      lsmod | grep "^pctel" > /dev/null 2>&1
+      if [ $? -eq 0 ];then #=0 found.
+       rmmod pctel
+       rmmod pctel_hw
+       rmmod linmodem
+      fi
+      lsmod | grep "^esscom " > /dev/null 2>&1
+      if [ ! $? -eq 0 ];then #=0 found.
+       rmmod esscom
+       rmmod esscom_hw
+       rmmod linmodem
+      fi
+      [ ! $MYCOUNTRY ] && countryfunc #choose country code
+      cat /etc/modprobe.conf | grep -v 'options esscom ' > /tmp/modprobeconf.tmp
+      sync
+      cp -f /tmp/modprobeconf.tmp /etc/modprobe.conf
+      if [ ! "$MYCOUNTRY" = "0" ];then
+       echo "options esscom country_code=$MYCOUNTRY" >> /etc/modprobe.conf
+      fi
+      modprobe esscom #$CNTRYPARAM #will also load esscom_hw.
+      sleep 1
+      testmodem /dev/ttyS_ESS0
+     ;;
+    23) #PCTEL pct789 modem
+      #avoid clashes with ess modules...
+      lsmod | grep "^esscom" > /dev/null 2>&1
+      if [ $? -eq 0 ];then #=0 found.
+       rmmod esscom
+       rmmod esscom_hw
+       rmmod linmodem
+      fi
+      lsmod | grep "^pctel " > /dev/null 2>&1
+      if [ ! $? -eq 0 ];then #=0 found.
+       rmmod pctel
+       rmmod pctel_hw
+       rmmod linmodem
+      fi
+      [ ! $MYCOUNTRY ] && countryfunc #choose country code
+      cat /etc/modprobe.conf | grep -v 'options pctel ' > /tmp/modprobeconf.tmp
+      sync
+      cp -f /tmp/modprobeconf.tmp /etc/modprobe.conf
+      if [ ! "$MYCOUNTRY" = "0" ];then
+       echo "options pctel country_code=$MYCOUNTRY" >> /etc/modprobe.conf
+      fi
+      #ess setup puts this line, remove it...
+      cat /etc/modprobe.conf | grep '^install linmodem '
+      if [ $? -eq 0 ];then #0=found.
+       cat /etc/modprobe.conf | grep -v '^install linmodem ' > /tmp/modprobeconf.tmp
+       sync
+       cp -f /tmp/modprobeconf.tmp /etc/modprobe.conf
+      fi
+      modprobe pctel #$CNTRYPARAM #also loads linmodem,pctel_hw.
+      sleep 1
+      testmodem /dev/ttyS_PCTEL0
+     ;;
+esac
+done
+rm -f /tmp/modemtest.txt
+rm -f /tmp/answer.txt
+
+#END#

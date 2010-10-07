@@ -1,0 +1,199 @@
+#!/bin/sh
+#Barry Kauler, LGPL 2010
+#Portions of this script are derived from the usb_modeswitch.tcl script created by Josua Dietze of the USB_ModeSwitch project (http://www.draisberghof.de/usb_modeswitch/).
+
+#Upgraded version to utilize the integrated config directory, emulating the tcl wrapper script.
+ARGUMENTS="$@"
+[ "$ARGUMENTS" = "" -o "$ARGUMENTS" = "-W" ] \
+ && echo -e "Error: No arguments specified.\n Use global configuration file only with command usb_modeswitch." \
+ && exit 0
+ARGUMENT1="$1"
+ARGUMENT2="$2"
+USE_TCL_WRAPPER=no #Set to yes to substitute modeswitcher-supplied wrapper script.
+#Continued after functions.
+
+
+pup_usb_modeswitch_func() {
+#wrapper substitute...
+ echo "Puppy Linux emulation of usb_modeswitch.tcl wrapper script"
+ echo "raw args from udev: $ARGUMENTS"
+# Argument format is bus/device:
+# bus: the bus id for the device (udev: %b)
+# device: the "kernel name" for the device (udev: %k)
+# Both together give the top directory where the path
+# to the SCSI attributes can be determined (further down)
+ [ "$ARGUMENT1" = "" ] \
+  && echo "No data from udev. Exiting" \
+  && return 0
+ BUS="`echo $ARGUMENT1 | cut -f 1 -d /`"
+ DEVICE="`echo $ARGUMENT1 | cut -f 2 -d /`"
+ [ "`echo "$DEVICE" | grep '\.0$'`" = "" ] \
+  && echo "Interface is not 0. Not the install storage. Exiting" \
+  && return 0
+ if [ "$BUS" = "" ];then
+  [ "$DEVICE" = "" ] \
+   && echo "No device number values given from udev! Exiting" \
+   && return 0
+  echo "Bus ID for device not given by udev."
+  echo " Trying to determine it from kernel name $DEVICE ..."
+  DEV_TOP="`echo $DEVICE | grep -o '^[^:]*'`"
+  [ "$DEV_TOP" = "" ] \
+   && echo "Could not determine top device dir from udev values! Exiting" \
+   && return 0
+ else
+  DEV_TOP="`echo $BUS | grep -o '^[^:]*'`"
+ fi
+ DEVDIR="/sys/bus/usb/devices/$DEV_TOP"
+ [ ! -d $DEVDIR ] \
+  && echo "Top sysfs directory not found ($DEVDIR)! Exiting" \
+  && return 0
+ 
+ IDV=""; IDP=""; UMA=""; UPR=""; USE=""
+ [ -e $DEVDIR/idVendor ] && IDV="`cat $DEVDIR/idVendor`"
+ [ -e $DEVDIR/idProduct ] && IDP="`cat $DEVDIR/idProduct`"
+ [ "$IDV" = "" -o "$IDP" = "" ] \
+  && echo "USB IDs not found in sysfs tree. Exiting" \
+  && return 0
+ [ -e $DEVDIR/manufacturer ] && UMA="`cat $DEVDIR/manufacturer | sed 's/ /_/g'`"
+ [ -e $DEVDIR/product ] && UPR="`cat $DEVDIR/product | sed 's/ /_/g'`"
+ [ -e $DEVDIR/serial ] && USE="`cat $DEVDIR/serial | sed 's/ /_/g'`"
+ CONFIGLIST="`ls -1 /etc/usb_modeswitch.d/$IDV:$IDP* 2>/dev/null | cut -f 4 -d /`"
+ CONFIGPATTERNS="`echo "$CONFIGLIST" | sed -e 's/^....:....://' -e 's/\?/\\\?/' -e 's/^\(....\):\(....\)$/\1@\2/' -e 's/:/\n/g' -e 's/^\(....\)@\(....\)$/\1:\2\$/'`"
+ [ "$CONFIGLIST" = "" ] \
+  && echo "Configuration file missing for $IDV:$IDP." \
+  && return 0
+ [ "`ls -1 /etc/udev/rules.d/* | grep 'eject' | grep '19d2' | grep '2000'`" != "" ] \
+  && echo "Existing ZTE rule found. Exiting" \
+  && return 0
+#
+ SVE=""; SMO=""; SRE=""
+ if [ "`echo "$CONFIGLIST" | grep ':s'`" != "" ];then
+  COUNT=0
+  while [ $COUNT -lt 20 ];do
+   sleep 0.5; COUNT=`expr $COUNT + 1`
+   SYSDIR="$DEVDIR/$DEVICE"
+   [ ! -d $SYSDIR ] \
+    && echo "Device tree $SYSDIR is gone. Exiting" \
+    && return 0
+   [ -e $DEVDIR/product ] && NEWPR="`cat $DEVDIR/product | sed 's/ /_/g'`" || NEWPR=""
+   [ "$NEWPR" != "$UPR" ] \
+    && echo "Device has changed. Exiting" \
+    && return 0
+   SYSDIR="`ls $SYSDIR/host* 2>/dev/null | tr ' ' '\n' | head -n 1`"
+   if [ "$SYSDIR" != "" ];then
+    SYSDIR="`ls $SYSDIR/target* 2>/dev/null | tr ' ' '\n' | head -n 1`"
+    if [ "$SYSDIR" != "" ];then
+     SUBDIR="`echo "$SYSDIR" | grep -o 'target.*' | sed 's/target//'`"
+     SYSDIR="`ls $SYSDIR/$SUBDIR* 2>/dev/null | tr ' ' '\n' | head -n 1`"
+     if [ "$SYSDIR" != "" ] && [ -e $SYSDIR/vendor ];then
+      [ -e $SYSDIR/vendor ] && SVE="`cat $SYSDIR/vendor | sed 's/ /_/g'`"
+      [ -e $SYSDIR/model ] && SMO="`cat $SYSDIR/model | sed 's/ /_/g'`"
+      [ -e $SYSDIR/rev ] && SRE="`cat $SYSDIR/rev | sed 's/ /_/g'`"
+      break
+     fi
+    fi
+   fi   
+  done
+  [ $COUNT -ge 20 ] && [ "$SVE" = "" ] \
+   && echo "SCSI tree not found" \
+   || echo "SCSI Attributes: vendor $SVE  model $SMO  rev $SRE"
+  sleep 3
+  if false;then #Avoid using usb_modeswitch to find SCSI info until this can be verified to not hang.
+#  if [ "$SVE" = "" ];then
+   /usr/sbin/usb_modeswitch -v 0x$IDV -p 0x$IDP > /tmp/usb_modeswitch_scsi-info.log
+   if [ $? -eq 0 ];then
+    TESTSCSI="`cat /tmp/usb_modeswitch_scsi-info.log | grep ' String: [A-Z0-9]'`"
+    SVE="`echo "$TESTSCSI" | grep '  Vendor String: ' | head -n 1 | sed -e 's/  Vendor String: //' -e 's/ /_/g'`"
+    SMO="`echo "$TESTSCSI" | grep '   Model String: ' | head -n 1 | sed -e 's/   Model String: //' -e 's/ /_/g'`"
+    SRE="`echo "$TESTSCSI" | grep 'Revision String: ' | head -n 1 | sed -e 's/Revision String: //' -e 's/ /_/g'`"
+   else
+    cat /tmp/usb_modeswitch_scsi-info.log
+   fi
+  fi
+ else
+  sleep 0.5
+ fi
+#
+ DEVSTRINGS="$IDV:$IDP:uSe=$USE
+$IDV:$IDP:uPr=$UPR
+$IDV:$IDP:uMa=$UMA
+$IDV:$IDP:sVe=$SVE
+$IDV:$IDP:sRe=$SRE
+$IDV:$IDP:sMo=$SMO
+$IDV:$IDP:?
+$IDV:$IDP" #Ordered to match effect of reverse sort
+ CONFIGMATCH="`echo "$DEVSTRINGS" | grep -o -E "$CONFIGPATTERNS" | head -n 1 | sed -e 's/^....:....$/&\$/'`"
+ [ "$CONFIGMATCH" = "" ] \
+  && echo -e "Configuration file missing for $IDV:$IDP.\nSelection attributes:\n uMa=$UMA\n uPr=$UPR\n uSe=$USE\n uMa=$UMA\n sMo=$SMO\n sRe=$SRE\nsVe=$SVE" \
+  && return 0
+ CONFIGFILE="`echo "$CONFIGLIST" | grep "$CONFIGMATCH" | tail -n 1`"
+# echo -e "DEVSTRINGS: $DEVSTRINGS\nCONFIGLIST: $CONFIGLIST\nCONFIGPATTERNS: $CONFIGPATTERNS\nCONFIGMATCH: $CONFIGMATCH\nCONFIGFILE: $CONFIGFILE" >> /tmp/udevtrace-modem.log   #debug
+ /usr/sbin/usb_modeswitch -I -W -D -c /etc/usb_modeswitch.d/$CONFIGFILE | tee /tmp/pup_usb_modeswitch.temp.log
+ #
+ if [ "`grep 'ok:' /tmp/pup_usb_modeswitch.temp.log`" != "" ];then
+  sleep 0.5
+  [ ! -d $DEVDIR ] \
+   && echo "Device directory in sysfs is gone! Exiting" \
+   && return 0
+  [ ! -e $DEVDIR/idProduct ] && sleep 1
+  [ -e $DEVDIR/idVendor ] && IDV="`cat $DEVDIR/idVendor`" || IDV=""
+  [ -e $DEVDIR/idProduct ] && IDP="`cat $DEVDIR/idProduct`" || IDP=""
+  if [ "$IDV" = "" -o "$IDP" = "" ];then
+   NEWIDS="`grep -o 'ok:....:....' /tmp/pup_usb_modeswitch.temp.log | cut -f 2-3 -d :`"
+   [ "$NEWIDS" != "0000:0000" ] \
+    && IDV="`echo $NEWIDS | cut -f 1 -d :`" \
+    && IDP="`echo $NEWIDS | cut -f 2 -d :`"
+  fi
+  [ "$IDV" != "" -a "$IDP" != "" ] \
+   && /usr/sbin/pmodprobeoption $IDV $IDP   
+ fi
+ return $?
+#end wrapper substitute
+}
+
+tcl_usb_modeswitch_func() {
+#Use tcl-coded wrapper script...
+ /usr/bin/tclsh /lib/udev/usb_modeswitch $ARGUMENTS
+ STATUS=$?
+ DEVICE="`echo $ARGUMENT1 | cut -f 2 -d /`"
+ [ ! -e /var/log/usb_modeswitch_$DEVICE ] \
+  && [ -e /var/log/usb_modeswitch_noname ] \
+  && DEVICE="noname"
+ cat /var/log/usb_modeswitch_$DEVICE
+ rm /var/log/usb_modeswitch_$DEVICE
+ return $STATUS
+#end tcl-coded wrapper interface...
+}
+
+#Main - udev-rule invocation
+[ ! -e /tmp/usb_modeswitch.log ] && touch /tmp/.usb_modeswitch_active
+if [ -f /sbin/pup_event_backend_modprobe_protect ];then
+ /sbin/pup_event_backend_modprobe_protect --lock=usbmswx \
+  || exit 0 #lock timed out
+fi
+USBSTORAGEDELAY="`grep 'options usb-storage ' /etc/modprobe.conf | grep -w --only-matching 'delay_use=[0-9]*' | cut -f 2 -d '='`"
+[ "$USBSTORAGEDELAY" = "" ] && USBSTORAGEDELAY="5" #default value
+sleep $USBSTORAGEDELAY; sleep 5
+  
+if [ "$ARGUMENT2" = "" ]; then #single arg
+ if [ -e /usr/bin/tclsh -a "$USE_TCL_WRAPPER" = yes ];then
+  tcl_usb_modeswitch_func &> /tmp/usb_modeswitch.temp.log
+ else
+  pup_usb_modeswitch_func &> /tmp/usb_modeswitch.temp.log
+ fi
+else
+ [ "`echo "$ARGUMENTS" | grep ' -s '`" = "" ] \
+  && ARGUMENTS="$ARGUMENTS -s 20"
+ /usr/sbin/usb_modeswitch $ARGUMENTS -W &> /tmp/usb_modeswitch.temp.log
+fi
+
+#Show completed action unless exception messages imply allowing retries.
+PATTERNS='Configuration file missing for
+No default device found.
+'
+[ "`grep -F "$PATTERNS" /tmp/usb_modeswitch.temp.log`" = "" ] \
+ && rm -f /tmp/.usb_modeswitch_active
+cat /tmp/usb_modeswitch.temp.log >> /tmp/usb_modeswitch.log
+[ -f /sbin/pup_event_backend_modprobe_protect ] \
+ && /sbin/pup_event_backend_modprobe_protect --unlock=usbmswx
+exit 0

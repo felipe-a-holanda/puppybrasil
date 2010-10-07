@@ -1,0 +1,197 @@
+#!/bin/sh
+#(c) Copyright 2010 Barry Kauler bkhome.org
+#Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#called from 'connectwizard'
+#choose between old Network Wizard, new Network Wizard and Pwireless2.
+#100227 BK initial creation of script.
+#100306 added Barry's Simple Network Setup.
+
+#100306
+SNS=""
+if [ -d /usr/local/simple_network_setup ];then
+ SNS="<frame Simple Network Setup>  <hbox>
+   <text><label>This is a simple network setup tool created by BarryK. Not as many features as the Network Wizard, for example requires the network to have a DHCP server (the vast majority of cases). The greatest feature is extreme ease of use.</label></text>
+   <vbox>
+   <button>
+    <input file>/usr/local/lib/X11/mini-icons/pc-2x.xpm</input>
+    <action type=\"exit\">FLAGSNS</action>
+   </button>
+   </vbox>
+  </hbox>
+  </frame>
+"
+fi
+
+PWIRELESS=""
+if [ -d /usr/local/Pwireless2 ];then #Jemimah's wireless connection gui.
+ PWIRELESS="<frame Pwireless2>  <hbox>
+   <text><label>This is a tool developed by Jemimah. Mostly for wireless connectivity for laptops, but also can handle ethernet connection. Very good for wireless roaming. Under very active development (see forum).</label></text>
+   <vbox>
+   <button>
+    <input file>/usr/local/lib/X11/mini-icons/pc-2x.xpm</input>
+    <action type=\"exit\">FLAGPWIRELESS</action>
+   </button>
+   </vbox>
+  </hbox>
+  </frame>
+"
+fi
+
+NETWIZARD=""
+if [ -f /usr/sbin/net-setup.sh ];then #wizard developed by Dougal.
+ NETWIZARD="<frame Network Wizard>  <hbox>
+   <text><label>This is the main tool for network setup in recent puppies. It is based on the 'Classic' Network Wizard but greatly enhanced by Dougal, with input from others. It is for both wired (ethernet) and wireless connectivity, with more features than Pwireless (supports use of Ndiswrapper for Windows wireless drivers, for example).</label></text>
+   <vbox>
+   <button>
+    <input file>/usr/local/lib/X11/mini-icons/pc-2x.xpm</input>
+    <action type=\"exit\">FLAGNETWIZARD</action>
+   </button>
+   </vbox>
+  </hbox>
+  </frame>
+"
+fi
+#Netwizclassic commented out in Lucid Puppy 5.0 by playdayz at request of BarryK
+#NETWIZCLASSIC=""
+#if [ -f /usr/local/net_setup/usr/sbin/net-setup.sh ];then #wizard used in older puppies.
+# NETWIZCLASSIC="<frame Network Wizard (Classic)>  <hbox>
+#   <text><label>The Network Wizard was originally developed by Barry Kauler, with considerable input from others. </label></text>
+#   <vbox>
+#   <button>
+#    <input file>/usr/local/lib/X11/mini-icons/pc-2x.xpm</input>
+#    <action type=\"exit\">FLAGNETWIZCLASSIC</action>
+#   </button>
+#   </vbox>
+#  </hbox>
+#  </frame>
+#"
+#fi
+
+export MAIN_DIALOG="
+<window title=\"Network Connection Wizard\" icon-name=\"gtk-connect\">
+<vbox>
+ <text><label>This build of Puppy has the following choices of GUI tool that you can use to connect to a network (and Internet)...</label></text>
+
+ ${PWIRELESS}
+ ${NETWIZARD}
+ ${NETWIZCLASSIC}
+ ${SNS}
+
+ <hbox>
+  <button cancel></button>
+ </hbox>
+</vbox>
+</window>
+"
+
+RETSTRING="`gtkdialog3 --program=MAIN_DIALOG --center`" 
+#[ "`echo "$RETSTRING" | grep 'EXIT' | grep 'OK'`" = "" ] && return
+#gtkdialog3 --program=MAIN_DIALOG --center
+
+if [ "`echo "$RETSTRING" | grep '^EXIT' | grep 'FLAG'`" != "" ];then
+ CHOSENWIZ="`echo "$RETSTRING" | grep '^EXIT' | grep 'FLAG' | cut -f 2 -d '"'`" #'geany
+ case $CHOSENWIZ in
+  FLAGPWIRELESS) #Pwireless2
+   chmod 755 /etc/init.d/Pwireless2 #100304
+   /etc/init.d/Pwireless2 start #100304
+   /usr/local/bin/Pwireless2 > /dev/null 2>&1
+   NWEXEC='Pwireless2'
+   NWCHOICE="Jemimah's Pwireless2"
+  ;;
+  FLAGNETWIZARD) #net-setup.sh
+   /usr/sbin/net-setup.sh > /dev/null 2>&1
+   NWEXEC='net-setup.sh'
+   NWCHOICE="Dougal's Network Wizard"
+  ;;
+  FLAGNETWIZCLASSIC) #net_wiz_classic
+   /usr/sbin/net_wiz_classic > /dev/null 2>&1
+   NWEXEC='net_wiz_classic'
+   NWCHOICE="Barry's Network Wizard Classic"
+  ;;
+  FLAGSNS)
+   /usr/sbin/sns
+   NWEXEC='sns'
+   NWCHOICE="Barry's Simple Network Setup"
+  ;;
+ esac
+ 
+ IFSUP="`ifconfig | grep -E '^eth|^wlan'`"
+ if [ "$IFSUP" != "" ];then
+  IFSUP="`echo "$IFSUP" | cut -f 1 -d ' ' | tr '\n' ' '`"
+  MSG1="These interfaces are active:
+$IFSUP
+
+...Satisfied? Got online ok? If yes, click 'YES SET AS DEFAULT' button, so Puppy will be optimised to use this tool for future boots."
+ else
+  MSG1="No interfaces are active, so was the tool unsatisfactory? If it actually was OK, click the 'YES SET AS DEFAULT' button. But, it seems not, so..."
+ fi
+ 
+  CURREXEC="`cat /usr/local/bin/defaultconnect | tail -n 1 | tr -s " " | cut -f 2 -d " "`"
+  [ "`grep 'gprs' /usr/local/bin/defaultconnect`" != "" ] && CURREXEC='pgprs-connect'
+  [ "$CURREXEC" = "gkdial" ] && CURREXEC="pupdial" #for older pups.
+  case $CURREXEC in
+   Pwireless2)
+    CURRCHOICE="Jemimah's Pwireless2"
+   ;;
+   net-setup.sh)
+    CURRCHOICE="Dougal's Network Wizard"
+   ;;
+   net_wiz_classic)
+    CURRCHOICE="Barry's Network Wizard Classic"
+   ;;
+   sns)
+    CURRCHOICE="Barry's Simple Network Setup"
+   ;;
+   *)
+    CURRCHOICE="${CURREXEC}"
+   ;;
+  esac
+
+  [ "$NWEXEC" = "$CURREXEC" ] && exit
+
+# <text><label>Note, the current default network tool is '${CURRCHOICE}'.</label></text>
+
+  export POST_DIALOG="
+<window title=\"Network Connection Wizard\" icon-name=\"gtk-connect\">
+<vbox>
+ <text use-markup=\"true\"><label>\"<b>You have finished running '${NWCHOICE}'</b>\"</label></text>
+ <text><label>\"${MSG1}\"</label></text>
+ <text><label>Click 'TRY A DIFFERENT TOOL' if you would like to try one of the other network setup tools...</label></text>
+ <text><label>Click 'Cancel' button to quit without setting a default tool...</label></text>
+ <hbox>
+   <button><input file>/usr/local/lib/X11/mini-icons/mini-tick.xpm</input><label>YES SET AS DEFAULT</label><action type=\"exit\">FLAGYES</action></button>
+   <button><input file>/usr/local/lib/X11/mini-icons/mini-cross.xpm</input><label>TRY A DIFFERENT TOOL</label><action type=\"exit\">FLAGTRYDIFF</action></button>
+   <button cancel></button>
+ </hbox>
+</vbox>
+</window>
+"
+
+  RETSTRING="`gtkdialog3 --program=POST_DIALOG --center`" 
+  if [ "`echo "$RETSTRING" | grep '^EXIT' | grep 'FLAG'`" != "" ];then
+   CHOSENACTION="`echo "$RETSTRING" | grep '^EXIT' | grep 'FLAG' | cut -f 2 -d '"'`" #'geany
+   case $CHOSENACTION in
+    FLAGYES)
+     echo -e "#!/bin/sh\nexec ${NWEXEC}" > /usr/local/bin/defaultconnect
+     export INFO_DIALOG="
+<window title=\"Network Connection Wizard\" icon-name=\"gtk-connect\">
+<vbox>
+ <text use-markup=\"true\"><label>\"<b>'${NWCHOICE}' now set as default network tool. Here are some technical notes that you might find useful:</b>\"</label></text>
+ <text><label>The default network tool is specified in file /usr/local/bin/defaultconnect, and if you were to look in that file now you will see that it contains '${NWEXEC}'. If you ever wanted to manually change that back to the original setting, you could edit the file and in place of '${NWEXEC}' put 'connectwizard'.</label></text>
+  <text><label>If you click on the 'connect' icon on the desktop, it will directly start the '${NWEXEC}' tool. In fact, it starts whatever has been specified in /usr/local/bin/defaultconnect. You can right-click on the 'connect' icon for a menu with other run options.</label></text>
+ <text><label>EXPERTS ONLY: If you really want to know in-depth about the inner workings, specifically how the default tool is activated at bootup, look in /etc/rc.d/rc.sysinit. Two other relevant scripts are /usr/sbin/connectwizard and /usr/sbin/connectwizard_2nd.</label></text>
+ <hbox><button ok></button></hbox>
+</vbox>
+</window>"
+     gtkdialog3 --program=INFO_DIALOG --center
+    ;;
+    FLAGTRYDIFF)
+     echo -e '#!/bin/sh\nexec connectwizard' > /usr/local/bin/defaultconnect
+     exec connectwizard
+    ;;
+   esac
+  fi
+ 
+fi
+
+###END###

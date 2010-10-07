@@ -1,0 +1,4 @@
+#!/bin/sh
+#wrapper for midori
+Xdialog --timeout 12 --msgbox "You are using Midori as your default browser. \nThis version is a stripped down version for internal use \n and has possible security holes as an external browser. \nYou should install a full featured Browser.  \n \nIn the Puppy Package Manager there are two other packages \n for Midori that are more suitable and both PPM and \n Quickpet have several other browsers to choose from. \n \nClick \"OK\" to start Midori" 0 0 0
+exec midori "$@"

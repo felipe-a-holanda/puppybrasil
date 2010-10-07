@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- Created with Inkscape ("http://www.inkscape.org/") -->
+<svg
+   id="svg1"
+   sodipodi:version="0.32"
+   inkscape:version="0.36"
+   width="635.28pt"
+   height="374.89pt"
+   sodipodi:docbase="/mnt/sdb3/woofproject/woof-tree/rootfs-skeleton/usr/share/doc"
+   sodipodi:docname="/mnt/sdb3/woofproject/woof-tree/rootfs-skeleton/usr/share/doc/woof-tree-official.svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="base" />
+  <rect
+     style="font-size:12;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke-width:3pt;"
+     id="rect98"
+     width="792.500040"
+     height="467.500000"
+     x="1.250000"
+     y="1.112523" />
+  <path
+     sodipodi:type="arc"
+     style="fill:#b6ffb4;fill-rule:evenodd;stroke:none;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     id="path123"
+     d="M 431.250000 408.612183 A 93.750000 38.750000 0 1 0 243.750000,408.612183 A 93.75 38.75 0 1 0 431.25 408.612 L 337.500000 408.612183 z"
+     sodipodi:cx="337.500000"
+     sodipodi:cy="408.612183"
+     sodipodi:rx="93.750000"
+     sodipodi:ry="38.750000"
+     transform="matrix(1.226667,0.000000,0.000000,1.064516,204.3856,-69.99382)" />
+  <path
+     sodipodi:type="arc"
+     style="fill:#ffb2b6;fill-rule:evenodd;stroke:none;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     id="path180"
+     d="M 577.500000 586.737183 A 160.625000 45.625000 0 1 0 256.250000,586.737183 A 160.625 45.625 0 1 0 577.5 586.737 L 416.875000 586.737183 z"
+     sodipodi:cx="416.875000"
+     sodipodi:cy="586.737183"
+     sodipodi:rx="160.625000"
+     sodipodi:ry="45.625000"
+     transform="matrix(0.715955,0.000000,0.000000,1.027397,-175.7957,-293.6732)" />
+  <path
+     sodipodi:type="arc"
+     style="fill:#b6ffb4;fill-rule:evenodd;stroke:none;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     id="path126"
+     d="M 431.250000 408.612183 A 93.750000 38.750000 0 1 0 243.750000,408.612183 A 93.75 38.75 0 1 0 431.25 408.612 L 337.500000 408.612183 z"
+     sodipodi:cx="337.500000"
+     sodipodi:cy="408.612183"
+     sodipodi:rx="93.750000"
+     sodipodi:ry="38.750000"
+     transform="matrix(1.000000,0.000000,0.000000,0.935484,67.66730,-238.7361)" />
+  <path
+     sodipodi:type="arc"
+     style="fill:#ffb2b6;fill-rule:evenodd;stroke:none;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     id="path120"
+     d="M 577.500000 586.737183 A 160.625000 45.625000 0 1 0 256.250000,586.737183 A 160.625 45.625 0 1 0 577.5 586.737 L 416.875000 586.737183 z"
+     sodipodi:cx="416.875000"
+     sodipodi:cy="586.737183"
+     sodipodi:rx="160.625000"
+     sodipodi:ry="45.625000"
+     transform="matrix(0.762646,0.000000,0.000000,1.068493,322.2394,-370.9107)" />
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:3.7828;"
+     d="M 298.917 21.0201 L 295.167 272.277 "
+     id="path4" />
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:20;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="308.917328"
+     y="25.8463318"
+     id="text5"
+     sodipodi:linespacing="100%"><tspan
+   x="308.917328"
+   y="25.8463326"
+   sodipodi:role="line"
+   id="tspan14"
+   style="fill:#000000;fill-opacity:1;">Woof</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan154"
+   x="308.917328"
+   y="45.8463326"
+   style="fill:#000000;fill-opacity:1;">time-line</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="201.417328"
+     y="35.0098240"
+     id="text21"
+     sodipodi:linespacing="100%"><tspan
+   id="tspan22"
+   style="fill:#000000;fill-opacity:1;">2008-11-02</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="200.167328"
+     y="91.0137608"
+     id="text32"
+     sodipodi:linespacing="100%"><tspan
+   id="tspan31"
+   style="fill:#000000;fill-opacity:1;">2009-10-17</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#ae0000;stroke-width:2.5;stroke-dasharray:none;"
+     d="M 298.917 88.5258 C 321.558 89.8631 344.199 87.8568 366.84 92.5381 C 379.031 94.5434 391.968 99.8927 402.667 117.277 "
+     id="path50"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#9b0000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="350.167328"
+     y="129.763791"
+     id="text58"><tspan
+   id="tspan52"
+   style="fill:#9b0000;fill-opacity:1;">Puppy 4.3.1</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#00009c;stroke-width:2.22201;"
+     d="M 295.167 212.277 C 352.996 213.556 410.825 211.638 468.658 216.114 C 499.797 218.032 532.841 223.149 560.167 239.777 "
+     id="path62"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#00009b;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="541.417328"
+     y="257.263733"
+     id="text66"><tspan
+   id="tspan64"
+   style="fill:#00009b;fill-opacity:0.75;">Wary</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#9b009b;stroke-width:2.54661;"
+     d="M 297.667 226.027 C 350.314 231.55 402.96 223.265 455.607 242.596 C 483.959 250.881 514.04 272.973 538.917 344.777 "
+     id="path66"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#99009c;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="525.167328"
+     y="363.513794"
+     id="text67"><tspan
+   id="tspan68"
+   style="fill:#99009c;fill-opacity:1;">Lucid Puppy 5.0 (Lupu)</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#970000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="510.167328"
+     y="111.013791"
+     id="text104"><tspan
+   id="tspan86"
+   style="fill:#970000;fill-opacity:1;">Puppy 4.x series</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan88"
+   x="510.167328"
+   y="125.013794"
+   style="fill:#970000;fill-opacity:1;">Packages compiled from source</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan90"
+   x="510.167328"
+   y="139.013794"
+   style="fill:#970000;fill-opacity:1;">using T2, the 4.x series has been</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan92"
+   x="510.167328"
+   y="153.013794"
+   style="fill:#970000;fill-opacity:1;">our official Puppy release right</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan94"
+   x="510.167328"
+   y="167.013794"
+   style="fill:#970000;fill-opacity:1;">through 2009 and into 2010</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#fc3234;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:18;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="596.417358"
+     y="282.263794"
+     id="text158"
+     sodipodi:linespacing="100%"><tspan
+   x="596.417358"
+   y="282.263794"
+   sodipodi:role="line"
+   id="tspan124"
+   style="fill:#fc3234;fill-opacity:0.75;">STATUS: Beta</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#22c924;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:16;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="336.417328"
+     y="154.763852"
+     id="text163"
+     sodipodi:linespacing="100%"><tspan
+   x="336.417328"
+   y="154.763855"
+   sodipodi:role="line"
+   id="tspan130"
+   style="fill:#22c924;fill-opacity:1;">STATUS: Release</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#ae0000;stroke-width:2.5;stroke-dasharray:none;"
+     d="M 295.167 96.0264 C 265.979 104.398 236.791 91.8371 207.604 121.146 C 191.888 133.699 175.21 167.188 161.417 276.027 "
+     id="path156"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#9b0000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="147.667328"
+     y="294.763791"
+     id="text157"><tspan
+   id="tspan158"
+   style="fill:#9b0000;fill-opacity:0.75;">Puppeee</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#ae0000;stroke-width:2.5;stroke-dasharray:none;"
+     d="M 292.667 97.2767 C 250.385 105.59 208.103 93.1164 165.824 122.221 C 143.057 134.688 118.897 167.944 98.917 276.027 "
+     id="path162"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#9b0000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="52.6673279"
+     y="296.013791"
+     id="text164"><tspan
+   id="tspan165"
+   style="fill:#9b0000;fill-opacity:0.75;">Puppy 4.4</tspan>
+</text>
+  <path
+     style="font-size:12;font-weight:normal;fill-opacity:0.75;stroke-width:3pt;font-family:helvetica;"
+     d="M 155.926 110.459 L 157.279 109.481 L 160.86 114.431 L 162.992 108.926 L 164.711 107.683 L 162.409 113.647 L 169.258 113.583 L 167.503 114.853 L 161.211 114.916 L 163.342 117.863 L 161.99 118.841 L 155.926 110.459 z M 156.936 114.719 C 156.738 114.764 156.538 114.836 156.337 114.939 C 156.138 115.032 155.932 115.158 155.717 115.313 C 154.957 115.863 154.504 116.469 154.359 117.131 C 154.217 117.787 154.393 118.456 154.887 119.139 L 157.186 122.316 L 155.833 123.295 L 151.469 117.262 L 152.821 116.284 L 153.5 117.221 C 153.517 116.649 153.689 116.113 154.015 115.609 C 154.339 115.102 154.825 114.613 155.473 114.144 C 155.566 114.077 155.672 114.008 155.791 113.938 C 155.909 113.864 156.042 113.787 156.191 113.705 L 156.936 114.719 z M 146.034 122.252 C 145.313 122.774 144.892 123.394 144.775 124.115 C 144.655 124.831 144.855 125.55 145.377 126.271 C 145.899 126.993 146.518 127.412 147.234 127.53 C 147.952 127.64 148.674 127.431 149.4 126.906 C 150.117 126.387 150.535 125.769 150.653 125.049 C 150.77 124.329 150.569 123.609 150.05 122.891 C 149.533 122.177 148.914 121.764 148.193 121.649 C 147.47 121.532 146.751 121.734 146.034 122.252 z M 145.426 121.412 C 146.596 120.566 147.718 120.181 148.791 120.258 C 149.864 120.335 150.758 120.869 151.475 121.86 C 152.19 122.847 152.417 123.864 152.157 124.911 C 151.895 125.955 151.178 126.899 150.008 127.746 C 148.833 128.596 147.71 128.983 146.636 128.905 C 145.565 128.821 144.673 128.285 143.958 127.297 C 143.242 126.307 143.012 125.291 143.27 124.252 C 143.533 123.209 144.251 122.262 145.426 121.412 z M 139.533 122.319 L 140.129 123.143 L 138.842 124.074 C 138.36 124.424 138.075 124.738 137.989 125.019 C 137.907 125.297 138.002 125.623 138.272 125.996 L 138.658 126.529 L 140.874 124.927 L 141.431 125.697 L 139.215 127.3 L 143.022 132.562 L 141.669 133.541 L 137.863 128.279 L 136.576 129.21 L 136.018 128.439 L 137.305 127.508 L 137.001 127.088 C 136.516 126.417 136.374 125.775 136.577 125.162 C 136.778 124.547 137.339 123.906 138.26 123.239 L 139.533 122.319 z "
+     id="path172" />
+  <text
+     xml:space="preserve"
+     style="fill:black;stroke:none;font-family:helvetica;font-style:normal;font-weight:normal;font-size:12px;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="-101.180187"
+     y="174.228882"
+     id="text177"
+     transform="matrix(0.415502,-1.111653,1.209143,0.451941,0.000000,0.000000)"><tspan
+   id="tspan178">remaster</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#fc3234;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:18;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="62.6673279"
+     y="328.513794"
+     id="text181"
+     sodipodi:linespacing="100%"><tspan
+   x="62.6673279"
+   y="328.513794"
+   sodipodi:role="line"
+   id="tspan182"
+   style="fill:#fc3234;fill-opacity:0.75;">STATUS: Beta</tspan>
+</text>
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#a2a400;stroke-width:2.04202;"
+     d="M 296.417 199.777 C 368.157 201.23 439.899 199.05 511.642 204.138 C 550.272 206.318 591.265 212.131 625.167 231.027 "
+     id="path185"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#8a8c00;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="605.167358"
+     y="248.513733"
+     id="text186"><tspan
+   id="tspan187"
+   style="fill:#8a8c00;fill-opacity:0.75;">FatDog64</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#009b00;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="17.6673279"
+     y="407.263794"
+     id="text107"><tspan
+   id="tspan108"
+   style="fill:#009b00;fill-opacity:1;">Quirky</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan123"
+   x="17.6673279"
+   y="421.263794"
+   style="fill:#009b00;fill-opacity:1;">Packages compiled from source</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan125"
+   x="17.6673279"
+   y="435.263794"
+   style="fill:#009b00;fill-opacity:1;">using T2, Quirky is at the forefront</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan127"
+   x="17.6673279"
+   y="449.263794"
+   style="fill:#009b00;fill-opacity:1;">of exploring new ideas for Puppy</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="200.167328"
+     y="232.745939"
+     id="text120"
+     sodipodi:linespacing="100%"><tspan
+   id="tspan120"
+   style="fill:#000000;fill-opacity:1;">2010-04-16</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#22c924;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:16;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="546.417328"
+     y="389.763855"
+     id="text124"
+     sodipodi:linespacing="100%"><tspan
+   x="546.417358"
+   y="389.763855"
+   sodipodi:role="line"
+   id="tspan126"
+   style="fill:#22c924;fill-opacity:1;">STATUS: Release</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="543.868103"
+     y="339.045072"
+     id="text129"
+     sodipodi:linespacing="100%"><tspan
+   id="tspan131"
+   style="fill:#000000;fill-opacity:1;">Released 2010-05-15</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#99009b;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="456.358032"
+     y="415.187014"
+     id="text147"><tspan
+   id="tspan148"
+   style="fill:#99009b;fill-opacity:1;">Lupu</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan163"
+   x="456.358032"
+   y="429.187012"
+   style="fill:#99009b;fill-opacity:1;">Created from Ubuntu Lucid binary</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan166"
+   x="456.358032"
+   y="443.187012"
+   style="fill:#99009b;fill-opacity:1;">packages. Package Manager has access</tspan>
+<tspan
+   sodipodi:role="line"
+   id="tspan168"
+   x="456.358032"
+   y="457.187012"
+   style="fill:#99009b;fill-opacity:1;">to entire Ubuntu package repositories</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#000000;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;text-anchor:start;writing-mode:lr;"
+     x="200.167328"
+     y="268.178988"
+     id="text145"
+     sodipodi:linespacing="100%"><tspan
+   id="tspan146"
+   style="fill:#000000;fill-opacity:1;">2010-06-05</tspan>
+</text>
+  <path
+     sodipodi:type="arc"
+     style="fill:#b6ffb4;fill-rule:evenodd;stroke:none;fill-opacity:0.75;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     id="path150"
+     d="M 431.250000 408.612183 A 93.750000 38.750000 0 1 0 243.750000,408.612183 A 93.75 38.75 0 1 0 431.25 408.612 L 337.500000 408.612183 z"
+     sodipodi:cx="337.500000"
+     sodipodi:cy="408.612183"
+     sodipodi:rx="93.750000"
+     sodipodi:ry="38.750000"
+     transform="matrix(1.020000,0.000000,0.000000,1.258065,21.93596,-144.0504)" />
+  <path
+     style="font-size:12;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#009b00;stroke-width:2.5;stroke-dasharray:none;"
+     d="M 297.667 263.742 C 311.852 266.881 326.033 262.173 340.218 273.16 C 347.862 277.871 355.963 290.427 362.667 331.242 "
+     id="path151"
+     sodipodi:nodetypes="ccc" />
+  <text
+     xml:space="preserve"
+     style="fill:#009c00;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:14;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="323.267792"
+     y="356.466431"
+     id="text152"><tspan
+   id="tspan153"
+   style="fill:#009c00;fill-opacity:1;">Quirky 1.2</tspan>
+</text>
+  <text
+     xml:space="preserve"
+     style="fill:#22c924;stroke:none;font-family:DejaVu Sans;font-style:normal;font-weight:bold;font-size:16;text-anchor:start;writing-mode:lr;fill-opacity:1;stroke-opacity:1;stroke-width:3pt;stroke-linejoin:miter;stroke-linecap:butt;"
+     x="288.061066"
+     y="385.216553"
+     id="text156"
+     sodipodi:linespacing="100%"><tspan
+   x="288.061066"
+   y="385.216553"
+   sodipodi:role="line"
+   id="tspan157"
+   style="fill:#22c924;fill-opacity:1;">STATUS: Release</tspan>
+</text>
+</svg>

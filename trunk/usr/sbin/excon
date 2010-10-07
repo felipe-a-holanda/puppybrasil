@@ -1,0 +1,11 @@
+#!/bin/sh 
+echo "ICONWIPE" > /tmp/pup_event_icon_change_flag 
+#do this code block if X is running... 
+mv -f /etc/X11/xorg.conf /etc/X11/xorg.conf.prev 2>/dev/null 
+   [ -e /usr/bin/Xvesa ] && ln -sf Xvesa /usr/bin/X 
+   NEXTWM="`cat /etc/windowmanager`" 
+   echo -n "$NEXTWM" > /etc/windowmanager #this makes change permanent. 
+   echo -n "$NEXTWM" > /tmp/wmexitmode.txt 
+   sync 
+   exec killall X
+   

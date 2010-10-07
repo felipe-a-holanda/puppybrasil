@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Htop system process viewer
+Exec=rxvt +sb -fn 9x15 -bg black -fg white -title htop -n htop -e htop
+Comment=system process viewer
+Icon=htop24.png
+Categories=System
+Terminal=true

@@ -1,0 +1,132 @@
+#!/bin/sh
+#Barry Kauler 2007 LGPL
+#v405 overhauled.
+#v408 rerwin: bugfix.
+#v465 rerwin: v413 move init string to Init3
+#v477 rerwin: v413 wait longer for modem response; add splash message during sleep
+#v424 rerwin: reset skip-PIN flag
+
+#[ ! $1 ] && exit
+DEVM=$1
+PARAM2=$2
+
+MODEMDEV=""
+if [ -h /dev/modem ];then
+ MODEMDEV="`readlink /dev/modem`"
+fi
+
+#a fallback if user runs this script directly...
+[ "$DEVM" = "" ] && [ "$MODEMDEV" = "" ] && exit
+[ "$DEVM" = "" ] && [ "$MODEMDEV" != "" ] && DEVM="$MODEMDEV"
+
+if [ "$PARAM2" = "initonly" ];then
+ MSGSUCCESS="Okay, the modem was probed and it responded, confirming that it does exist,\n
+now the probe can be done to determine a suitable initialization string.\n
+Click the 'Yes' button to do this (recommended), \n
+or 'No' if you have changed your mind..."
+else
+ MSGSUCCESS="Success, the modem responds as $DEVM! (The modem is there; getting it to dial out is another matter!)\n
+Click the 'yes' button if you would like /dev/modem to be a link to ${DEVM} and the Wvdial\n
+configuration file /etc/wvdial.conf set with entry 'Modem = /dev/${DEVM}. An attempt will\n
+also be made to determine appropriate modem initialization strings."
+fi
+
+
+#return the IRQ that respond to a given device...
+irq_from_device_func() { #device passed in, ex: /dev/ttyS0
+ #v1.0.2 it seems that setserial may be more trouble than its worth...
+ #in the case of linmodems it often doesn't work...
+ case ${1} in
+  /dev/ttyS[0-9])
+   set -- `setserial -v -b ${1} auto_irq skip_test autoconfig session_lockout`
+   [ "$6" ] && echo $6 | tr -d \)
+  ;;
+  esac
+}
+
+#talk to modem, wait for response...
+chat_with_func() { #device passed in.
+ rm -f /tmp/answer.txt
+ #TODO maybe send +++ to return modem to command-mode.
+ #hangs if modem unplugged or turned off (contrary to what docs say)...
+ modem-stats -c "ATZ" $1 > /tmp/answer.txt &
+ sleep 5 #v413
+ killall modem-stats
+ if [ -e /tmp/answer.txt ];then
+  if [ -s /tmp/answer.txt ];then #nonzero size.
+   grep "^OK" /tmp/answer.txt > /dev/null 2>&1
+   [ $? -eq 0 ] && return 0 #success
+  fi
+ fi
+ return 1
+}
+
+#v433 Set config file Modem line(s), including possible alternate USB modem device.
+modem_device_to_conf_func() {
+ #Argument is modem device for config file - current or tested
+ DEVMCONF="$1"
+ DEVMALT="`get_modem_alternate_device $DEVM`"
+ if [ "$DEVMALT" = "" ];then
+  if [ "$DEVM" = "$MODEMDEV" -a "$PARAM2" = "" ];then
+   grep -q '^#Modem =' /etc/wvdial.conf \
+    || return 1
+  fi
+  aPATTERN="s%^Modem = .*%Modem = /dev/${DEVMCONF}%"
+ else
+  aPATTERN="s%^Modem = .*%Modem = /dev/${DEVMCONF}\n#Modem = /dev/${DEVMALT}%"
+ fi
+ sed -i \
+  -e '/#Modem =/d' \
+  -e "$aPATTERN" /etc/wvdial.conf
+ return 0
+} #v433 end
+
+modem_test_func() {
+ [ "$DEVM" = "" ] && DEVM='invalid'
+ #case $DEVM in
+ #tty*)
+  yaf-splash -font "8x16" -outline 0 -margin 4 -bg orange -text "Verifying modem is present..." &
+  X8PID=$! #v413
+  IRQM=$(irq_from_device_func /dev/${DEVM})
+  fuser -k /dev/${DEVM} 2>/dev/null #kill processing attached to device.
+  chat_with_func /dev/$DEVM
+  if [ $? -eq 0 ];then
+   kill $X8PID #v413
+   modem_device_to_conf_func $DEVM #v433 set tested dev
+   if [ "$DEVM" = "$MODEMDEV" -a "$PARAM2" = "" ];then
+    Xdialog --left --wmclass "pupdial" --title "PupDial: modem test" --no-cancel --msgbox "Success, the modem responds as $DEVM! (The modem is there; getting it to dial out is another matter!)" 0 0
+   else 
+    Xdialog --left --wmclass "pupdial" --title "PupDial: modem test" --no-cancel --yesno "${MSGSUCCESS}" 0 0
+    if [ $? -eq 0 ];then
+     yaf-splash -font "8x16" -outline 0 -margin 4 -bg orange -text "Please wait, updating settings..." &
+     X9PID=$!
+     ln -snf $DEVM /dev/modem
+
+     waitmax 29 gen_modem_init_string > /dev/null #writes to /tmp/mymodeminitstring
+     if [ -s /tmp/mymodeminitstring ];then
+      INITSTRING="`cat /tmp/mymodeminitstring | sed 's/\&/\\\&/g'`" #v433 sed problem with &
+      bPATTERN="s/^Init3.*/Init3 = ${INITSTRING}/" #v413
+      sed -i -e "$bPATTERN" /etc/wvdial.conf #v433
+     fi
+     kill $X9PID
+    fi
+    rm -f /tmp/.pupdial_pin_sent #v433
+   fi
+   touch /tmp/.pupdial-modem_detected #v433
+  else
+   kill $X8PID #v413
+   modem_device_to_conf_func $MODEMDEV #v433 set current dev
+   Xdialog --left --wmclass "pupdial" --title "PupDial: modem test" --no-cancel --msgbox "Sorry, the modem was not detected as $DEVM." 0 0
+   rm -f /tmp/.pupdial_pin_sent #v433
+   rm -f /tmp/.pupdial-modem_detected #v433
+  fi
+ # ;;
+ #*)
+ #  Xdialog --center --wmclass "pupdial" --title "PupDial: modem test" --no-cancel --msgbox "There is no modem to test." 0 0
+ # ;;
+ #esac
+}
+
+modem_test_func
+
+###END###

@@ -1,0 +1,132 @@
+#!/bin/sh
+#(c) Barry Kauler 2005/2006 www.puppylinux.com
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#keyboard/mouse wizard for Puppy Linux
+#based on code from /usr/X11R7/bin/xwin
+#updated for 2.17
+#v411 rerwin: touchpad fix.
+#v411 rerwin: mouse detect fixes.
+#2009-03-03 ecube: "requires Xorg driver" added for Left-hand mouse
+#2009-05-23 ecube: kmap-1.1.14 keymaps used
+#v431 BK: usb and ps/2 mouse now has same devnode.
+#091122 BK: not using 'kbd' pkg keycodes anymore. only kmaps in /lib/keymaps.
+#100127 notice to restart X if change keyboard layout (see code in /usr/bin/xwin to sync x and console).
+#100215 moved sync code for console/xorg kbd layout from xwin.
+#100527 added jemimah's flsynclient touchpad config.
+
+
+
+askkbdlayout () #091122
+{
+ echo -n "" >/tmp/keybdlist.txt
+ for AFILE in `ls /lib/keymaps/*`
+ do
+  AKMAP="`basename $AFILE .gz`" #us, fr, br, etc.
+  #hmmm, very slow way to do this...
+  case $AKMAP in
+   us*) ACNTRY="(USA)";;
+   fr*) ACNTRY="(France)";;
+   it*) ACNTRY="(Italy)";;
+   ba*) ACNTRY="(Bashkir)";;
+   be*) ACNTRY="(Belgium)";;
+   bg*) ACNTRY="(Bulgaria)";;
+   br*) ACNTRY="(Brazil)";;
+   by*) ACNTRY="(Byelorussian)";;
+   cf*) ACNTRY="(French-Canadian)";;
+   croat*) ACNTRY="(Croatia)";;
+   cz*) ACNTRY="(Czech)";;
+   de) ACNTRY="(Germany)";;
+   de_*) ACNTRY="(Germany)";;
+   de-*) ACNTRY="(Germany)";;
+   dk*) ACNTRY="(Denmark)";;
+   es*) ACNTRY="(Spain)";;
+   fi*) ACNTRY="(Finland)";;
+   hu*) ACNTRY="(Hungary)";;
+   ka*) ACNTRY="(Kazakhstan)";;
+   ky*) ACNTRY="(Kyrgyzstan)";;
+   et*) ACNTRY="(Estonia)";;
+   lt*) ACNTRY="(Lithuania)";;
+   mk*) ACNTRY="(Macedonia)";;
+   sr*) ACNTRY="(Serbia)";;
+   tr*) ACNTRY="(Turkey)";;
+   tt*) ACNTRY="(Tatar)";;
+   sg*) ACNTRY="(Sango)";;
+   ua*) ACNTRY="(Ukraine)";;
+   gr*) ACNTRY="(Greece)";;
+   il*) ACNTRY="(Israel)";;
+   is*) ACNTRY="(Iceland)";;
+   jp*) ACNTRY="(Japan)";;
+   pc*) ACNTRY="(Japanese/English)";;
+   la*) ACNTRY="(Latin_America)";;
+   nl*) ACNTRY="(Netherlands)";;
+   no*) ACNTRY="(Norway)";;
+   pl*) ACNTRY="(Poland)";;
+   pt*) ACNTRY="(Portugal)";;
+   ro*) ACNTRY="(Romania)";;
+   ru*) ACNTRY="(Russia)";;
+   se*) ACNTRY="(Sweden)";;
+   sv*) ACNTRY="(Sweden)";;
+   sk*) ACNTRY="(Slovakia)";;
+   sl*) ACNTRY="(Slovenia)";;
+   uk*) ACNTRY="(UK)";;
+   wangbe*) ACNTRY="(Belgium)";;
+   azerty) ACNTRY="(Tandon)";;
+   dvorak-r) ACNTRY="(Right_single-handed)";;
+   dvorak-l) ACNTRY="(Left_single-handed)";;
+   *)  ACNTRY="-";;
+  esac
+  echo -e "$AKMAP \"${ACNTRY}\"" >> /tmp/keybdlist.txt
+ done
+ KEYLIST="us \"(USA)\" `sort /tmp/keybdlist.txt | tr '\n' ' '`"
+
+ KEYBOARD=""
+ FONTMAP=""
+ CODEPAGE=""
+ CURRKMAP="us"
+ [ -f /etc/keymap ] && CURRKMAP="`cat /etc/keymap | sed -e 's/\..*//'`"
+ #Xdialog --title "Keyboard Wizard" --cancel-label "Cancel" --default-item "$CURRKMAP" --menubox "Select country for your keyboard:" 0 0 0 $( for F in $KEYLIST; do echo $F ; done ) 2> /tmp/kbdextlayout.txt
+ XDLG="Xdialog --title \"Keyboard Wizard\" --cancel-label \"Cancel\" --default-item \"$CURRKMAP\" --menubox \"Select country for your keyboard:\" 30 50 30 ${KEYLIST} 2> /tmp/kbdextlayout.txt"
+ eval $XDLG
+ [ $? != 0 ] && return 1
+ KEYBOARD="`cat /tmp/kbdextlayout.txt`"
+ case $KEYBOARD in #note, same code in /etc/rc.d/rc.country and init.
+  de*|be*|br*|dk*|es*|fi*|fr*|it*|no*|se*|sv*|pt*) #100127 added sv
+   FONTMAP="lat1-12.psfu"
+   modprobe nls_cp850
+   CODEPAGE="850"
+  ;;
+  cz*|hu*|pl*|ro*|sk*|croat*|slovene*)
+   modprobe nls_cp852
+   modprobe nls_iso8859-2
+   FONTMAP="lat2-12.psfu"
+   CODEPAGE="852"
+  ;;
+ esac
+ return 0
+}
+
+
+
+ #put some code in here to ask keyboard layout, keyboard ps2/usb, mouse serial/ps2/usb setup?
+ #also offer the old 2-letter layout...
+ #eval `gtkdialog2 --program=MouseKeyboardWizard | grep "EXIT"`
+
+   askkbdlayout #this is extended menu, func above.
+   #...this sets KEYBOARD, FONTMAP, CODEPAGE variables.
+   [ $? -eq 0 ] && KMAP="$KEYBOARD"
+ echo -n "$KMAP" > /etc/keymap
+ echo -n "$FONTMAP" > /etc/fontmap
+ echo -n "$CODEPAGE" > /etc/codepage
+
+  Xdialog --left --wrap --title "Country setup" --ok-label "Restart X now" --cancel-label "Finished"  --yesno "Ok, the change has been made and will take effect at next boot. However, if you click the 'Restart X now' button X will exit then restart and the new keyboard layout will immediately take effect--however make sure that all other applications are closed first as restarting X will rudely kill them!" 0 100
+
+ if [ $? -eq 0 ];then
+  rm -rf /tmp/.X0-lock
+  sync
+  exec restartwm $CURRENTWM
+ fi
+ 
+
+#done 
+#end while loop.
+###END###

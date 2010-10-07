@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>pmetatagger</title></head><body>Pmetatagger help document.<br>
+<br>
+This program will tag and/or edit existing tags of various audio file
+types. This gui depends on at least one of the following command line
+taggers:<br>
+<br>
+&nbsp;&nbsp;&nbsp; metaflac: necessary for flac support (flac files get corrupted with other taggers)<br>
+&nbsp;&nbsp;&nbsp; vorbiscomment: supports the ogg format (so does mp3info &amp; id3tag)<br>
+&nbsp;&nbsp;&nbsp; AtomicParsley: supports the itunes tagging structure with m4a, m4b, m4p, m4v, &amp; mp4 files<br>
+&nbsp;&nbsp;&nbsp; mp3info: version 1 tags &amp; supports many audio formats (not just mp3)<br>
+&nbsp;&nbsp;&nbsp; id3tag, id3convert, id3info: version 1 tags that support many formats, also version 2 tags for mp3<br>
+<br>
+The gtkdialog (version 0.7.20 or possibly greater) program is also a dependancy.<br>
+<br>
+For some command line specific options please enter "pmetatagger --help" at the command line.<br>
+<br>
+You can choose to load a directory of a specific file type into the gui
+or you can load a single file. The program will find the various
+tagging programs you have installed and will check your file for a tag.
+The information that is found will be displayed in the gui. You can
+then edit or enter the information you want in the tag. For formats
+other than flac there will be a combobox where you can select your
+tagger. The existing tagger type will be displayed first but if you
+want to change to a different tagger you can select it from the drop
+down box (if multiple taggers are installed). If you click "DUMP-tag"
+the tag information will be dumped to a file named (your input
+file).ptag in the same directory as your file. This ptag file can be
+read and edited with a regular text editor. You could then use this
+ptag file as a tag for another file by clicking the button "Tag file
+with an existing ptag". When you're done editing your tag or selecting
+an existing ptag click the "Next" or "Ok" button to move onto the next
+file or end the process if all file/s have been run thru the gui.<br>
+<br>
+For the AtomicParsley supported formats there are alot of tagging options so the gui is a bit more advanced for those filetypes.<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+</body></html>

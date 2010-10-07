@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pschedule task on time
+Icon=mini-clock.xpm
+Comment=Pschedule task on time
+Exec=/usr/local/pschedule/pschedule
+Terminal=false
+Type=Application
+Categories=X-SystemSchedule
+GenericName=Pschedule

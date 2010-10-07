@@ -1,0 +1,36 @@
+
+
+      PuppySerialDetect
+      for Puppy Linux
+      
+  synopsis:
+         detects usb/ps2 mouse&keyboard from /proc/bus/input/devices
+         detects serial mice, and serial modems
+         default output only lists mouse(s) and serial modems.
+         command line options available
+
+Versions:
+
+(1.1h 2008/Oct/16 - Jesse)
+1.1h    added -n command option to skip the serial port scan
+
+(1.1g 2007/Jul/1 - Jesse)
+1.1g    added -u command option to (hopefully) list serial ports with nothing plugged in
+1.1g    serial modem detection reporting fixed (hopefully)
+1.1g    Scanning /proc/tty/driver/serial for some debug messages only.
+1.1g    tidied up some of serial detect code for easier reading/understanding.
+1.1g    extra debug messages so that we can see whats up if somethings not working
+
+(1.1f 2007/Jun/10 - Jesse)
+1.1f    Added /dev node autocreate serial ports /dev/ttySX
+1.1f    Removed shortcut test of scanning /proc/tty/driver/serial which might have missed
+           some serial modems.
+1.1f    Added Serial detect to go from X=0 to 4 (previously X=0 - 3) on /dev/ttySX
+1.1f    README file started
+
+(1.1e a while ago - Jesse)
+1.1e    Added several command line options see --help
+1.1e    Added --help page
+1.1e    Added version number to start of debug output
+
+(1.0 a long, long time ago - BarryK)

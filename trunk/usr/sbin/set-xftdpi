@@ -1,0 +1,31 @@
+#!/bin/sh
+#BK Aug 2009, gpl
+
+export LANG=C #xdialog happy with this.
+
+#read current dpi setting...
+CURRDPI=`cat /root/.Xresources | grep "^Xft\\.dpi:" | tr '\t' ' ' | tr -s ' ' | cut -f 2 -d ' '`
+[ ! $CURRDPI ] && CURRDPI=78
+CURRINDEX=`expr $CURRDPI \/ 6`
+CURRINDEX=`expr $CURRINDEX - 9`
+
+CNT=0; RADIOBUTTONS=''
+for ONEDPI in 54 60 66 72 78 84 90 96 102 108
+do
+ STATUS='off'
+ [ $CNT -eq $CURRINDEX ] && STATUS='on'
+ RADIOBUTTONS="$RADIOBUTTONS $ONEDPI $ONEDPI $STATUS"
+ CNT=`expr $CNT + 1`
+done
+
+
+XDIALOG="Xdialog --left --stdout --title \"Set global font size\" --no-tags --radiolist \"Please choose dpi (dots per inch) for the screen.\nThe larger the value, the bigger that antialiased\nfonts will render on the screen. Adjust up or down if\nfonts are rendering too small or too big on screen.\n\nNote1: Some apps do not use antialiased rendering\n            and will not be affected by this setting.\n\nNote2: Change will only take effect after restarting X\" 0 0 0 ${RADIOBUTTONS}"
+NEWDPI="`eval "$XDIALOG"`"
+[ $? -ne 0 ] && exit
+
+TMP1="`cat /root/.Xresources | grep -v "Xft\\.dpi:"`"
+echo "$TMP1" > /root/.Xresources
+echo "Xft.dpi: $NEWDPI" >> /root/.Xresources
+sync
+
+###END###

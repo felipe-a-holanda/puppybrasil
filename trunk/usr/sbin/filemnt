@@ -1,0 +1,131 @@
+#!/bin/bash
+##############  ROX app.: Click image files to mount & unmount.	by: Terry Becker	aka: SunBurnt
+##############	File types = ".2fs, .3fs, .sfs, .iso, & initrd.gz".
+#v423 detect wrong squashfs version 3.x or 4.x.
+#v424 advise of sfs-version-converter.
+#100606 have backported squashfs4 to kernel 2.6.27.47.
+
+#v423...
+KERNELVER="`uname -r`"
+KERNELSUBVER=`echo -n "$KERNELVER" | cut -f 3 -d '.' | cut -f 1 -d '-'`
+KERNELSUBSUBVER=`echo -n "$KERNELVER" | cut -f 4 -d '.' | cut -f 1 -d '-'`
+SFSSTR='squashfs, version 3'
+SFSMAJOR=3
+if [ $KERNELSUBVER -eq 27 ];then
+ if [ $KERNELSUBSUBVER -gt 46 ];then #100606
+  SFSSTR='squashfs, version 4'
+  SFSMAJOR=4
+ fi
+fi
+if [ $KERNELSUBVER -gt 28 ];then
+ SFSSTR='squashfs, version 4'
+ SFSMAJOR=4
+fi
+
+ imgFile="$1"
+ if [ -z "$imgFile" ] ;then exit 1 ;fi
+ if [ "`dirname $imgFile`" = '\.' ] ;then
+  imgFile="`pwd``echo $imgFile |sed 's/^\.//'`"
+ fi
+ MntPt='/mnt/'`echo "$imgFile" |sed "s#^\.##g" |sed "s#/#+#g"`
+ 
+
+if [ 1 -eq 2 ] ;then	##############################################	JUMP OVER this SECTION.
+
+ loMnts="`mount |grep '/dev/loop' |awk '{print $1}'`"
+ echo "$loMnts" |while read LOOP					### test if file's mounted
+ do
+   loFile="`losetup-FULL $LOOP |sed 's/^.*(//' |sed 's/).*$//'`"
+   if [ "$loFile" = "$imgFile" ] ;then
+    echo -e "\n ### Loop File: $loFile"
+    break
+   fi
+   i=`expr $i + 1`
+ done
+
+fi			##############################################	END of JUMP SECTION.
+
+
+							### file's not mounted, mount it
+# if [ $i -eq 16 ] ;then
+
+ imgFileBASE="`basename "$imgFile"`" #BK
+
+ if [ ! -d "$MntPt" ] ;then
+ 
+  #BK check if already mounted elsewhere...
+  for ONELOOP in `mount | grep '^/dev/loop' | cut -f 1 -d ' ' | tr '\n' ' '`
+  do
+   MNTDIMG="`losetup-FULL $ONELOOP | cut -f 2 -d '(' | cut -f 1 -d ')'`"
+    IMGBASE="`basename "$MNTDIMG"`"
+    #echo "IMGBASE=$IMGBASE imgFileBASE=$imgFileBASE" #TEST
+    #not perfect, but paths may be symlinks...
+    if [ "$IMGBASE" = "$imgFileBASE" ];then #if [ "$MNTDIMG" = "$imgFile" ];then
+     xmessage "Sorry $imgFile is already mounted and in-use by Puppy"
+     exit
+    fi
+  done
+   
+  Ext=`echo "$imgFile" |sed 's/^.*\.//'`	# get file type from extention
+  if [ "$Ext" = '2fs' ] ;then
+   Type='ext2'
+  elif [ "$Ext" = '3fs' ] ;then
+   Type='ext3'
+  elif [ "$Ext" = '4fs' ] ;then #v423 planning for the future!
+   Type='ext4'
+  elif [ "$Ext" = 'sfs' ] ;then
+   Type='squashfs'
+  elif [ "$Ext" = 'iso' ] ;then
+   Type='iso9660'
+  # BK
+  #elif [ "$imgFile" = 'initrd.gz' ] ;then
+  # Type='ext2'
+  # gunzip $imgFile				# handle gzip image file
+  # imgFile="echo "$imgFile" |sed 's/.gz$//'"
+  fi
+  
+  #v423 detect wrong squashfs version...
+  if [ "$Type" = "squashfs" ];then
+   if [ "`disktype "${imgFile}" | grep "$SFSSTR"`" = "" ];then
+    if [ $SFSMAJOR -eq 4 ];then #100606
+     xmessage -center -bg '#FFC0C0' "NOTICE: This is an older version 3.x squashfs file, not usable.
+All Linux kernels 2.6.29 or later require version 4.x squashfs files
+(note, some 2.6.27.47+ kernels have Squashfs4 backported to them).
+Note, there is an SFS-version-converter in the Utility menu, run that first."
+    else
+     xmessage -center -bg '#FFC0C0' "NOTICE: This is a newer version 4.x squashfs file, not usable.
+All Linux kernels 2.6.28 or earlier require version 3.x squashfs files
+(note, an exception is some 2.6.27.47+ kernels that have Squashfs4 backported).
+Note, there is an SFS-version-converter in the Utility menu, run that first."
+    fi
+    exit
+   fi
+  fi
+  
+#  echo -e "\nimgFile = $imgFile\t\tExt  = $Ext"
+#  echo -e "MntPt   = $MntPt\t\tType = $Type\n"
+  echo -e "\n ### Mount: $imgFile\n"
+  mkdir -p $MntPt
+  mount -t $Type -o loop $imgFile $MntPt
+  Err=$?
+  if [ $Err -eq 0 ] ;then
+   rox -d $MntPt # mount good, run rox filer
+   yaf-splash -timeout 6 -font "8x16" -outline 0 -margin 4 -bg green -text "SUCCESS! Click $imgFileBASE icon again to unmount it" & #BK
+  fi	
+
+ else							### file's mounted, unmount it
+  rox -D $MntPt #BK
+  umount $MntPt
+  Err=$?
+  rmdir $MntPt
+  if [ "basename $imgFile" = 'initrd' ] ;then gzip -9 $imgFile ;fi
+  yaf-splash -timeout 3 -font "8x16" -outline 0 -margin 4 -bg orange -text "Unmounting $imgFileBASE" #BK
+  #Xdialog --title " Notice..." --no-button \
+  #        --infobox "
+  #UnMounting: $imgFile  
+  #" 0 0 2000
+  echo -e "\n ### UnMount: $imgFile\n"
+ fi
+ if [ $Err -gt 0 ] ;then			# ERROR: mount/unmount
+  xmessage -title " ERROR..." "  Failed mounting or unmounting.  "
+ fi

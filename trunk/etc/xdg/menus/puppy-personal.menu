@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Personal</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Personal.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="99">PersonalSub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">PersonalUtility</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>PersonalSub</Name>
+    <Directory>Puppy-PersonalSub.directory</Directory>
+    <Include>
+      <Category>X-Personal</Category>
+      <Category>Calendar</Category>
+      <Category>ContactManagement</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>PersonalUtility</Name>
+    <Directory>Puppy-PersonalUtility.directory</Directory>
+    <Include>
+      <Category>X-PersonalUtility</Category>
+    </Include>
+  </Menu>
+
+</Menu>

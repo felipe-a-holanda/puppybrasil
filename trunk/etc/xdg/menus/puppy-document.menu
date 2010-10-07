@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Document</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Document.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="25">DocumentSub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="12">DocumentTextEditor</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">DocumentUtility</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>DocumentSub</Name>
+    <Directory>Puppy-DocumentSub.directory</Directory>
+    <Include>
+      <Category>X-Document</Category>
+      <Category>WordProcessor</Category>
+      <Category>WebDevelopment</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>DocumentTextEditor</Name>
+    <Directory>Puppy-DocumentTextEditor.directory</Directory>
+    <Include>
+      <Category>TextEditor</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>DocumentUtility</Name>
+    <Directory>Puppy-DocumentUtility.directory</Directory>
+    <Include>
+      <Category>X-DocumentUtility</Category>
+      <Category>Dictionary</Category>
+    </Include>
+  </Menu>
+
+</Menu>

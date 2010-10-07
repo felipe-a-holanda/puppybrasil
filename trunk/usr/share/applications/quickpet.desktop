@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Quickpet Install Popular Programs
+Icon=pet16.xpm
+Comment=Quickpet Install Popular Programs
+Exec=quickpet
+Terminal=false
+Type=Application
+Categories=PackageManager
+GenericName=Quickpet Install Popular Programs

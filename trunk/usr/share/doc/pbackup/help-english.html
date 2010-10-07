@@ -1,0 +1,261 @@
+<html>
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+<title>Pbackup</title>
+</head>
+<table style="width: 760px; height: 29px;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; background-color: rgb(192, 192, 192); ">
+        <div style="text-align: left;">
+          <br>
+          <font size="+3"><span style="font-weight: bold;">&nbsp;Pbackup</span></font>&nbsp;
+          <span style="color: rgb(0, 153, 0);">...one-button-backup</span>
+        </div>
+      </td>
+      <td style="vertical-align: top; background-color: rgb(192, 192, 192); text-align: right;">
+        Version 3.1.x&nbsp; <br>
+        <a href="http://www.murga-linux.com/puppy/viewtopic.php?t=10975" target="new">Pbackup</a>&nbsp; <br>
+        GPL, Copyright 2006,2007,2008,2009&nbsp; <br>
+        Sigmund Berglund&nbsp; <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<body>
+<blockquote>
+<br>
+______________________________________________________________________________________________<br>
+INDEX<br>
+<br>
+1.		About<br>
+2.		Backup types<br>
+3.		Jobs<br>
+4.		Main settings<br>
+5.		Backup<br>
+  5.1.	Options<br>
+  5.2.	Settings<br>
+6.		Sync<br>
+  6.1.	Options<br>
+  6.2.	Settings<br>
+7.		Misc<br>
+8.		Preferences<br>
+9.		Quiet mode<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[1] ABOUT<br>
+<br>
+Features<br>
+- 3 backup types (Backup recent, Full backup, Sync)<br>
+- Save to CD / DVD / Local disks / FTP-server<br>
+- Build backup jobs for scheduling or run manually<br>
+- Restore backup files<br>
+- Chain several backups<br>
+- Inspection mode<br>
+- Compress result<br>
+- Minor requirements and minor size<br>
+- Language support<br>
+- Wizard and Documentation (/usr/share/doc/pbackup/help-LOCAL.txt)<br>
+<br>
+Translators:<br>
+- French: Jean-Jacques Moulinier<br>
+- German - Thorsten Köbe<br>
+- Japanese: Jimmy Lu<br>
+- Norwegian: Sigmund Berglund<br>
+- Russian: Valeriy Kruvelis<br>
+- Spanish: Pedro Worcel<br>
+<br>
+Requirements:<br>
+- bash, busybox (or similar)<br>
+- gtkdialog 0.7.15, xdialog<br>
+Optional:<br>
+- cdrtools (mkisofs, cdrecord) for CD-burning<br>
+- dvd+rwtools (growisofs) for DVD-burning<br>
+- curl for transferring via FTP<br>
+- cron for scheduling<br>
+<br>
+Support/Code catch:<br>
+Trond Sandmo, PaulBx1, Veronicathecow, GeoffS, Dougal, Barry Kauler, Mark Ulrich, GuestToo, Nathan Fisher, Jason Pline, HairyWill, Trapster, TED DOG, Sunburnt, Rarsa<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[2] BACKUP TYPES<br>
+<br>
+< BACKUP RECENT ><br>
+Save files created or changed since last backup. First run it will copy files from a given date. (Default is 1/1/1970 to include all.) Next run it copies only files that is newer than last backup. Files get full path in backup, and are put into one top-directory 'Backup from date - to date/time'.<br>
+<br>
+< FULL BACKUP ><br>
+Save all files in specified directories. Files get full path in backup, and are put into one top-directory 'Backup date/time'.<br>
+<br>
+< SYNC ><br>
+Keeps 2 directories equal. First run it will copy all files to target (save-to), later just updating changes to target. 'SYNC' only works when target is a local disk (harddisk, flashcard...). It is most secure that sourcefiles and target are stored on equal filesystems (ext, reiser...). If you still choose to use 2 different filesystems, it is possible to uncheck the option 'CHECK ATTRIBUTES'. When copying files to another type of filesystem, files may get different names and attributes. These files may be detected as alien files by 'SYNC', and deleted.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[3] JOBS<br>
+<br>
+Every backup contains a set of settings. These settings are saved in a 'job'. It is always an active job, I repeat - Always. It means; when you run a backup, settings are saved with the active job (after backup has succeeded). It will overwrite existing settings for this job. Active job is marked with a red ball in the main window.<br>
+<br>
+There is a predefined job - 'Pbackup_default'. If you only work with one backup-job, it's just to specify settings and push button. It will then be saved with 'default'-job. To manage different backups you should create new jobs. Just specify settings, and choose 'NEW' from the menu. You will the be asked for a name, and if the job should be scheduled. For more info about backup options and settings, choose 'NEW JOB - WIZARD'.<br>
+<br>
+Jobs can be combined in a 'CHAIN' (menu). This will run jobs one by one. The chain will be show up as a job, but status after backup will be updated to jobs inside the chain. The chain itself doesn't get any status.<br>
+<br>
+A job can either be started by user ('MANUAL'), or by a given timeschedule. If jobs are scheduled, it shows up in job-field in the row 'SCHEDULE'. When saving a job, there are predefined scheduling options:<br>
+- HOURLY<br>
+- DAILY<br>
+- WEEKLY<br>
+- MONTHLY<br>
+- REALTIME<br>
+<br>
+'REALTIME' will backup every 2 minute. Realtime is designed for 'SYNC' to keep a directory always "up to date". Please consider to uncheck 'WRITE HISTORY' when using this option.<br>
+<br>
+You can also freely edit scheduling. Either by hand or use a schedule editor. It is the program 'crond' that manage the schedule. The jobs are stored in the file: /var/spool/cron/crontabs/$USER.<br>
+<br>
+Remember to turn off warnings before running scheduled, to avoid backup to halt.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[4] MAIN SETTINGS - In basic, Pbackup uses 3 settings.<br>
+<br>
+< SAVE FROM ><br>
+contains path of files or directories that should be backed up. Click 'Add' button (+) to select another directory from filetree for this list. Click 'Remove' button (-) to remove entrys from this list. Default is $HOME where your personal datas (e-mail, bookmarks...) are stored.<br>
+<br>
+< SAVE TO ><br>
+specifies where backup files should be saved. First select the media: CD, DVD, FTP-server or HD (harddisk, flash...). If you choose CD or DVD - specify burning device, HD - specify directory, FTP - specify address and login info. On first run it sets save-media to CD, and tries to autodetect the CD-burner. The 'SAVE TO' directory should NOT be on the same physical harddisk as your your main data. Do NOT think your data is safe when saving backup-files on another partition. It is still the same disk, and when it crashes, it all does.<br>
+<br>
+< FROM DATE ><br>
+contains the 'change' date of the oldest file you want in your backup. The default date in the field is the date of last successful backup. Click button to choose another date from a calender. Format: DD/MM/YYYY<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[5.1] BACKUP OPTIONS<br>
+<br>
+< INCLUDE SUBDIR ><br>
+When 'INCLUDE SUBDIR' is selected, Pbackup makes a backup of the listed directories, and all their subdirectories (same as recursive). 'INCLUDE SUBDIR' is on by default.<br>
+<br>
+< FOLLOW SYMLINK ><br>
+- Backup file that symlink points to.<br>
+- Using 'FOLLOW SYMLINK' will allow Pbackup to dive into symlink-directories. If symlinks then points back to your backup directory, it has come into an endless loop.<br>
+- FTP: If 'follow symlink' is turned off, links are not transferred at all.<br>
+<br>
+< COMPRESS RESULT ><br>
+- Make a .tgz file of backup result.<br>
+<br>
+< MULTISESSION ><br>
+- Allows many backups on 1 CD or DVD.<br>
+- Default is 'off', and it will burn a closed session. This is most compatible with different readers. But you can't burn more on that disk.<br>
+- It is not recommended to change the options 'JOLIET' and 'FOLLOW SYMLINK' between multiple sessions on a CD. This will close the CD for more sessions. There is a built-in workaround for DVDs, that seems to work.<br>
+- When burning 'MULTISESSION', be aware of the risk of losing earlier backups if burning process fails and destroys CD/DVD.<br>
+<br>
+< JOLIET ><br>
+- Make CD or DVD readable in other OS.<br>
+- 'JOLIET' may give errors.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[5.2] BACKUP SETTINGS<br>
+<br>
+< EXCLUDE FROM BACKUP ><br>
+- Make a list of files and directories that should NOT be in your backup.<br>
+- Excluded directories will work recursively.<br>
+<br>
+< SAVE TO DATE ><br>
+- Alternative save-to-date when 'BACKUP RECENT'. Default is still today. Useful to split heavy backups.<br>
+<br>
+< ONLY THESE FILENAMES ><br>
+- Define which files you want to backup. Use of regular expression is allowed (and needed). For instance to backup only photos (*.jpg).<br>
+<br>
+< MOUNT DIRECTORY ><br>
+- Where to mount backup disk.<br>
+- Default '/mnt/cdrom/', but if you have several CD-ROMs, it may be in use.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[6.1] SYNC OPTIONS<br>
+<br>
+< KEEP TRASH ><br>
+- Do not delete outdated files. Instead they will be moved to a defined trash-directory.<br>
+- Default Trash-directory is in /tmp/, and will be deleted next time you shutdown pc. If you want to keep these files permanently, you must specify another destination.<br>
+- When doing lot of restructuring in source files, there will be lots of trash. Then it may not make sense to keep all trash. It will fill your disk and take time.<br>
+<br>
+< LEADING PATH ><br>
+- Make complete directory structure in front of sync files.<br>
+- Deactivating 'LEADING PATH' will make source and target complete equal. This could be critical if destination is not empty. Datas will be deleted if they aren't in sourcefiles.<br>
+- There is a warning showing up when 'LEADING PATH' is deactivated. Warnings can be turned off. See 'MISC'.<br>
+<br>
+< CHECK ATTRIBUTES ><br>
+- When activated, Pbackup compares size, time, user, group, permissions and linkstatus.<br>
+- When deactivated, Pbackup compares only size. This is useful, when source and target is on different type of filesystem. FAT32 has for instance different attributes than EXT3. When trying to compare these, No files matches, and everything must be updated. Comparing only size is not 100% secure, but it works over different filesystems.<br>
+<br>
+< FOLLOW SYMLINK ><br>
+- Backup the file that symlink points to.<br>
+- Using 'FOLLOW SYMLINK' will allow Pbackup to dive into symlink-directories. If symlinks then points back to your backup directory, it has come into an endless loop.<br>
+<br>
+< UPDATE SYMLINK ><br>
+- When copying a symlink to another filesystem it will not work in target. When activate 'UPDATE SYMLINKS', symlinks in source and target are not equal, but both are now accessable. If restoring links, they will only work if this option is deactivated. So, False for backup, True for syncronize.<br>
+- 'UPDATE SYMLINKS' does not work retrospective. The workaround is to first 'FOLLOW SYMLINK', then not. This will update all symlinks.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[6.2] SYNC SETTINGS<br>
+<br>
+< ACT ON FILES RECENT CHANGED OR CREATED IN 'SAVE TO' ><br>
+- What to do with newer files in target (Save-to directory). This is files that has been either created or changed since last 'SYNC'.<br>
+- 3. options:<br>
+1. DO NOT OVERWRITE - Keep newer files in Save-to directory.
+This is default, and the way to make a 2-way-sync. When working in both source and target, there are files in both directories that we want to save. First sync one way, and choose 'DO NOT OVERWRITE'. Then do the same the other way around.<br>
+2. OVERWRITE - Overwrite files in target by older files from source ('SAVE FROM').<br>
+3. COPY TO /tmp/pbackupSYNC/ - Be aware. Files in this directory will be deleted when pc is turned off.<br>
+<br>
+< DO NOT CHECK ><br>
+- Make a list of files and directories that should NOT be in your sync.<br>
+- Excluded directories will work recursively.<br>
+<br>
+< TRASH DIRECTORY ><br>
+- Trashfiles from 'SYNC' can be saved in a safe place. Default is inside /tmp/ and will be deleted when pc is turned off.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[7] MISC<br>
+<br>
+< ALLOW AUTOMOUNTING OF LOCAL DRIVES ><br>
+- Will try to automount chosen destination disk, useful in scheduled backups. It is highly recommended to use EXT filesystems for these destinations.<br>
+<br>
+< WRITE HISTORY LOG ><br>
+- Whatever status pbackup get (success, status quo, error or inspection) after a backup, it will write to a logfile if wanted. Files in sucsess-backups can later be restored.<br>
+- If syncing in 'REALTIME', it may be a bad idea to write history log. It would be huge very fast.<br>
+- Clear history from menu.<br>
+<br>
+< WARNINGS ><br>
+- Warnings are information about some critical situations. Please read carefully
+before continuing; there's a reason they are here. It is possible to turn off warnings by
+default. This is normally done in scheduled and quiet-mode scripted backups. Be aware of subsequent risk.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[8] PREFERENCES<br>
+<br>
+< TEMPORARY DIRECTORY ><br>
+- If main filesystem is too small for burning process, set temporary storage outside this filesystem. That is most often another partition mounted in '/mnt/'.<br>
+- When burning uncompressed DVD, temporary storage is not needed.<br>
+<br>
+< RESET ALL SETTINGS ><br>
+- Show all settings as they were at first run.<br>
+- This option doesn't save anything.<br>
+<br>
+< CLEAR HISTORY ><br>
+- This clears the log with info of all backups.<br>
+- NO files are deleted.<br>
+<br>
+<br>
+______________________________________________________________________________________________<br>
+[9] QUIET MODE<br>
+<br>
+When running Pbackup with parameter -q in a terminal (pbackup -q "job1" "job2"), it will backup quiet. The only message is if backup fails. Quiet mode is used when scheduling a backup.<br>
+<br>
+Remember to turn off warnings before running scheduled, to avoid backup to halt.<br>
+<br>
+</blockquote>
+</body>
+</html>

@@ -1,0 +1,160 @@
+#!/bin/sh
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#Barry Kauler www.puppylinux.com
+#called from savepuppyd and rc.shutdown, to save tmpfs layer to permanent flash storage.
+#updated 13 Sept 2007. copy-down only. flushing is done in petget.
+#updated 24 Sept 2007. removed '-u' option when copy-down files.
+#8 oct 2007: screen out /root/tmp when saving.
+#4 nov 2007: reintroduce '-u' copy option.
+#v4.01 19may2008 BK: now called from /sbin/pup_eventd daemon (savepuppyd now history).
+#v4.01 19may2008 BK: if called from pup_eventd then X running: graceful exit if X shutdown.
+#v409 BK: XRUNNING test should be 'pup_event_frontend_d'.
+#v409 BK: save /var dir. previously screened out to save space, but prevents crontab from running.
+#v412 /etc/DISTRO_SPECS, renamed pup_xxx.sfs, pup_save.2fs etc.
+#w000 pup files renamed to woofr555.sfs, woofsave.2fs.
+#w003 bug fix for .wh.__dir_opaque whiteout file.
+#w003 screened out some dirs in /dev that should not be saved.
+#v424 fix for more layers in unionfs/aufs.
+#100222 shinobar: possible timezone problem with BOOTCONFIG. more file exclusions.
+#100422 added ^root/ftpd exclusion.
+#100429 modify 'trash' exclusion.
+#100820 added /var/tmp exclusion (apparently filled by opera crashes).
+
+#variables created at bootup by 'init' script in initramfs...
+. /etc/rc.d/PUPSTATE
+. /etc/DISTRO_SPECS #v412
+SAVEPART="`echo -n "$PUPSAVE" | cut -f 1 -d ','`"
+
+#v3.02 first time, do not use '-u' option when saving, save everything...
+NEXTPASSTHRU=""
+[ -e /tmp/flagnextpassthru ] && NEXTPASSTHRU="yes"
+
+RUNPS="`ps`"
+SHUTDOWN="no"
+XRUNNING="no"
+[ "`echo "$RUNPS" | grep 'rc.shutdown'`" != "" ] && SHUTDOWN="yes"
+[ "`echo "$RUNPS" | grep 'pup_event_frontend_d'`" != "" ] && XRUNNING="yes" #v4.01 v409
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R7/bin"
+WD="`pwd`"
+
+SNAP="/initrd/pup_rw"
+cd $SNAP || exit 1
+
+if [ "$SAVE_LAYER" ];then #defined in PUPSTATE
+ BASE="/initrd${SAVE_LAYER}"
+else
+ BASE="/initrd/pup_ro1"
+fi
+
+echo "Merging $SNAP onto $BASE..."
+
+#Handle Whiteouts...
+find . -mount \( -regex '.*/\.wh\.[^/]*' -type f \) | sed -e 's/\.\///;s/\.wh\.//' |
+while read N
+do
+ BN="`basename "$N"`"
+ DN="`dirname "$N"`"
+ [ "$BN" = ".wh.aufs" ] && continue #w003 aufs has file .wh..wh.aufs in /initrd/pup_rw.
+ [ "$DN" = "." ] && continue
+ if [ "$BN" = "__dir_opaque" ];then #w003
+  #'.wh.__dir_opaque' marks ignore all contents in lower layers...
+  rm -rf "${BASE}/${DN}/*" 2>/dev/null #wipe anything in save layer.
+  #also need to save the whiteout file to block all lower layers (may be readonly)...
+  touch "${BASE}/${DN}/.wh.__dir_opaque" 2>/dev/null
+  rm -f "$SNAP/$DN/.wh.__dir_opaque" #should force aufs layer "reval".
+  continue
+ fi
+ #comes in here with the '.wh.' prefix stripped off, leaving actual filename...
+ rm -rf "$BASE/$N"
+ #if file exists on a lower layer, have to save the whiteout file...
+ BLOCKFILE=""
+ [ -e "/initrd/pup_ro1/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro2/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro3/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro4/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro5/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro6/$N" ] && BLOCKFILE="yes"
+ [ -e "/initrd/pup_ro7/$N" ] && BLOCKFILE="yes" #v424
+ [ -e "/initrd/pup_ro8/$N" ] && BLOCKFILE="yes" #v424
+ [ -e "/initrd/pup_ro9/$N" ] && BLOCKFILE="yes" #v424
+ [ "$BLOCKFILE" = "yes" ] && touch "${BASE}/${DN}/.wh.${BN}"
+ rm -f "$SNAP/$DN/.wh.$BN" #remove whiteout file. should force aufs layer "reval".
+done
+
+#Directories... v409 remove '^var'. w003 remove aufs .wh. dirs.
+#w003 /dev/.udev also needs to be screened out... 100820 added var/tmp
+find . -mount -type d | tail +2 | sed -e 's/\.\///' | grep -v -E '^mnt|^initrd|^proc|^sys|^tmp|^root/tmp|^\.wh\.|/\.wh\.|^dev/\.|^dev/fd|^dev/pts|^dev/shm|^var/tmp' |
+while read N
+do
+ #v4.01 graceful exit if shutdown X (see /usr/X11R7/bin/restartwm,wmreboot,wmpoweroff)...
+ [ "$XRUNNING" = "yes" ] && [ -f /tmp/wmexitmode.txt ] && exit
+ mkdir -p "$BASE/$N"
+ chmod "$BASE/$N" --reference="$N"
+ OWNER="`stat --format=%U "$N"`"
+ chown $OWNER "$BASE/$N"
+ GRP="`stat --format=%G "$N"`"
+ chgrp $GRP "$BASE/$N"
+ touch "$BASE/$N" --reference="$N"
+done
+
+#100222 a quick hack: BOOTCONFIG written to in init, before timezone set, can cause trouble...
+touch /etc/rc.d/BOOTCONFIG
+
+#Copy Files... v409 remove '^var'. w003 screen out some /dev files. 100222 shinobar: more exclusions. 100422 added ^root/ftpd. 100429 modify 'trash' exclusion. 100820 added var/tmp
+find . -mount -not \( -regex '.*/\.wh\.[^/]*' -type f \) -not -type d |  sed -e 's/\.\///' | grep -v -E '^mnt|^initrd|^proc|^sys|^tmp|^pup_|^zdrv_|^root/tmp|_zdrv_|^dev/\.|^dev/fd|^dev/pts|^dev/shm|^\.wh\.|^var/run|^root/ftpd|^var/tmp' | grep -v -E -i '\.thumbnails|\.trash|trash/|\.part$'  |
+while read N
+do
+
+ #v4.01 graceful exit if shutdown X (see /usr/X11R7/bin/restartwm,wmreboot,wmpoweroff)...
+ [ "$XRUNNING" = "yes" ] && [ -f /tmp/wmexitmode.txt ] && exit
+
+ if [ "$SAVEPART" = "fd0" ];then
+  #not much space, so screen out more files...
+  [ "`echo -n "$N" | grep -v -E '^etc|^root'`" != "" ] && continue
+  [ "`echo -n "$N" | grep -v -E 'mozilla|printjobs|archive|cache'`" = "" ] && continue
+ fi
+
+ #stop saving if not enough room left in ${DISTRO_FILE_PREFIX}save file...
+ FREEBASEK=`df -k | grep "$BASE" | tr -s ' ' | cut -f 4 -d ' '`
+ FILESIZEB=`stat --format=%s "/${N}"`
+ [ ! $FILESIZEB ] && break #w003 precaution.
+ FILESIZEK=`expr $FILESIZEB \/ 1024`
+ FILESIZEK=`expr $FILESIZEK + 200` #200K slack space.
+ if [ $FILESIZEK -gt $FREEBASEK ];then
+  #also the taskbar freemem-applet lets the user know when low.
+  if [ "$SHUTDOWN" = "no" -a "$XRUNNING" = "yes" ];then
+   yaf-splash -display :0 -timeout 4 -font "8x16" -outline 0 -margin 4 -bg red -text "WARNING!
+Unable to save all files. You need to delete some." &
+  fi
+  break
+ fi
+
+ ##v2.21 -u causes trouble if timezone malconfigured...
+ ##[ -L "$BASE/$N" ] && rm -f "$BASE/$N"
+ ##cp -a -u -f "$N" "$BASE/$N"
+ #cp -a --remove-destination "$N" "$BASE/$N"
+ [ -L "$BASE/$N" ] && rm -f "$BASE/$N"
+ if [ -L "$N" -o "$NEXTPASSTHRU" = "" ];then
+  #link, or first run of snapmergepuppy. no '-u' (update) option.
+  cp -a -f "$N" "$BASE/$N"
+ else
+  cp -a -u -f "$N" "$BASE/$N" #v3.02
+ fi
+ 
+ #if [ "$NEXTPASSTHRU" != "" ];then
+ # cp -a -u -f "$N" "$BASE/$N"
+ #else
+ # cp -a -f "$N" "$BASE/$N" #no update option.
+ #fi
+ #flock -x -n "$N" -c rm -f "$N" #remove if file not in use
+
+done
+
+touch /tmp/flagnextpassthru
+
+sync
+cd "$WD"
+exit 0
+
+###END###

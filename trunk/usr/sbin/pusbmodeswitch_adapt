@@ -1,0 +1,69 @@
+#!/bin/sh
+#Barry Kauler, LGPL 2010
+
+#To be run inside build directory for usb_modeswitch module or data update
+#Uses new2dir, so requires build directory to have a version number (e.g., for data, -yyyymmdd).
+CURRDIR="`pwd`"
+UPONE="`dirname "$CURRDIR"`"
+PKGDIR="../`basename "$CURRDIR"`"
+if [ "`echo "$PKGDIR" | grep '[0-9]'`" = "" ];then
+ echo -e "Please append a version number to this directory:\n $PKGDIR -> $PKGDIR-`grep '^VERS' Makefile | cut -f 2 -d = | cut -f 2 -d ' '`"
+ exit
+fi
+
+[ ! -f ./Makefile ] \
+ && echo "No Makefile found in this directory.
+ Please run this command from inside a usb-modeswitch(-data) development directory." \
+ && exit 0
+
+if [ -d ./usb_modeswitch.d ];then
+ echo "Generating informational listing of database in /tmp/usb_modeswitch.d.lst."
+ cd ./usb_modeswitch.d
+ grep -v -H -E '^ *$|^#* *$' * | tr -s \# | tee /tmp/usb_modeswitch.d.conf | grep ':# [^ ]' | grep -v ':# Note:' | sed -e 's/^\([^\#]*\)\# \(.*\)/\2@  Config file: \1/' -e 's/:$//' | sort | tr @ '\n' > /tmp/usb_modeswitch.d.lst
+ cd ..
+fi
+[ "$1" != "" ] && exit 0 #skip install if argument present.
+
+mkdir -p /lib/udev
+[ -e ./usb_modeswitch.c ] \
+ && echo "Compiling and installing to new package directory." \
+ && mkdir -p /usr/share/man/man1
+[ -d ./usb_modeswitch.d ] \
+ && echo "Installing configuration data base to new package directory."
+grep -q '^files-install:' ./Makefile \
+ && echo -e "\n\n\n\n\n" | new2dir make files-install \
+ || echo -e "\n\n\n\n\n" | new2dir make install
+
+PETDIR="${CURRDIR}-i486"
+echo; echo
+[ -e ${PETDIR}/etc/usb_modeswitch.conf ] \
+ && echo -e "Editing usb_modeswitch.conf to turn on logging." \
+ && sed -i \
+  -e 's%EnableLogging=0%EnableLogging=1%' \
+  ${PETDIR}/etc/usb_modeswitch.conf
+
+if [ -f ${PETDIR}/lib/udev/rules.d/40-usb_modeswitch.rules ];then
+ echo "Editing 40-usb_modeswitch.rules to use Puppy modeswitch script."
+ mkdir -p ${PETDIR}/etc/udev/rules.d
+ cp -f ${PETDIR}/lib/udev/rules.d/40-usb_modeswitch.rules ${PETDIR}/etc/udev/rules.d/40-usb_modeswitch-adapted.rules
+ mv -f ${PETDIR}/lib/udev/rules.d/40-usb_modeswitch.rules ${PETDIR}/lib/udev/rules.d/40-usb_modeswitch.rules-tcl
+ sed -i \
+  -e '1 a\
+### Edited to use only the Puppy Linux port-determination scheme and modeswitch wrapper substitute...' \
+  -e 's%^KERNEL==\"ttyUSB\*\".*$%#&%' \
+  -e 's%RUN+=\"usb_modeswitch %RUN+=\"/usr/sbin/pusbmodeswitch %' \
+  ${PETDIR}/etc/udev/rules.d/40-usb_modeswitch-adapted.rules
+fi
+
+if [ -f ${PETDIR}/usr/share/man/man1/usb_modeswitch.1 ];then
+ echo "Converting man page to html as puppy man page."
+ mkdir -p ${PETDIR}/usr/share/doc
+ man2html ${PETDIR}/usr/share/man/man1/usb_modeswitch.1 > ${PETDIR}/usr/share/doc/usb_modeswitch.htm
+ rm -f -r ${PETDIR}/usr/share/man
+fi
+
+echo -e "Now verify the contents of the new package directory,\n${PETDIR}:"
+[ -e ./usb_modeswitch.c ] \
+ && echo -e " 1. File /etc/usb_modeswitch.conf\n 2. File /lib/udev/usb_modeswitch\n 3. File /usr/sbin/usb_modeswitch\n 4. File /usr/share/doc/usb_modeswitch.htm"
+[ -d ./usb_modeswitch.d ] \
+ && echo -e " 1. Directory /etc/usb_modeswitch.d\n 2. File /etc/udev/rules.d/40-usb_modeswitch-adapted.rules\n 3. File /lib/udev/rules.d/40-usb_modeswitch.rules-tcl"

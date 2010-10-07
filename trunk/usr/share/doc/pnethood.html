@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE>Pnethood Help Page</TITLE>
+</HEAD>
+<BODY LANG="en-GB" DIR="LTR">
+<H1>Pnethood v0.65 Help Page</H1>
+<H2>Running</H2>
+<P>Pnethood can be started from its entry in the network menu. If you have just installed this program you may need to restart JWM (or other window manager) for the menu to be updated. This program may be launched from the
+console with the command pnethood.</P>
+<H3>Usage</H3>
+<P>When starting from the console it is possible to specify a list of
+servers you wish to connect to. This is helpful if you have a large
+number of servers or simply wish to avoid the time delay of scanning
+the network. The list of servers should be separated by commas and if
+the names contain spaces the list should be wrapped in quotation
+marks ie. <strong>pnethood &quot;server1,server2,my server&quot;</strong>. It
+is also possible to specify servers by IP address. 
+</P>
+<H2>Description of Interface</H2>
+<P>The main window contains four buttons at the top.</P>
+<UL>
+	<LI>Rescan Network - finds servers on your network and
+	checks the state of all shares. If the servers you expect to see are
+	not showing, you may need to hit this button a couple of times to
+	wake them up. 
+	</li>
+	<LI>Help - Display this page. 
+	</LI>
+	<LI>Info - Opens a monitor (tail -f) of the log file
+	/tmp/pnethood/log. In the event of you having problems with this
+	program it would be helpful if you submit the bottom few lines of
+	this log to the <A HREF="http://www.murga-linux.com/puppy/viewtopic.php?t=23464">forum</A>.
+	</LI>
+	<LI>Quit</LI>
+</UL>
+<P>Under these buttons are checkboxes to enable the saving of passwords and the use of the (CIFS)
+ Common Internet Filesystem protocol when mounting shares. This requires the kernel cifs module. This is included in puppy 4.00RC (and onwards ?)and 2.14R. There is a combox box to
+  allow the scan time to be increased in case your server is not found and also a button to refresh the state of the servers you are currently viewing</p>
+<p>Below is a tabbed pane with one tab for each server
+found. Each pane contains fields for username and password.
+Underneath these are buttons to connect, disconnect and show (open an
+already connected folder) for each share on a server. If you get an
+error when pressing a connect or disconnect button, the message may
+ask you to press the other button to resynchronise the interface,
+alternatively you may hit the refresh button. The reason for this is
+a limitation in the way that gtkdialog can enable or disable buttons
+programatically.</P>
+<P>If the initial scan detects more than 10 computers in your subnet,
+you will get a popup window asking you to choose which one you wish
+to use. This is to avoid excessively long startup times and also to
+avoid generating too many tabs in the interface.</P>
+<H2>Common Errors</H2>
+<P>The easiest way to upset pnethood is to try to disconnect a share
+when you are still accessing some files in it, are displaying a filer
+window for it or have a shell open inside the share. If you try to do
+this you will get an unmount failed message. You should hit the
+connect button to resynchronise the interface, close all programs
+that are using the share and then try disconnect again.</P>
+<P>Trying to connect to a share with an incorrect username or
+password will understandable cause an error. If you think that you may have entered your credentials
+incorrectly, hit the disconnect button, re-enter your username and
+password and try the connect again.</P>
+<P>If the server you are connected to shuts down whilst you have
+shares connected this can leave the filesystem somewhat confused. The
+mountpoints for that server may generate errors if you try to carry
+out a directory listing over them. It is recommended that you reboot
+puppy before trying to access shares on that server again.</P>
+<P>If a server is not shown when you expect it to be try hitting the
+refresh button a few times or increasing the scan time. 
+</P>
+<H2>Security</H2>
+<P>Currently any passwords you enter are stored inside  $HOME/.pnethood/passwords this is normally
+/root/pnethood/.passwords on Puppy Linux. Your passwords will not be saved unless you tick the box to allow it.
+Currently pnethood uses a helper process to mount shares, this means that your password may be visible 
+in the process list.</P>
+<H2>Help and Feedback</H2>
+<P>If at any time this program behaves in an unexpected way please
+report it on the forum at
+<A HREF="http://www.murga-linux.com/puppy/viewtopic.php?t=23464">http://www.murga-linux.com/puppy/viewtopic.php?t=23464</A>.
+If it works really well for you comments are welcome too as are
+suggestions for improvements. Some errors may be recorded in
+/tmp/pnethood/log.</P>
+<H2>Project Status</H2>
+<H3>Depends On:</H3>
+<UL>
+	<LI>smbclient</LI>
+	<LI>smbmount</LI>
+	<LI>nmblookup - needed if you want to specify a server by name</LI>
+	<LI>rox (filer needed to show open a
+	window once share is connected)</LI>
+	<LI>rxvt (needed to view the log)</LI>
+	<LI>(all of the above are included in
+	the basic iso for recent puppies)</LI>
+	<LI>nbtscan (included in the pet)</LI>
+	<LI>cifs module - needed if you want to mount using cifs</LI>
+</UL>
+<H3>Done:</H3>
+<UL>
+	<LI>separate show/connect/disconnect buttons</LI>
+	<LI>entry in the network menu 
+	<LI>separate tabs for each machine 
+	</LI>
+	<LI>separate authentication details
+	for each server 
+	</LI>
+	<LI>rescans server as guest if
+	anonymous scan fails 
+	</LI>
+	<LI>rescans server with password if
+	guest scan fails 
+	</LI>
+	<LI>if password scan fails, checks
+	mount to see if any shares are already mounted from that server 
+	</LI>
+	<LI>inbuilt limit of 10 servers
+	scanned, once this limit is exceeded you get a list of all servers
+	and are asked to choose one. 
+	</LI>
+	<LI>server and share names with
+	spaces, dots and hyphens should work
+	</LI>
+	<LI>servers may be specified by IP
+	address 
+	</LI>
+	<LI>scan includes every network
+	interface, except ppp ones. I can't see why you would want to scan a
+	ppp interface, it was taking ages and taking down my pptp vpn
+	connection 
+	</LI>
+	<LI>tabs are always shown for servers
+	with shares that are currently mounted</LI>
+	<LI>status, error handling and reporting (can't really be
+	improved much without further user feedback)</LI>
+	<LI>cifs protocol can be used if kernel module is installed</LI>
+	<LI>saving of passwords is now optional</LI>
+	<LI>user control over network scan speed</LI>
+</UL>
+<H3>To Do</H3>
+<UL>
+	<LI>Allow user with more than 10
+	machines to select a new one without rescanning the entire network 
+	</LI>
+	<LI>Handle servers with lots of
+	shares. This will probably mean changing the interface
+	implementation to use gtkdialog tree instead of buttons. This is a
+	shame because I like the buttons.</LI>
+	<LI>replace nbtscan with a scan that works with netbios over
+	tcp/ip, this will probably just be a backup in case nbtscan produces
+	nothing</LI>
+</UL>
+<H3>Known Bugs</H3>
+<P>Could run out of screen space for large numbers of shares.</P>
+<P>Cifs mounting of shares on samba servers does not work properly. 
+The permissions of the mounted filesystem are set incorrectly. Work around, disable cifs.</P>
+<H2>How it works</H2>
+<P>Each time the pnethood window is loaded it uses nbtscan to get a
+list of computers on the x.x.0.0/16 subnet corresponding to your IP
+address. Each one of these computers is then scanned for shares using
+smbclient. This list of shares is then compared with the output from
+mount to find out if any of them are mounted already. From this list
+the interface is generated.</P>
+<H2>nbtscan</H2>
+<P>This program relies on nbtscan for super faster scanning of your
+network to find machines to check for shares. Thanks to Alla
+Bezroutchko. Nbtscan relies on the NetBIOS protocol. NetBIOS is enabled by default on all versions of windows that I am aware of. If your windows computer is running Windows 2000 or above it is possible for NetBIOS to be disabled. If the scan repeatedly returns no results you may want to check this.</P>
+<P>If you are interested in building nbtscan yourself it is available
+here: <A HREF="http://www.inetcat.net/software/nbtscan.html">http://www.inetcat.net/software/nbtscan.html</A></P>
+</BODY>
+</HTML>

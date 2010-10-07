@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Multimedia</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Multimedia.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="99">MultimediaSub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">MultimediaBurn</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>MultimediaSub</Name>
+    <Directory>Puppy-MultimediaSub.directory</Directory>
+    <Include>
+      <Category>X-Multimedia</Category>
+      <Category>AudioVideo</Category>
+      <Category>Video</Category>
+      <Category>Player</Category>
+      <Category>AudioVideoEditing</Category>
+      <Category>Recorder</Category>
+      <Category>Music</Category>
+      <Category>Audio</Category>
+      <Category>Midi</Category>
+      <Category>Mixer</Category>
+      <Category>Sequencer</Category>
+      <Category>Tuner</Category>
+      <Category>Video</Category>
+      <Category>TV</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>MultimediaBurn</Name>
+    <Directory>Puppy-MultimediaBurn.directory</Directory>
+    <Include>
+      <Category>DiskBurning</Category>
+    </Include>
+  </Menu>
+
+</Menu>

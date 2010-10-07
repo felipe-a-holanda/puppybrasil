@@ -1,0 +1,190 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of AXEL</TITLE>
+</HEAD><BODY>
+<H1>AXEL</H1>
+Section: User Commands  (1)<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<P>
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<B>Axel</B> - A light download accelerator for Linux.
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>axel</B>
+
+[<I>OPTIONS</I>] <I>url1</I> [<I>url2</I>] [<I>url...</I>]
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Axel is a program that downloads a file from a FTP or HTTP server through
+multiple connection, each connection downloads its own part of the file.
+<P>
+Unlike most other programs, Axel downloads all the data directly to the
+destination file, using one single thread. It just saves some time at the
+end because the program doesn't have to concatenate all the downloaded
+parts.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<P>
+
+One argument is required, the URL to the file you want to download. When
+downloading from FTP, the filename may contain wildcards and the program
+will try to resolve the full filename. Multiple URL's can be specified
+as well and the program will use all those URL's for the download. Please
+note that the program does not check whether the files are equal.
+<P>
+<P>
+
+Other options:
+<P>
+<DL COMPACT>
+<DT><B>--max-speed=x</B>, <B>-s&nbsp;x</B><DD>
+You can specify a speed (bytes per second) here and Axel will try
+to keep the average speed around this speed. Useful if you don't want
+the program to suck up all of your bandwidth.
+<P>
+<DT><B>--num-connections=x</B>, <B>-n&nbsp;x</B><DD>
+You can specify an alternative number of connections here.
+<P>
+<DT><B>--output=x</B>, <B>-o&nbsp;x</B><DD>
+Downloaded data will be put in a local file with the same name,
+unless you specify a different name using this option. You can
+specify a directory as well, the program will append the filename.
+<P>
+<DT><B>--search[=x]</B>, <B>-S [x]</B><DD>
+Axel can do a search for mirrors using the filesearching.com search
+engine. This search will be done if you use this option. You can specify how
+many different mirrors should be used for the download as well.
+<P>
+The search for mirrors can be time-consuming because the program tests
+every server's speed, and it checks whether the file's still available.
+<P>
+<DT><B>--no-proxy</B>, <B>-N</B><DD>
+Don't use any proxy server to download the file. Not possible when a
+transparent proxy is active somewhere, of course.
+<P>
+<DT><B>--verbose</B><DD>
+If you want to see more status messages, you can use this option. Use it
+more than once if you want to see more.
+<P>
+<DT><B>--quiet</B>, <B>-q</B><DD>
+No output to stdout.
+<P>
+<DT><B>--alternate</B>, <B>-a</B><DD>
+This will show an alternate progress indicator. A bar displays the progress
+and status of the different threads, along with current speed and an
+estimate for the remaining download time.
+<P>
+<DT><B>--help</B>, <B>-h</B><DD>
+A brief summary of all the options.
+<P>
+<DT><B>--version</B>, <B>-V</B><DD>
+Get version information.
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTE</H2>
+
+Long (double dash) options are supported only if your platform knows about
+the getopt_long call. If it does not (like *BSD), only the short options can
+be used.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The program returns 0 when the download was succesful, 1 if something really
+went wrong and 2 if the download was interrupted. If something else comes back,
+it must be a bug..
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<PRE>
+axel <A HREF="ftp://ftp.{be,nl,uk,de}.kernel.org/pub/linux/kernel/">ftp://ftp.{be,nl,uk,de}.kernel.org/pub/linux/kernel/</A>
+     v2.4/linux-2.4.17.tar.bz2
+</PRE>
+
+<P>
+This will use the Belgian, Dutch, English and German kernel.org mirrors to
+download a Linux 2.4.17 kernel image.
+<P>
+<PRE>
+axel -S 4 <A HREF="ftp://ftp.kernel.org/pub/linux/kernel/v2.4/">ftp://ftp.kernel.org/pub/linux/kernel/v2.4/</A>
+          linux-2.4.17.tar.bz2
+</PRE>
+
+<P>
+This will do a search for the linux-2.4.17.tar.bz2 file on filesearching.com
+and it'll use the four (if possible) fastest mirrors for the download.
+(Possibly including <A HREF="ftp://ftp.kernel.org">ftp.kernel.org</A>)
+<P>
+(Of course, the commands are a single line, but they're too long to fit on
+one line in this page.)
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>FILES</H2>
+
+<P>
+
+<I>/etc/axelrc</I> System-wide configuration file
+<P>
+
+<I>~/.axelrc</I> Personal configuration file
+<P>
+
+These files are not documented in a man-page, but the example file which
+comes with the program contains enough information, I hope. The position
+of the system-wide configuration file might be different.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>COPYRIGHT</H2>
+
+Axel is Copyright 2001-2002 Wilmer van der Gaast.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+<P>
+
+I'm sure there are some bugs left somewhere, please tell me about them and
+I will try to fix them.
+<P>
+A known bug is that the program does weird things when downloading using
+hundreds of connections. Well, just don't do that.
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Wilmer van der Gaast. (<A HREF="mailto:lintux@lintux.cx">lintux@lintux.cx</A>)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">NOTE</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">EXAMPLES</A><DD>
+<DT><A HREF="#lbAI">FILES</A><DD>
+<DT><A HREF="#lbAJ">COPYRIGHT</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">AUTHORS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 07:36:11 GMT, July 17, 2004
+</BODY>
+</HTML>

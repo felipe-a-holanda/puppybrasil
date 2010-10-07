@@ -1,0 +1,320 @@
+<html lang="en">
+<head><meta http-equiv="Content-type" content="text/html; charset=UTF-8"></head>
+<body>
+	<hr style="width: 100%; height: 2px;">
+	<div style="text-align: center;"><font color="#508F2D" size="6" >Pmusic - FAQ<br></font></div>
+	<hr style="width: 100%; height: 2px;">
+	<div class="content">
+		<div class="content-item">
+			<ol>
+			<font color="#508F2D" size="4">General<br></font>
+			<li><a href="#whatis">What is Pmusic?</a></li>
+			<li><a href="#whatisnot">What is Pmusic not?</a></li>
+			<br>
+			<font color="#508F2D" size="4">Performance<br></font>
+			<li><a href="#slow">When I dump all my thousands of songs into a playlist, Pmusic becomes real slow?</a></li>
+			<li><a href="#whyindex">Why should I index my music?</a></li>
+			<li><a href="#random">But hey, since I can't put my entire collection into the playlist, how can I play a random song?</a></li>
+			<li><a href="#history">How does the 'playlist history' work?</a></li>
+			<li><a href="#songinfo">How do you see "Song Info" for file on the left side? I.E. the library side, not the playlist side. Is that available?</a></li>
+			<li><a href="#presets">What are the best envisioned uses for the 4 window navigator windows?</a></li>
+			<li><a href="#bookmarks">What are Bookmarks and how do I use them?</a></li>
+			<li><a href="#makebookmark">But how do I make a new Bookmark?</a></li>
+			<li><a href="#podcast">What are Podcasts?</a></li>
+			<li><a href="#convert">What if I want to convert a WAV file to a MP3 file?</a></li>
+			<li><a href="#burn">How do I burn a playlist to an audio disc? </a></li>
+			<li><a href="#extendedfileoperations">What file operations are possible?</a></li>
+			<li><a href="#undo">Is there an undo feature?</a></li>
+			<li><a href="#theme">How do I change the interface to be something more exciting? A new Theme / Skin.</a></li>
+			<li><a href="#modifytheme">How can I modify a theme?</a></li>
+			<li><a href="#rip">Can I rip an audio-CD with Pmusic?</a></li>
+			<br>
+			<font color="#508F2D" size="4">Troubleshooting<br></font>
+			<li><a href="#formats">Why doesn't Pmusic play this/that file-format?</a></li>
+			<li><a href="#trim">Can I trim Pmusic to run smooth on my old pc?</a></li>
+			<li><a href="#mixer">How can I activate bass/treble in the mixer?</a></li>
+			<li><a href="#delmostplayed">My 'Recently Played' and 'Most played' song lists have songs that I have burnt and deleted. What should I do?</a></li>
+			<li><a href="#tooltips">A little message box pops up and blocks my view of playlist. How do I get rid of this?</a></li>
+			<li><a href="#knownbugs">Are there any known bugs?</a></li>
+			<br>
+			<font color="#508F2D" size="4">Desktop intergation<br></font>
+			<li><a href="#addfromrox">How can I 'Add file to playlist' rather than 'Play file' when clicking in filebrowser?</a></li>
+			<li><a href="#default">How do I set Pmusic as my default player in 4.31 and perhaps others?</a></li>
+			<li><a href="#terminal">Can I use the terminal or external code to manage Pmusic</a></li>
+			<li><a href="#hotkeys">How can I control Pmusic by hotkeys in JWM?</a></li>
+			</ol>
+		</div>
+		
+		
+<!#############   G E N E R A L   ###############>
+
+<br>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;"><font color="#508F2D" size="6" >General<br></font></div>
+<hr style="width: 100%; height: 2px;">
+
+<br>
+<div class="content-item">
+<a id="whatis"><font color="#696969" size="5">What is Pmusic?<br></font></a>
+<p> Pmusic is a bash script / GTKDialog based Music Player developed by Sigmund ﻿Berglund. Pmusic can play a variety of audio inputs (Audio CD, mp3, ape, ogg, wma, stream audio to name a few). It is also quite well featured considering Puppy Linux's mantra of "Light and Sweet". Some highlights:</p>
+	<ul>
+	<li>5 different <a href="#presets">user interfaces</a> (presets) built in. The default interface should be very easy to use. You can also create <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=313250#313250">custom presets</a>.</li>
+	<li>Fast managing of huge music collection.</li>
+	<li>Play &amp; bookmark your favorite internet radio stations, podcasts, audio files.</li>
+	<li>Meta-tagging tools.</li>
+	<li>Multiple playlist management.</li>
+	<li>Interface to internet "Lyric" sites to display the lyrics of a song.</li>
+	<li>Pmusic stores your music history, so you can browse playlist for ie. last Saturday.</li>
+	<li>Copy and convert your playlist to an external device (as your phone or mp3-player).</li>
+	<li>Ability to create your own "mix" audio CD's.</li>
+	<li>Supports <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=349661#349661">graphical theming</a>.</li>
+	<li><a href="http://www.murga-linux.com/puppy/viewtopic.php?p=259090">Language support</a>.</li>
+	</ul>
+<p> Pmusic is released with the General Public Lisence. Download latest package from the <a href="http://www.murga-linux.com/puppy/viewtopic.php?t=31206">homepage</a>.</p></div>
+
+<br>
+<div class="content-item">
+<a id="whatisnot"><font color="#696969" size="5">What is Pmusic not?<br></font></a>
+<p> Well, For one thing Pmusic is not bloated big like other music players available. - It's pet package is a mere 40k. So because it is not a 2-30mb install, Pmusic does not have every feature the "big boys" have.</p>
+	<ul>
+	<li>It does not show album art.</li>
+	<li>Pmusic is more music-organizer than audioplayer. The playback-module is simple.</li>
+	<li>The skins is mostly restricted to gtk-theming.</li>
+	<li>It does not connect to musicbrainz or similar for autodetection of metatags.</li>
+	<li>Support of podcasts is limited to the functions of Puppy-podcast-grabber.</li>
+	<li>Pmusic does not connect to wikipedia... for extended information.</li>
+	<li>No equalizer</li>
+	</ul>
+</div>
+
+
+<!#############   P E R F O R M A N C E   ###############>
+
+<br>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;"><font color="#508F2D" size="6" >Performance<br></font></div>
+<hr style="width: 100%; height: 2px;">
+
+<br>
+<div class="content-item">
+<a id="slow"><font color="#696969" size="5">When I dump all my thousands of songs into a playlist, Pmusic becomes real slow?<br></font></a>
+<p> Yes, Depending on your CPU, Pmusic starts to become slow after 150-300 songs. But there is a solution. Please keep in mind a typical 150 song playlist is probably a 8+ hour long session. If your collection is larger than that, I recommend you to index the music files. It is a much faster way of selecting your songs to play. See next question for more information.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="whyindex"><font color="#696969" size="5">Why should I index my music?<br></font></a>
+<p> There is no need of indexing your audio files. Pmusic has a builtin file-browser where you can find your music and add it to the playlist. This works perfectly for small music collections. If you on the other hand experience that it's hard to navigate through your huge collection, it's time to consider indexing.<br><br>
+
+You might think that 'indexing' sounds advanced, - but it's not. it is only a table holding information about all your songs and albums. This makes it easy to sort your music by artist, album, song name.... Also, Pmusic lists 20000 songs from your index in a blink of an eye. Open a directory with the same amount of files, you can drink a cup of coffee while waiting. While building the table (the index), Pmusic scans your system for audio files. It is possible to run various filters during this scan. ie. 'files in the same directory belongs together, and should be put in a new album'. Pmusic offers some simple filters depending on your collection structure.<br><br>
+
+But the biggest advantage of an index is its speed when searching for a song. Pmusic searches so fast that the search result shows up while typing. The downside is that the index must be refreshed after adding more music to your collection.<br><br>
+
+So if you have a large library, indexing is the way to go. Because of the search speed, you can create a playlist "session" to suit your needs of the moment quite quickly. When you have a playlist the way you want it, you can always save it for reuse later.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="random"><font color="#696969" size="5">But hey, since I can't put my entire collection into the playlist, how can I play a random song?<br></font></a>
+<p> In Pmusic you have to first 'Add random songs' from your index/browser into the playlist, - then play. You can define how many songs you want to pick randomly from you collection.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="history"><font color="#696969" size="5">How does the 'playlist history' work?<br></font></a>
+<p> The playlist history stores your list whenever you click for a 'New' list. Like this you can go back in history to see what you played yesterday (or last month). Be aware that it is also possible to store playlists by using several playlists. Pmusic manages 4 different lists where you can keep different music for different occations. You can of course also save the playlist as a m3u file.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="songinfo"><font color="#696969" size="5">How do you see "Song Info" for file on the left side? I.E. the library side, not the playlist side. Is that available?<br></font></a>
+<p> The 'Music-Sources' window does show meta-information by default. This can be turned off in the preferences. If 'Song info' means bitrate, etc.... this is only available for the playing song, - from the menu 'Sonf info / Meta tags'. In 'Manager' mode, you'll have a info-tag holding this info of the current playing song.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="presets"><font color="#696969" size="5">What are the best envisioned uses for the window navigator windows?<br></font></a>
+<p> The different window presets show different ways of setting up the Pmusic gui, - each one for a purpose.</p>
+	<ul>
+	<li>The default is the Classic one, - This one should not scare mum away..... Just the basic stuff, and looks not too different from several other players. Another benefit is that a less complex gui works faster, and is preferable for low-powered systems. The Classic mode uses a standalone 'Music-Source' window. I have tried to also keep this simple. At first glance, it looks like a filebrowser (and it acts like it too). This is just the same as any simple player would act. When clicking on additional features as the 'Songs' button, new windows shows up, asking for more configuration. Earlier this configuration had to be set during the first run of Pmusic, but now you can use Pmusic just as an ordinary player without bothering with advanced options.</li>
+	<li>Some of the big/modern audio-players like Amarok, provides a far more advanced gui. Pmusic will never be something like Amarok, but the Manager mode is inspired by the way these way-too-complex audio-players are built. Many users have reported that they prefer the Manager mode, because of having the Music-sources in the same gui as the playlist. I agree, but have returned back to Classic because of its speed.</li>
+	<li>The Wings mode is made for systems set up as a music manager. It is well suited in full screen, but works best on resolutions from 1200 width and above.</li>
+	<li>The Vertical mode requires a big screen to work well. It is built to be tall and narrow. It will work nice when screen is big enough to have both your major application and Pmusic side by side on the desktop.</li>
+	<li>At last there is a system mode called 'Navigator window'. This is meant to reduce Pmusic's cpu-hunger.</li>
+	</ul>
+<p> As earlier mentioned, the user has the ability to build <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=313250#313250">unique Pmusic guis</a>.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="bookmarks"><font color="#696969" size="5">What are Bookmarks and how do I use them? <br></font></a>
+<p> 'Bookmarks' is an advanced feature to help the user to quickly find a source of music i.e. a large number of music files stored somewhere on your hard disk. To use a bookmark is fairly simple. In 'Music-sources' you click on the 'Bookmarks' button/menuitem. The list will appear. You click only once on a Bookmark, and the Pmusic file management system kicks in.<br><br>
+ 
+Extra note: At the top of the Bookmark list is the name 'Manage Bookmarks'. It isn't a source of music.  See next question to find out what it does. </p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="makebookmark"><font color="#696969" size="5">But how do I make a new Bookmark?<br></font></a>
+<p> Click once on 'Manage Bookmarks', either from 'file' menu or in the 'Music-sources' list. As an example, let's say that /root/Music is the location of a large number of songs.  Click once on the small icon next to Path/URL field.  Add the folder you wish. Back in the 'Manage Bookmarks' window, the path to folder is at the top. Type in a simple descriptive name in the field directly beneath the path to folder. Click once on the blue plus symbol. Then click on the OK button to get out of  the 'Manage Bookmarks' window. Unfortunately you will not see this new bookmark in the list until you click the 'Bookmarks' button once more.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="podcast"><font color="#696969" size="5">What are Podcasts?<br></font></a>
+<p> When you sign up for a podcast, you get regular file downloads automatically, maybe even once a day. As an example Deutsche Welle has a free daily podcast called  'Langsam gesprochene Nachrichten' to help students learning German. Make sure you select mp3 as the file format of the podcast if possible, since this is the most popular song format and very compact. The podcast-grabber will create the folder /root/my-documents/Podcasts where it will store downloaded podcasts. The folder is on your list of bookmarks so it is easy to locate.<br><br>
+
+Tip: If using multiple playlists, use one playlist just for Podcasts alone. Like this you easy keep the track. To rename the 'Playlist 4' to 'Podcasts', go to menu item 'Preferences' and under 'Playlist' the name of a playlist can be easily changed.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="convert"><font color="#696969" size="5">What if I want to convert a WAV file to a MP3 file?<br></font></a>
+<p> Under 'Tools' menu choose 'copy/convert' to convert all songs in playlist. Click 'Specify output stream'. For high quality stereo conversion choose 192000 bits/sec. For mono songs you choose half the stereo rate.<br><br>
+
+If you have a large number of files to convert located in one folder, I would suggest installing paudioscripts-1.4.2.pet, which is a collection of scripts that will create a folder and place the converted files in this folder. The script I use is wav2mp3. There is also another script that converts MP3 to WAV called mp32wav. </p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="burn"><font color="#696969" size="5">How do I burn a playlist to an audio disc?<br></font></a>
+<p> Pmusic is well matched with the program Pburn. Once you have a playlist (well under 70 minutes long) of WAV,MP3,OGG,WMA files, then choose menu item 'Burn files in playlist'. When Pburn is first run, it will ask you where it should store it's temporary files. It will warn you not to select a partition that is formated in FAT(an old Microsoft standard). The other types of file system formatting such as ext2/3 and ntfs are fine. Make sure that there is at least 800mb (minimum) of empty space available on this drive. Choose the 'normalize' option in Pburn since it adds only a small amount of extra time to burn process. Follow instructions and in only a few minutes you will have burnt an audio disk.  Keep the disk in a sleeve, out of sunlight, and it should last for many years.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="extendedfileoperations"><font color="#696969" size="5">What file operations are possible?<br></font></a>
+<p>Once a song is playing you can do several operations. 'Rename' 'Copy' or 'Delete' are available under menu heading 'Playlist'. You will be given a warning when you delete, but beware 'Delete' means the erasing of the file so it is gone forever. For powerful file management you should go to 'Tools' menu,  'Rox - Show location...'. The Rox-filer will pop up a folder window with the song that is currently playing or has just finished playing.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="undo"><font color="#696969" size="5">Is there an undo feature?<br></font></a>
+<p>The history feature acts like an undo. You can go backwards in history to a previous state. In some situations this will restore a song title on your playlist that you accidentally right clicked and removed. There are two ways to go backwards in history. The most convenient way is to click on the curved yellow arrow icon but there is also a menu item. Hint: The list of recently played songs is also helpful in tracking down a song that you removed from a playlist.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="theme"><font color="#696969" size="5">How do I change the interface to be something more exciting? A new Theme / Skin.<br></font></a>
+<p>Pmusic can change it's theme i.e. its icons and window color. It's a simple matter of installing an available theme pet and then choosing
+the theme. It is a preference option. Find more info on the <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=349661#349661"></a></p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="modifytheme"><font color="#696969" size="5">How can I modify a theme?<br></font></a>
+<p>If you have not downloaded any themes then "/user/local/pmusic/themes" directory will be empty:  If you have there will be a directory for each theme. In this directory you will find many .png files which are the icons that make up the GTK GUI of Pmusic. You can have Pmusic running so you can compare these icons the their respective on-screen positions in the app. Now you can open your favourite image editor and edit these icons to your heart's desire, making sure to back-up your original theme and saving the new icons you create in a new directory inside "/usr/local/pmusic/themes". Be sure to save the icons with the identical name as the original.<br><br>
+
+You will also find two text files in the theme directory. You can leave the "themerc" file alone but you can edit the "gtkrc" file. One nifty thing you can do is change the font. Find a font you would like Pmusic to have and be sure it is installed correctly in "/usr/share/fonts/default/TTF". On line 31 of the "gtkrc" file you will find "font_name = DejaVu Sans 12" or "font_name = D3 Euronism 9", where "DejaVu Sans" or "D3 Euronism" is the font name and "12" or "9" is the size of the font. Alter these and save the file. There are lots of other things you can edit in this file, colors and such, just experiment, but remember to back-up before you do so you don't lose any of your hard work if something goes wrong.<br><br>
+
+Save all your changes and name your new directory to a theme name of your choice. Restart Pmusic and go to File/Preferences where a window will appear offering you the theme options. If you have done everything correctly then your theme will appear in the list. Select it, restart Pmusic and again, if all is well, your new theme will appear.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="rip"><font color="#696969" size="5">Can I rip an audio-CD with Pmusic?<br></font></a>
+<p>No, but here are some tips to use Asunder (the ripper in Puppy) better with Pmusic.</p>
+	<ul>
+	<li>Look under Asunder's Preferences to find the "Destination Folder'. Now launch Pmusic and make Asunder's Destination Folder a Bookmark.</li>
+	<li>Asunder has a feature 'Create M3U playlist' available in it's preferences. Make sure this is selected. Also make sure that Rox Filer has it's 'Set Run Action' to open the .m3u  file extension with the command 'pmusic -a "$@"'. This is done with a right click on the file when using Rox Filer.  Better still, use the file browser built into Pmusic to open this playlist created by Asunder</li>
+	</ul>
+</div>
+
+
+<!#############   T R O U B L E S H O O T I N G   ###############>
+
+<br>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;"><font color="#508F2D" size="6" >Troubleshooting<br></font></div>
+<hr style="width: 100%; height: 2px;">
+
+<br>
+<div class="content-item">
+<a id="formats"><font color="#696969" size="5">Why doesn't Pmusic play this/that file-format?<br></font></a>
+<p> Pmusic supports many audio-formats, but it is depending of the converter 'ffmpeg' to work. Most distros contains ffmpeg, but it differs how it is compiled, and what formats it supports. If you are sure your ffmpeg supports output of an audio-format, but you still can't get Pmusic to play it. - Please give a note!<br><br>
+
+To see a complete list of supported formats; run 'pmusic -h' in terminal.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="trim"><font color="#696969" size="5">Can I trim Pmusic to run smooth on my old pc?<br></font></a>
+<p> Yes, you can. After built your playlist you have some options:</p>
+	<ul>
+	<li>Choose 'Navigator window' from the 'Window' menu. This reduces the gui, and stops the background process that updates status in the progress bar.</li>
+	<li>Click on the pmusic-icon in the tray will hide the gui. Navigate in playlist with the right-click menu.</li>
+	<li>You can start the playlist with the Pmusic backend from a terminal (pmusic -b playlist.m3u). This uses the pmusic-engine, but no gui.</li>
+	</ul>
+Note that you can build your own gui-preset. Removing the progress bar from the 'Classic' mode, and you have a real lightweight player.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="mixer"><font color="#696969" size="5">How can I activate bass/treble in the mixer?<br></font></a>
+<p> The bass/treble options enables if your audio-card has a builtin hardware-based mixer. Pmusic does not support software-based equalizing.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="delmostplayed"><font color="#696969" size="5">My 'Recently Played' and 'Most played' song lists have songs that I have burnt and deleted. What should I do?<br></font></a>
+<p> Look under Preferences>Add and you will see an option to delete the 'most played list' and Pmusic will create a new list automatically. All index lists can be manually edited. You find them in $HOME/.pmusic/</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="tooltips"><font color="#696969" size="5">A little message box pops up and blocks my view of playlist. How do I get rid of this?<br></font></a>
+<p> This feature is called 'Tooltips'. It is intended to help new users understand the function of icons, buttons ,menu items etc. , but once you understand Pmusic thoroughly you should go to Preferences and turn off 'Tooltips'.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="knownbugs"><font color="#696969" size="5">Are there any known bugs?<br></font></a>
+	<ul>
+	<li>On rare occasions Pmusic won't play at all. It appears to lock up. This may have been caused by the file being renamed or deleted by another program or the square bracket [ character. You could try the history feature. Another suggestion. Replace this bad playlist with a good one. Using Rox Filer open a playlist that has already been saved properly to disk.  The playlist will have an extension .m3u. You should have set up Rox Filer to automatically open files with this extension in Pmusic. If you haven't then it's time you did. Using Rox Filer just left click a file with the extension .m3u. Then choose 'Set Run Action' . The command to be used is 'pmusic "$@"' . Then click the button 'Use Command'. Now using Rox Filer, one click on a file with the extenson .m3u will open it with Pmusic.</li>
+	<li>Pmusic is a 'one click app' which means that the user should only click once on a item. Clicking twice will cause strange behavior in some situations.</li>
+	<li>Pmusic should play fine even if a song title has special characters in it, however there is three special characters that you should avoid using. Namely the piping symbol | , th square bracket [ and the backslash \ .  As well  the forward slash is forbidden in linux filenames because it is needed to describe the path.</li>
+	</ul>
+</div>
+
+
+<!#############   D E S K T O P   I N T E G R A T I O N   ###############>
+
+<br>
+<hr style="width: 100%; height: 2px;">
+<div style="text-align: center;"><font color="#508F2D" size="6" >Desktop integration<br></font></div>
+<hr style="width: 100%; height: 2px;">
+
+<br>
+<div class="content-item">
+<a id="addfromrox"><font color="#696969" size="5">How can I 'Add file to playlist' rather than 'Play file' when clicking in filebrowser?<br></font></a>
+<p> This is set by the filebrowser, not by Pmusic. Most Puppies uses the Rox filebrowser. In Rox you right-click on the audiofile and chooses 'Set run action'. Command should be 'pmusic -a $1"' to 'Add file to playlist. For complete list of parameters run 'pmusic -h' in terminal.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="default"><font color="#696969" size="5">How can I set Pmusic as the default audioplayer?<br></font></a>
+<p>To set Pmusic as the default player you must edit the tiny file /usr/local/bin/defaultaudioplayer. This might points to agualung. Let it instead point to /usr/local/bin/pmusic. Also, don't forget to "set run action" in ROX-filer to /usr/local/bin/pmusic on the m3u playlists you create in pmusic if it is not set already. Then all you have to do is click the playlist file in ROX filer and it will load automatically.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="terminal"><font color="#696969" size="5">Can I use the terminal or external code to manage Pmusic?<br></font></a>
+<p>Pmusic provides different switches for adding / playing music. Pmusic can also be ran as a backend (witout gui) with the -b switch. In additon to this you can send a signal to a running Pmusic. - 'pmusic -s next' will start next song in playlist. See 'pmusic -h' for a complete list of switches.</p>
+</div>
+
+<br>
+<div class="content-item">
+<a id="hotkeys"><font color="#696969" size="5">How can I control Pmusic by hotkeys in JWM?<br></font></a>
+<p>The following code in $HOME/.jwm/jwmrc-personal plays next/previous song by ALT+right/left, and increases/decreases volume by ALT+up/down.<br><br>
+
+&lt;Key mask="A" key="Up"&gt;exec:/usr/local/pmusic/pmusic -s volup&lt;/Key&gt;<br>
+&lt;Key mask="A" key="Down"&gt;exec:/usr/local/pmusic/pmusic -s voldown&lt;/Key&gt;<br>
+&lt;Key mask="A" key="Right"&gt;exec:/usr/local/pmusic/pmusic -s next&lt;/Key&gt;<br>
+&lt;Key mask="A" key="Left"&gt;exec:/usr/local/pmusic/pmusic -s prev&lt;/Key&gt;<br>
+</p>
+</div>
+
+
+</div>
+</body>
+</html>

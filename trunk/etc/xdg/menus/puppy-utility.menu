@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Utility</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Utility.directory</Directory>
+
+  <Layout>
+    <Menuname inline="true" inline_limit="99">UtilitySub</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">UtilityArchiving</Menuname>
+    <Separator/>
+    <Menuname inline="true" inline_limit="10">UtilityConsole</Menuname>
+  </Layout>
+
+  <Menu>
+    <Name>UtilitySub</Name>
+    <Directory>Puppy-UtilitySub.directory</Directory>
+    <Include>
+      <Category>Utility</Category>
+      <Category>Viewer</Category>
+      <Category>Development</Category>
+      <Category>Building</Category>
+      <Category>Debugger</Category>
+      <Category>IDE</Category>
+      <Category>Profiling</Category>
+      <Category>Translation</Category>
+      <Category>GUIDesigner</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>UtilityArchiving</Name>
+    <Directory>Puppy-UtilityArchiving.directory</Directory>
+    <Include>
+      <Category>Archiving</Category>
+    </Include>
+  </Menu>
+
+  <Menu>
+    <Name>UtilityConsole</Name>
+    <Directory>Puppy-UtilityConsole.directory</Directory>
+    <Include>
+     <Category>TerminalEmulator</Category>
+     <Category>Shell</Category>
+    </Include>
+  </Menu>
+
+</Menu>

@@ -1,0 +1,265 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of rpl</TITLE>
+</HEAD><BODY>
+<H1>rpl</H1>
+Section: User Commands  (1)<BR>Updated: July 22, 2002<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+rpl (RePLace) - replace strings in multiple files
+<A NAME="lbAC">&nbsp;</A>
+<H2>VERSION</H2>
+
+1.4.0
+<A NAME="lbAD">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+rpl [-iwRspfdtx [-q|-v]] &lt;old_str&gt; &lt;new_str&gt; &lt;target_file(s)&gt;
+<A NAME="lbAE">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>rpl</I>
+
+replaces old_str with new_str in all target files. It returns the number of strings replaced
+or a system error code (non-zero) if there is an error.
+
+Note that you should put strings in single quotes if they contain spaces. You must also escape all shell meta-characters. It's a good idea to put ALL strings in single quotes.
+
+<I>rpl</I>
+
+will attempt to maintain the owner, group and permissions of your original files. For safety,
+<I>rpl</I>
+
+creates a temporary file and makes changes to that file. It then moves the temporary file over the original file.
+<I>rpl</I>
+
+sets the owner, group, and permissions of the new file to match those of the original file.
+In some circumstances
+<I>rpl</I>
+
+will not be able to do this (such as when a file is owned by the superuser but you have group write permission).
+In these cases
+<I>rpl</I>
+
+will warn you that the owner/group or permissions cannot be set and that file will be skipped, unless you use the force (-f) option. Note that the use of temp files in predictable, world-writeable locations could lead to symlink attacks. Ideally you should set the $TMPDIR environment variable to a private directory readable and writeable only by you. This is especially important if running
+<I>rpl</I>
+
+as root. You have been warned!
+
+Normally,
+<I>rpl</I>
+
+will change the modification time of all files it processes like any other program. However, you may instruct
+<I>rpl</I>
+
+to keep the original modification times using the -d (Don't alter mod-times) option.
+
+You can specify file suffixes to be searched using the -x option. Any files that do not match the specified suffixes will not be searched or modified. The -x option may be used more than once to tell 
+<I>rpl</I>
+
+to search files with varying suffixes. For instance, say you wanted to search all of your &quot;.html&quot;, &quot;.htm&quot;, and &quot;.php&quot; files you would add 
+
+&quot; -x'.html' -x'.htm' -x'.php' &quot;
+
+to your command line. 
+<I>rpl</I>
+
+would then skip any files that did not end with these suffixes. This is mainly useful when doing recursive searching (-R option).
+<A NAME="lbAF">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-i</B>
+
+<DD>
+Ignore case of old_str
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will match the old_str in the searched file regardless of the case. The case of new_str will not be altered.
+</DL>
+
+<DT><B>-w</B>
+
+<DD>
+Whole words (old_str bounded by white space in file)
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will only match old_str if it is bounded by the start of a line, a space, a tab, or the end of a line.
+</DL>
+
+<DT><B>-q</B>
+
+<DD>
+Quiet mode (no output at all)
+<DL COMPACT><DT><DD>
+Good for shell scripts, etc.
+</DL>
+
+<DT><B>-v</B>
+
+<DD>
+Verbose mode (lots of output)
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will list the name of each file and directory, and the line numbers that contain matches.
+</DL>
+
+<DT><B>-R</B>
+
+<DD>
+Search directories recursively
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will scan every file and every directory recursively. Without this option directories will be skipped.
+</DL>
+
+<DT><B>-x</B>
+
+<DD>
+Specify file suffixes to search. (e.g. &quot;.html&quot;, &quot;.c&quot;, etc.) May be used multiple times. See above for details.
+<DL COMPACT><DT><DD>
+</DL>
+
+<DT><B>-p</B>
+
+<DD>
+Prompt for each file
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will prompt you before scanning each file. If you respond 'N' or 'n'
+<I>rpl</I>
+
+will skip that file and move on to the next file. The default action if you press enter is to process the file.
+</DL>
+
+<DT><B>-s</B>
+
+<DD>
+Simulation mode
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will scan all of the files and list the names of files that it would modify if a replace operation was executed. If you turn on the verbose (-v) option as well
+<I>rpl</I>
+
+will list the line numbers where the string is matched.
+</DL>
+
+<DT><B>-e</B>
+
+<DD>
+Honor Escapes
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will honor escape sequences in old_string and new_string.  Standard escapes such as &quot;	&quot; (tab), &quot; (newline), &quot;&quot; (carriage return) are processed, as well as any octal or hexidecimal ASCII codes. Octal ASCII codes start with a '' and are comprised of three digits [0-7] (e.g. '&nbsp;15'). Hexidecimal ASCII codes start with '&nbsp;x' followed by two characters [0-f] (e.g. '&nbsp;x0d'). The 'x' and the [a-f] may be upper or lowercase. When you use this switch you must escape all backslash ('') characters with another backslash (e.g. '\').
+</DL>
+
+<DT><B>-f</B>
+
+<DD>
+Force mode
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will overwrite files even if the owner, group, or permissions of the new file will not match the original. Obviously,
+<I>rpl</I>
+
+cannot overwrite files if the user does not have write permission.
+</DL>
+
+<DT><B>-d</B>
+
+<DD>
+Don't change modification times
+<DL COMPACT><DT><DD>
+<I>rpl</I>
+
+will process files, but keep their original modification times.
+</DL>
+
+<DT><B>-t</B>
+
+<DD>
+Use $TMPDIR for temporary files
+<DL COMPACT><DT><DD>
+Causes
+<I>rpl</I>
+
+to write temporary files to the directory specified by the environment variable $TMPDIR instead of writing the temp files to the original file dir. (See note above about symlink attacks and temp files.)
+</DL>
+
+<DT><B>-L</B>
+
+<DD>
+Display the software license
+<DL COMPACT><DT><DD>
+This displays the software license that you agree to by using
+<I>rpl.</I>
+
+</DL>
+
+<DT><B>-h</B>
+
+<DD>
+Display a brief summary of options
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Report bugs to <A HREF="mailto:software@laffeycomputer.com">software@laffeycomputer.com</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>TODO</H2>
+
+Grep pattern matching.
+
+An option to backup the original file.
+
+If you would like to see this or other enhancements send e-mail to <A HREF="mailto:software@laffeycomputer.com">software@laffeycomputer.com</A>
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONTRIBUTORS</H2>
+
+Original code:
+<DL COMPACT><DT><DD>
+Joe Laffey &lt;<A HREF="mailto:software@laffeycomputer.com">software@laffeycomputer.com</A>&gt;
+</DL>
+
+
+Other contributors include:
+<DL COMPACT><DT><DD>
+Devrim Erdem &lt;<A HREF="mailto:devrim@infotron-tr.com">devrim@infotron-tr.com</A>&gt; 
+</DL>
+
+<DL COMPACT><DT><DD>
+Many thanks to the beta testers who sent in valuable feedback!
+</DL>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">VERSION</A><DD>
+<DT><A HREF="#lbAD">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAE">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAF">OPTIONS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">TODO</A><DD>
+<DT><A HREF="#lbAI">CONTRIBUTORS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 12:32:51 GMT, March 19, 2009
+</BODY>
+</HTML>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Secure ssh telnet
+Icon=mini-sh1.xpm
+Comment=Secure ssh telnet
+Exec=securetelnetshell
+Terminal=false
+Type=Application
+Categories=X-Internet
+GenericName=Secure ssh telnet

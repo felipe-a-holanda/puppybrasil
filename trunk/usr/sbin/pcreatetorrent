@@ -1,0 +1,389 @@
+#!/bin/bash
+
+VERSION=1.4 ##by Jason Pline 2007-12-28
+
+##find a suitable version of gtkdialog (needs 0.7.20 or greater) currently (as of puppy 4 and maybe before)
+##the executable is named gtkdialog3. Exit with a warning incase gtkdialog isn't found.
+GTKDIALOG=""
+if [ "`which gtkdialog3`" != "" ]; then
+GTKDIALOG=gtkdialog3
+elif [ "`which gtkdialog`" != "" ]; then
+GTKDIALOG=gtkdialog
+elif [ "$GTKDIALOG" = "" ]; then
+echo "you need to install gtkdialog"
+exit 0
+fi
+
+##find a suitable terminal
+TERMINAL=""
+if [ "`which rxvt`" != "" ]; then
+TERMINAL=rxvt
+elif [ "`which urxvt`" != "" ]; then
+TERMINAL=urxvt
+elif [ "`which mrxvt`" != "" ]; then
+TERMINAL=mrxvt
+elif [ "`which aterm`" != "" ]; then
+TERMINAL=aterm
+elif [ "`which materm`" != "" ]; then
+TERMINAL=materm
+elif [ "`which xterm`" != "" ]; then
+TERMINAL=xterm
+elif [ "`which Eterm`" != "" ]; then
+TERMINAL=Eterm
+elif [ "`which sakura`" != "" ]; then
+TERMINAL=sakura
+elif [ "`which konsole`" != "" ]; then
+TERMINAL=konsole
+elif [ "`which gnome-terminal`" != "" ]; then
+TERMINAL=gnome-terminal
+elif [ "`which xfce4terminal`" != "" ]; then
+TERMINAL=xfce4terminal
+elif [ "`which xfce4term`" != "" ]; then
+TERMINAL=xfce4term
+elif [ "`which xfce4-term`" != "" ]; then
+TERMINAL=xfce4-term
+fi
+
+if [ -d $HOME/pupctorrent ]; then
+mv $HOME/pupctorrent $HOME/pcreatetorrent
+fi
+
+WHOAMI=`whoami`
+rm -f /tmp/$WHOAMI-pcreatetorrent*
+mkdir -p $HOME/pcreatetorrent/trackers
+mkdir -p $HOME/pcreatetorrent/torrents
+
+cd $HOME/pcreatetorrent/trackers
+
+if [ "`ls`" != "" ]; then
+ls | while read TEMP
+do
+if [ "`cat "$TEMP" | grep url=`" = "" ]; then
+if [ "$TEMP" != add-a-tracker ]; then
+cat "$TEMP" >> /tmp/$WHOAMI-pcreatetorrent-temp
+fi
+rm -f "$TEMP"
+fi
+done
+fi
+
+TRACKERS=""
+for ONETRACKER in `ls`
+do
+ TRACKERS="$TRACKERS<item>$ONETRACKER</item>"
+done
+
+echo 512k > /tmp/$WHOAMI-pcreatetorrent-rates
+echo 32k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 48k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 64k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 96k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 128k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 192k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 256k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 384k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 768k >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 1m >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 1.5m >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 2m >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 3m >> /tmp/$WHOAMI-pcreatetorrent-rates
+echo 4m >> /tmp/$WHOAMI-pcreatetorrent-rates
+
+RATES=""
+for ONERATE in `cat /tmp/$WHOAMI-pcreatetorrent-rates`
+do
+ RATES="$RATES<item>$ONERATE</item>"
+done
+
+cd /
+
+export NEWGUI="
+<window title=\"Pcreatetorrent-$VERSION \"icon-name=\"gtk-network\">
+<hbox>
+<vbox>
+
+    <frame Select one or the other>
+	<hbox>
+    <radiobutton active=\"true\">
+      <label>Make a torrent of a directory</label>
+      <variable>RADIOBUTTON1</variable>
+		<action>if true enable:NEWDIR</action>
+		<action>if true enable:FILE_BROWSE_DIRECTORY</action>
+      <action>if false disable:NEWDIR</action>
+      <action>if false disable:FILE_BROWSE_DIRECTORY</action>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>Make a torrent of a single file</label>
+      <variable>RADIOBUTTON2</variable>
+		<action>if true enable:ENTRY1</action>
+		<action>if true enable:FILE_BROWSE_FILENAME</action>
+      <action>if false disable:ENTRY1</action>
+      <action>if false disable:FILE_BROWSE_FILENAME</action>
+    </radiobutton>
+    </hbox>
+	<frame Select a directory>
+	<hbox>
+      <entry accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>NEWDIR</variable>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">NEWDIR</action>
+      </button>
+  </hbox>
+  </frame>
+	<frame Select a single file>
+    <hbox>
+      <entry accept=\"filename\">
+        <label>Select an Existing File</label>
+        <variable>ENTRY1</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+			<visible>disabled</visible>
+        <action type=\"fileselect\">ENTRY1</action>
+      </button>
+    </hbox>
+  </frame>
+  </frame>
+
+    <frame Select your piece rate size for the torrent file>
+    <hbox>
+    <combobox>	
+     <variable>RATECOMBO</variable>
+      $RATES
+    </combobox>
+    </hbox>
+    </frame>
+
+    <frame Select a tracker & create a torrent>
+    <hbox>
+    <combobox>	
+     <variable>TRACKERCOMBO</variable>
+      $TRACKERS
+    </combobox>
+    <button>
+      <input file icon=\"gtk-yes\"></input>
+      <label>Create</label>
+      <action type=\"exit\">CREATE_TORRENT</action>
+    </button> 
+    </hbox>
+    </frame>
+    
+    <frame Remove/Add tracker - Exit program>
+    <hbox>
+    
+    <button>
+      <input file icon=\"gtk-remove\"></input>
+      <label>Remove Tracker</label>
+      <action type=\"exit\">REMOVE_THE_TRACKER</action>
+    </button>
+    
+    <button>
+      <input file icon=\"gtk-add\"></input>
+      <label>Add A Tracker</label>
+      <action type=\"exit\">ADD_A_TRACKER</action>
+    </button>
+    
+    <button>
+      <input file icon=\"gtk-quit\"></input>
+      <label>QUIT</label>
+      <action type=\"exit\">Exit-NOW</action>
+    </button>
+
+  </hbox>
+  </frame>
+
+</vbox>
+</hbox>
+</window>
+"
+PCREATETORRENT="`$GTKDIALOG --program=NEWGUI --center`"
+
+EXIT="`echo "$PCREATETORRENT" | grep EXIT= | cut -f 2 -d '"' | sed 's/"//g'`"
+
+if [ "$EXIT" = Exit-NOW ]; then
+exit 0
+fi
+
+TRACKERCOMBO="`echo "$PCREATETORRENT" | grep TRACKERCOMBO= | cut -f 2 -d '"' | sed 's/"//g'`"
+
+if [ "$EXIT" = CREATE_TORRENT ]; then
+NEWDIR="`echo "$PCREATETORRENT" | grep NEWDIR= | cut -f 2 -d '"' | sed 's/"//g'`"
+if [ "$NEWDIR" = "" ]; then
+NEWDIR="`echo "$PCREATETORRENT" | grep ENTRY1= | cut -f 2 -d '"' | sed 's/"//g'`"
+fi
+if [ "$NEWDIR" = "" ]; then   
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"50\">
+    <label>You need to select a file or a directory to make a torrent of</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+$GTKDIALOG --program=MAIN_DIALOG --center
+pcreatetorrent &
+exit 0
+fi
+FILE="`basename "$NEWDIR"`"
+RATECOMBO="`echo "$PCREATETORRENT" | grep RATECOMBO= | cut -f 2 -d '"' | sed 's/"//g'`"
+if [ "$RATECOMBO" = 1.5m ]; then
+RATE=1500000
+else
+RATE=`echo "$RATECOMBO" | sed 's/k/000/g' | sed 's/m/000000/g'`
+fi
+cd $HOME/pcreatetorrent/trackers/
+NEWURL=`cat "$TRACKERCOMBO" | grep url= | cut -f 2 -d '='`
+NEWPORT=`cat "$TRACKERCOMBO" | grep port= | cut -f 2 -d '='`
+NEWPATH=`cat "$TRACKERCOMBO" | grep path= | cut -f 2 -d '='`
+URL="$NEWURL":"$NEWPORT""$NEWPATH"
+TORR="$FILE".torrent
+
+cd "`dirname "$NEWDIR"`"
+if [ "$FILE" != "" ]; then
+if [ "$TERMINAL" = rxvt ]; then
+rxvt -bg black -fg green --geometry 60x10 -e ctorrent -t "$FILE" -u "$URL" -l "$RATE" -s $HOME/pcreatetorrent/torrents/"$TORR"
+else
+$TERMINAL -e ctorrent -t "$FILE" -u "$URL" -l "$RATE" -s $HOME/pcreatetorrent/torrents/"$TORR"
+fi
+ 
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"50\">
+    <label>$TORR is located at $HOME/pcreatetorrent/torrents/</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+RESULTS=`$GTKDIALOG --program=MAIN_DIALOG --center`
+fi
+fi
+
+if [ "$EXIT" = REMOVE_THE_TRACKER ]; then
+cd $HOME/pcreatetorrent/trackers/
+export MAIN_DIALOG="
+ <vbox>
+  <text>
+    <label>Are you sure you want to remove \"$TRACKERCOMBO\" ?</label>
+  </text>
+  <hbox>
+    <button>
+      <input file icon=\"gtk-delete\"></input>
+      <label>REMOVE</label>
+      <action type=\"exit\">REMOVE-YES</action>
+    </button>
+    <button>
+      <input file icon=\"gtk-quit\"></input>
+      <label>CANCEL</label>
+      <action type=\"exit\">REMOVE-NO</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+MAIN_DIALOG=`gtkdialog3 --program=MAIN_DIALOG --center`
+EXIT="`echo "$MAIN_DIALOG" | grep EXIT= | cut -f 2 -d '"' | sed 's/"//g'`"
+if [ "$EXIT" = REMOVE-YES ]; then
+rm -f "$TRACKERCOMBO"
+fi
+pcreatetorrent &
+exit 0
+fi
+
+if [ "$EXIT" = ADD_A_TRACKER ]; then
+export NEWGUI2="
+<window title=\"Add-A-Tracker \"icon-name=\"gtk-network\">
+<vbox>
+
+    <frame Enter the announce url for the tracker>
+    <vbox>
+    <text><label>For example the bt.etree.org tracker is at</label></text>
+    <text><label>http://tracker.etree.org:6969/announce</label></text>
+    <text><label>In this box just enter the url no port/announce</label></text>
+    <text><label>i.e. http://tracker.etree.org</label></text>
+    <entry>	
+     <variable>NEWURL</variable>
+      <input>echo http://</input>
+    </entry>
+    </vbox>
+    </frame>
+    
+    <frame enter the port number for the tracker>
+    <vbox>
+    <entry>	
+     <variable>NEWPORT</variable>
+     <input>echo 6969</input>
+    </entry>
+    </vbox>
+    </frame>
+    
+    <frame enter the path on the server>
+    <vbox>
+    <entry>	
+     <variable>NEWPATH</variable>
+     <input>echo /announce</input>
+    </entry>
+    </vbox>
+    </frame>
+    
+    <vbox>
+    <text><label>enter a name to represent this tracker</label></text>
+    <text><label>i.e. bt.etree.org</label></text>
+    <entry>	
+     <variable>NEWNAME</variable>
+    </entry>
+    </vbox>
+    
+    <frame create and exit buttons>
+    <hbox>    
+    
+    <button>
+      <input file icon=\"gtk-yes\"></input>
+      <label>CREATE</label>
+      <action type=\"exit\">ADD-TRACKER</action>
+	</button>
+	
+    <button>
+      <input file icon=\"gtk-quit\"></input>
+      <label>QUIT</label>
+      <action type=\"exit\">Exit-NOW</action>
+    </button>
+    
+  </hbox>
+  </frame>
+
+</vbox>
+</window>
+"
+NEWGUI2=`$GTKDIALOG --program=NEWGUI2 --center`
+EXIT="`echo "$NEWGUI2" | grep EXIT= | cut -f 2 -d '"' | sed 's/"//g'`"
+if [ "$EXIT" = ADD-TRACKER ]; then
+NEWURL="`echo "$NEWGUI2" | grep NEWURL= | cut -f 2 -d '"' | sed 's/"//g'`"
+NEWPORT="`echo "$NEWGUI2" | grep NEWPORT= | cut -f 2 -d '"' | sed 's/"//g'`"
+NEWPATH="`echo "$NEWGUI2" | grep NEWPATH= | cut -f 2 -d '"' | sed 's/"//g'`"
+NEWNAME="`echo "$NEWGUI2" | grep NEWNAME= | cut -f 2 -d '"' | sed 's/"//g'`"
+echo url="$NEWURL" > $HOME/pcreatetorrent/trackers/"$NEWNAME"
+echo port="$NEWPORT" >> $HOME/pcreatetorrent/trackers/"$NEWNAME"
+echo path="$NEWPATH" >> $HOME/pcreatetorrent/trackers/"$NEWNAME"
+pcreatetorrent &
+fi
+fi
+
+rm -f /tmp/$WHOAMI-pcreatetorrent*
+exit 0

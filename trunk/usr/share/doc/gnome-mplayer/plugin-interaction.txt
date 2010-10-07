@@ -1,0 +1,121 @@
+Abstract:
+
+This document explains how the gecko-mediaplayer browser plugin and gnome-mplayer work
+together over DBus
+
+
+Browser Side													GNOME MPlayer
+
+dbus_hookup
+
+	connection is created and signals on the
+	com.gecko.mediaplayer interface are listened for
+
+
+gnome-mplayer is started
+	options passed:	
+	--window=wid		(wid is the window to embed in)	
+	--controlid=xxx 	(xxx is random)
+	--width=x
+	--height=y
+	
+	
+														on startup:
+														
+														dbus_hookup
+															
+															connection to dbus is created and signals on the com.gnome.mplayer interface 
+															are listened for. In addtion a name is requested from dbus
+															if controlid is not specified the name "com.gnome.mplayer" is requested
+															if controlid is specified the name "com.gnome.mplayer.cidXXX" is requested where XXX
+																is the controlid specified on the command line	
+															Also if controlid is specifed a signal named "Ready" is sent to com.gecko.mediaplayer
+																with the value "controlid" as an INT32 argument and path set to "/control/XXX". 	
+																
+
+														The Introspect method is processed and the Method Calls and signals are registered on the bus for
+															the name requested
+
+
+
+filter_func
+
+	The "Ready" signal is processed and the argument is processed so that the plugin
+	knows what controlid is now active. 
+
+	During the process of "Ready" the plugin requests a method call named
+	"GetCacheSize" from "com.gnome.mplayer.cidXXX" where XXX is the controlid
+	This is a blocking request, so it must be answered promptly.
+
+														filter_func
+															The method call "GetCacheSize" is processed and the value of the cache_size is sent
+															back in the reply message
+
+
+
+During the plugin run the plugin may request a window resize this is accomplished
+by sending the signal "ResizeWindow" this signal provides two arguments
+width and height
+														filter_func
+															The signal "ResizeWindow" is handled and processed as needed
+
+
+During the plugin run the plugin may request that the player be terminated. This is done		
+by sending the signal "Terminate"
+														filter_func
+															The signal "Terminate" is handled, the application cleans up and shuts down the connection
+
+Once the media is at an acceptable level or 100% downloaded a signal "Open" maybe sent to 
+interface "com.gnome.mplayer" and path "/control/XXX" where XXX is the control id. Open is 
+sent with 1 string argument, the file to open. This argument may be a local filename or maybe 
+a URL.
+														filter_func
+															The signal "Open" is handled and the media is played until the player is terminated or 
+															the media completes or is cancelled. When the media completes the signal "Next" is sent 
+															to "com.gecko.mediaplayer" with the path "/control/XXX" where XXX is the control id.
+
+
+Once the media is at an acceptable level or 100% downloaded a signal "OpenButton" maybe sent to 
+interface "com.gnome.mplayer" and path "/control/XXX" where XXX is the control id. OpenButton is 
+sent with 2 string argument, the file to open and and id to request. 
+The file argument may be a local filename or maybe a URL.
+														filter_func
+															The signal "OpenButton" takes the file argument and creates a image from it and displays
+															the image without the controls showing. It should respond to a click on the image with
+															a signal to "com.gecko.mediaplayer", path "/control/XXX" and a name of "RequestById" with
+															and string argument of the id to request.
+
+filterfunc
+
+	The signal "RequestById" is processed and if the media is streaming the "Open" signal
+	maybe be send (see above). If the media is not streaming, the media will be requested 
+	and eventually be cached (with several signals occuring in the meantime) and finally
+	opened using the "Open" signal. Also at this time a new gnome-mplayer instance may
+	be opened and that instance may be the instance that is sent the signals.
+
+
+Plugin Signal Calls to "com.gnome.mplayer" with a path that is set to "/control/XXX" 
+where XXX is the controlid that are requested and need to be handled
+SetCachePercent													SetCachePercent - tells the player how much of the data has been downloaded
+SetPercent													SetPercent - sets the progress bar percentage, sent during the caching phase
+SetProgressText													SetProgressText - sets the text on the progress bar, sent during the caching phase
+Play														Play - plays the media if paused
+Pause														Pause - suspends the playback
+Stop														Stop - suspends the playback and returns to time 0
+FastForward													FastForward - skips ahead 10 seconds
+FastReverse													FastReverse - skips back 10 seconds (may not work on streaming media)
+SetShowControls													SetShowControls - Boolean, show or hide controls
+SetFullScreen													SetFullScreen - boolean, fullscreen or not
+Volume														Volume - double value between 0 and 100, 100 being max volume
+
+
+Plugin Method calls to "com.gnome.mplayer.cidXXX" with path set to "/control/XXX"				
+GetVolume													GetVolume - return message with volume in double form
+GetFullScreen													GetFullScreen - return message with state in boolean
+GetShowControls													GetShowControls - return message with state in boolean
+GetTime														GetTime - return message with seconds into media in double form
+GetDuration													GetDuration - return message with length of media in seconds in double form
+GetPercent													GetPercent - return message with percent of media played (0-100) in double form
+
+
+

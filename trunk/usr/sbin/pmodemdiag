@@ -1,0 +1,96 @@
+#!/bin/bash
+#Barry Kauler, LGPL 2010
+
+NAMEDATE="`date -u +%Y%m%d`"
+if [ "$1" = "--help" ];then
+	cat 1>&2 << EOT
+
+Usage: `basename $0` [options]
+
+  --help                   This small usage guide
+
+Default action is to collect modem-relevant files into a compressed archive
+(tarball) named such as pmodemdiag-$NAMEDATE.tar.gz in your root/home directory.
+That file can be submitted to Puppy developers for analysis and possible problem
+resolution.
+EOT
+ exit
+fi
+[ -e ~/pmodemdiag-$NAMEDATE.tar.gz ] && echo -e " A file already exists with the intended name of the new tarball file:\n  pmodemdiag-$NAMEDATE.tar.gz\n Please rename or delete it and then rerun pmodemdiag."  && exit
+if [ `cat /etc/puppyversion | cut -b 1-3` -ge 431 ];then 
+ echo " Running PupScan silently to get hardware IDs and drivers."
+else
+ echo " Running PupScan to get hardware IDs and drivers - please close its window manually."
+ sleep 5
+fi
+pupscan --silent
+echo -e " Collecting various modem-related files into an archive tarball:\n  pmodemdiag-$NAMEDATE.tar.gz."
+cd /
+rm -f -r /tmp/pmodemdiag-$NAMEDATE
+mkdir -p /tmp/pmodemdiag-$NAMEDATE
+cp -f /tmp/chipnummod.txt /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/usbchipnummod.txt /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/udevtrace.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/udevtrace-modem.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/bootsysinit.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /var/log/messages /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /etc/rc.d/MODULESCONFIG /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+lsmod > /tmp/pmodemdiag-$NAMEDATE/lsmod.txt
+ls -l /etc/init.d > /tmp/pmodemdiag-$NAMEDATE/ls-etc-init.d.txt
+ls -l -R /dev > /tmp/pmodemdiag-$NAMEDATE/ls-dev.txt
+[ -s /etc/wvdial.conf ] && sed -e 's/^\(Username *= *\).*/\1XXXXXXXX/' \
+ -e 's/^\(Password *= *\).*/\1XXXXXXXX/' \
+ -e 's/\(AT+CPIN=\)..*/\1XXXX/' \
+ /etc/wvdial.conf > /tmp/pmodemdiag-$NAMEDATE/wvdial.conf.txt 2> /dev/null
+cp -f /tmp/pupdial.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /etc/ppp/peers/wvdial /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+[ -e /etc/ppp/peers/gprsmm ] && grep '^[^#]' /etc/ppp/peers/gprsmm > /tmp/pmodemdiag-$NAMEDATE/gprsmm 2> /dev/null
+cp -f /tmp/logwvdialprobe /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/usb_modeswitch.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/usb_modeswitch.temp.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/usb_modeswitch.active /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/ozerocdoff.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/osetsuspend.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /etc/modemttyUSBnum /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+ls -1 /sys/class/tty/ttyHS* > /tmp/pmodemdiag-$NAMEDATE/ls-ttyHS.txt 2> /dev/null
+if [ "`lsmod | grep '^hso '`" != "" ];then
+ TTYS=`find /sys/class/tty -name "ttyHS*"`
+ for i in $TTYS; do
+  echo "$i/hsotype: `cat $i/hsotype`" >> /tmp/pmodemdiag-$NAMEDATE/ttyHS_hsotypes
+ done
+fi
+[ "`which pup_event_backend_modprobe_protect`" != "" ] \
+ && /sbin/pup_event_backend_modprobe_protect --dump 2> /dev/null
+sleep 1
+cp -f /tmp/pup_event_backend_modprobe_protect.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /etc/modules.conf /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cat /proc/devices > /tmp/pmodemdiag-$NAMEDATE/proc_devices.txt 2> /dev/null
+cp -f /tmp/usb_modeswitch_scsi-info.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /etc/rc.d/rc.local /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+ifconfig > /tmp/pmodemdiag-$NAMEDATE/ifconfig.txt 2> /dev/null
+cp -f /root/.packages/user-installed-packages /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+ls -1 /tmp/usb_modem_port-* > /tmp/pmodemdiag-$NAMEDATE/ls-tmp-usb_modem_port.txt 2> /dev/null
+cp -f /etc/rc.d/pupstate /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+touch /tmp/pmodemdiag-$NAMEDATE/kernel-`uname -r`
+cp -f /tmp/xerrs.log /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+cp -f /tmp/.usbserial_dependents /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+if [ "`which hciconfig`" != "" ];then
+ cp -f /etc/bluetooth/*.conf /tmp/pmodemdiag-$NAMEDATE/ 2> /dev/null
+ hciconfig -a 2>&1 > /tmp/pmodemdiag-$NAMEDATE/hciconfig.txt
+ if [ "`which hcitool`" != "" ];then
+  hcitool dev 2>&1 > /tmp/pmodemdiag-$NAMEDATE/hcitool.txt
+  hcitool inq 2>&1 >> /tmp/pmodemdiag-$NAMEDATE/hcitool.txt
+  hcitool con 2>&1 >> /tmp/pmodemdiag-$NAMEDATE/hcitool.txt
+ fi
+ [ "`which rfcomm`" != "" ] \
+  && rfcomm -a 2>&1 > /tmp/pmodemdiag-$NAMEDATE/rfcomm.txt
+ [ "`which sdptool`" != "" ] \
+  && sdptool browse 2>&1 > /tmp/pmodemdiag-$NAMEDATE/sdptool.txt
+fi
+
+cd /tmp
+tar -czf ~/pmodemdiag-$NAMEDATE.tar.gz pmodemdiag-$NAMEDATE
+cd
+echo " Diagnostic file collection complete."
+echo -e " Tarball pmodemdiag-$NAMEDATE.tar.gz can be attached to a posting or personal\n  message (PM) in the Puppy forum, for analysis of dialup modem issues."
+echo " The content can be found in /tmp/pmodemdiag-$NAMEDATE/."

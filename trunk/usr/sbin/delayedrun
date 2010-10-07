@@ -1,0 +1,168 @@
+#!/bin/sh
+#(c) copyright 2007 Barry Kauler
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#launched from ~/.xinitrc, so X is running.
+#note, see also /usr/sbin/savepuppyd, launched from /etc/rc.d/rc.local0.
+#v3.91 BK oct,nov 2007, upated for Dingo.
+#v3.94 BK 15 dec 2007, updated.
+#v4.01 BK 19may2008: don't think loading usb-storage reqd here anymore.
+#v4.01 BK 19may2008: note the new pup_eventd also launched from .xinitrc.
+#w007 path fix for Xorg.
+#w481 warning if modules cannot be loaded.
+#100404 fix load applets for fbpanel. 100413 think needs some 'sleep 0.1'
+#100504 background color for retrovol.
+#100511 for ram-challenged pc, better to display welcome1stboot.png.
+#100513 jwm tray now uses freememapplet_tray and blinky_tray. NOTE: future, move these to /root/Startup.
+#100517 freememapplet_tray moved to /root/Startup.
+#100522 'surfer' is a simple viewer (uses libgtkhtml).
+#100608 if yaf-splash symlink to gtkdialog-splash, use '-fontsize large' parameter.
+#100821 01micko: fixes for background color in tray apps, also launch first-run.sh.
+
+#variables created at bootup by 'init' in initramfs...
+. /etc/rc.d/PUPSTATE
+
+BGOPT=""
+#100821 start...
+WINDOWMANAGER="`cat /etc/windowmanager`"
+case $WINDOWMANAGER in
+ icewm*) #icewm or icewm-session.
+  #micko for icewm, not sure why it's needed but it doesn't work without killing the ice tray. It's mainly so freememapplet_tray, network_tray and retrovol work.
+  killall icewmtray
+  icewmtray & 2>/dev/null 
+  . $HOME/.icewm/theme
+  THEMEDIR="/usr/share/icewm/themes"
+  . ${THEMEDIR}/${Theme} 2>/dev/null
+  NUMCOLOR=`echo $ColorNormalTaskBarApp|grep "rgb:"`
+  if [[ $NUMCOLOR = "" ]];then BG=""
+  else PRE_BG=`echo $ColorNormalTaskBarApp|cut -d ':' -f2|sed 's%/%%g'`
+   BG="#${PRE_BG}"   #this is more generic and works with many themes.
+  fi
+  if [[ $Theme = "GoldenSand/default.theme" ]];then 
+   BG="#C6AD73" #this is particular to 5.1, it can be removed for cleanliness
+  fi
+  if [ "$BG" = "" ];then 
+   BGOPT=""
+  else 
+   BGOPT="-bg ${BG}"
+  fi
+ ;;
+ *) 
+  if [ -f /root/.jwm/jwm_colors ];then #100504
+   . /root/.jwm/jwm_colors
+    BGOPT="-bg ${MENU_BG}"
+  fi
+ ;;
+esac
+#10821 end.
+
+FONTSIZEPARAM=''
+[ -h /usr/bin/yaf-splash ] && FONTSIZEPARAM='-fontsize large' #100608
+
+KERNVER="`uname -r`" #w481
+
+BAREVIEW="bareview"
+[ "`which bareview`" = "" ] && BAREVIEW="defaulthtmlviewer"
+
+sleep 2 #let the dust settle first.
+
+#this goes into the tray...
+CURRPS="`ps`"
+if [ "`which blinky_tray`" != "" ];then #100821
+ blinky_tray -bg ${BGOPT} & #created by Lior Tubi and MU.
+ sleep 0.1
+fi
+if [ "`which retrovol`" != "" ];then
+ if [ "`retrovol -help 2>&1 | grep '\-show'`" != "" ];then
+  retrovol ${BGOPT} & #100119 tray volume control by pizzasgood. 100504
+ else
+  retrovol -hide ${BGOPT} & #100413 versions after 0.2. 100504
+ fi
+fi
+
+#offer to popup a getting-started html page...
+#the test for /etc/videomode is for when Xvesa has finished choosing a resolution...
+if [ "`readlink /usr/bin/X`" = "Xorg" -o -e /etc/videomode ];then #w007
+ if [ $PUPMODE -eq 5 ];then
+  [ "`which first-run.sh`" != "" ] && exec first-run.sh & #100821
+  if [ "`ls -1 /lib/modules/${KERNVER}/modules.* 2>/dev/null`" = "" ];then #w481
+   #thistle is a very light purple...
+   yaf-splash -display :0 -margin 2 ${FONTSIZEPARAM} -bg thistle -bw 0 -placement top -font "9x15B" -outline 0 -text "Welcome! Move mouse-pointer here for getting-started information. WARNING: all required kernel modules were not loaded due to restricted RAM. You need to reboot to create a save-file on the hard drive and/or you need a swap file/partition to obtain more space. If you click here, a help file will display, or simply select Shutdown->Reboot from the menu." &
+  else
+   #thistle is a very light purple...
+   yaf-splash -display :0 -margin 2 ${FONTSIZEPARAM} -bg thistle -bw 0 -placement top -font "9x15B" -outline 0 -text "Welcome! Move mouse-pointer here for getting-started information" &
+  fi
+  RETVALs=$?
+  YAFPIDs=$!
+  LOOPCNT=0
+  while [ $RETVALs -eq 0 ];do #only do this if X running.
+   usleep 500000 #sleep 1
+   LOOPCNT=`expr $LOOPCNT + 1`
+   [ $LOOPCNT -gt 110 ] && break #55 second timeout.
+   [ "`pidof yaf-splash`" != "" ] && continue
+   #bark and put up the getting started message...
+   if [ ! "`grep 'alias snd\-card\-0' /etc/modprobe.conf`" = "" ];then
+    aplay /usr/share/audio/2barks.au &
+    #wavplay /usr/share/audio/2barks.wav &
+    RETAPLAY=$?
+    PIDAPLAY=$!
+   fi
+   #100511 for ram-challenged pc, better to display png...
+   if [ -f /usr/share/doc/welcome1stboot.png ];then
+    if [ "`which gview`" ];then
+     gview /usr/share/doc/welcome1stboot.png
+    else
+     defaultimageviewer /usr/share/doc/welcome1stboot.png
+    fi
+   else
+    #100522 'surfer' is a simple viewer (uses libgtkhtml)...
+    if [ -f /usr/bin/surfer ];then
+     surfer /usr/share/doc/welcome1stboot.htm #can't handle the file:// prefix.
+    else
+     gtkmoz file:///usr/share/doc/welcome1stboot.htm
+    fi
+   fi
+   #[ $RETAPLAY -eq 0 ] && kill $PIDAPLAY 2> /dev/null
+   [ "`pidof aplay`" != "" ] && killall aplay
+   break
+  done
+  [ $RETVALs -eq 0 ] && kill $YAFPIDs 2>/dev/null
+ fi
+fi
+
+#v2.16 popup the BootManager if an extra SFS file added (once only)...
+if [ ! $PUPMODE -eq 5 ];then
+ if [ -d /initrd ];then #test it isn't full hd installation.
+  . /etc/rc.d/BOOTCONFIG
+  #if EXTRASFSLIST variable not there, then auto-load of SFS files (meaning, user
+  # has probably never run the BootManager)...
+  if [ "`grep '^EXTRASFSLIST' /etc/rc.d/BOOTCONFIG`" = "" ];then
+   #see /initrd/init which writes these to BOOTCONFIG..
+   if [ "$LASTUNIONRECORD" != "" ];then
+    if [ "$LASTUNIONRECORD" != "$PREVUNIONRECORD" ];then
+     bootmanager extrasfs quiet
+    fi
+   fi
+  fi
+ fi
+fi
+
+#v2.16 popup a warning if booting from usb flash...
+if [ "$PMEDIA" = "usbflash" ];then
+ yaf-splash ${FONTSIZEPARAM} -font "8x16" -outline 0 -margin 4 -bg yellow -text "WARNING! Do not unplug USB Flash drive!" &
+ X1PID=$!
+ X1RET=$?
+ sleep 3
+ [ $X1RET -eq 0 ] && kill $X1PID
+fi
+
+#v2.17 suggested by andrei...
+if [ -d /root/Startup ];then
+ for a in /root/Startup/*
+ do
+  [ -x "$a" ] && $a &
+  sleep 0.2
+ done
+fi
+
+
+###END###

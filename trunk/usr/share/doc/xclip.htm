@@ -1,0 +1,129 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of XCLIP</TITLE>
+</HEAD><BODY>
+<H1>XCLIP</H1>
+Section: Misc. Reference Manual Pages (1x)<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+xclip - command line interface to X selections (clipboard)
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>xclip</B>
+
+[OPTION] [FILE]...
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Reads from standard in, or from one or more files, and makes the data available as an X selection for pasting into X applications. Prints current X selection to standard out.
+<DL COMPACT>
+<DT><B>-i</B>, <B>-in</B><DD>
+read text into X selection from standard input or files (default)
+<DT><B>-o</B>, <B>-out</B><DD>
+prints the selection to standard out (generally for piping to a file or program)
+<DT><B>-f</B>, <B>-filter</B><DD>
+when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
+<DT><B>-l</B>, <B>-loops</B><DD>
+number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection
+<DT><B>-d</B>, <B>-display</B><DD>
+X display to use (e.g. &quot;localhost:0&quot;), xclip defaults to the value in $<B>DISPLAY</B> if this option is omitted
+<DT><B>-h</B>, <B>-help</B><DD>
+show quick summary of options
+<DT><B>-selection</B><DD>
+specify which X selection to use, options are &quot;primary&quot; to use XA_PRIMARY (default), &quot;secondary&quot; for XA_SECONDARY or &quot;clipboard&quot; for XA_CLIPBOARD
+<DT><B>-version</B><DD>
+show version information
+<DT><B>-silent</B><DD>
+forks into the background to wait for requests, no informational output, errors only (default)
+<DT><B>-quiet</B><DD>
+show informational messages on the terminal and run in the foreground
+<DT><B>-verbose</B><DD>
+provide a running commentary of what xclip is doing
+<P>
+</DL>
+<P>
+
+xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
+<B>-o</B>
+
+option.
+<P>
+xclip was designed to allow tighter integration of X applications and command line programs. The default action is to silently wait in the background for X selection requests (pastes) until another X application places data in the clipboard, at which point xclip exits silently. You can use the <B>-verbose</B> option to see if and when xclip actually receives selection requests from other X applications.
+<P>
+Options can be abbreviated as long as they remain unambiguous. For example, it is possible to use <B>-d</B> or <B>-disp</B> instead of <B>-display</B>. However, <B>-v</B> couldn't be used because it is ambiguous (it could be short for <B>-verbose</B> or <B>-version</B>), so it would be interpreted as a filename.
+<P>
+Note that only the first character of the selection specified with the <B>-selection</B> option is important. This means that &quot;p&quot;, &quot;sec&quot; and &quot;clip&quot; would have the same effect as using &quot;primary&quot;, &quot;secondary&quot; or &quot;clipboard&quot; respectively.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<P>
+
+I hate man pages without examples!
+<P>
+<B>uptime | xclip</B>
+
+<P>
+
+Put your uptime in the X selection. Then middle click in an X application to paste.
+<P>
+<B>xclip -loops 10 -verbose /etc/motd</B>
+
+<P>
+
+Exit after /etc/motd (message of the day) has been pasted 10 times. Show how many selection requests (pastes) have been processed.
+<P>
+<B>xclip -o &gt; helloworld.c</B>
+
+<P>
+
+Put the contents of the selection into a file.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+<DL COMPACT>
+<DT><FONT SIZE="-1"><B>DISPLAY</B></FONT>
+<DD>
+X display to use if none is specified with the
+<B>-display</B>
+
+option.
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>REPORTING BUGS</H2>
+
+Please report any bugs, problems, queries, experiences, etc. directly to the author.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Kim Saunders &lt;<A HREF="mailto:kims@debian.org">kims@debian.org</A>&gt;
+Peter Åstrand &lt;<A HREF="mailto:astrand@lysator.liu.se">astrand@lysator.liu.se</A>&gt;
+<BR>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLES</A><DD>
+<DT><A HREF="#lbAF">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAG">REPORTING BUGS</A><DD>
+<DT><A HREF="#lbAH">AUTHORS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 09:22:42 GMT, April 25, 2008
+</BODY>
+</HTML>

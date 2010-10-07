@@ -1,0 +1,1772 @@
+#!/bin/bash
+
+#script depends on:
+#gtkdialog(3) (needed for gui)
+#a terminal (preferably rxvt)
+#lame (optional) used to verify genre
+#id3tag (needs "id3info" to read & "id3convert" to strip)  (optional) (version 1 supports many formats - version 2 seems to corrupt most besides mp3)
+#apetag (optional) (supports many formats)
+#AtomicParsley (optional) (mp4, m4a, m4b, m4p, & m4v - uses itunes tagging structure)
+#mp3info (optional) (version 1 tags only - supports many formats)
+#metaflac (optional) (flac)
+#vorbiscomment (optional) (ogg)
+#jhead (optional) (jpeg/jpg)
+
+VERSION=2.1 ##2008-11-30 by Jason Pline
+
+if ! [ -f $HOME/.config/pmetatagger ]; then
+mkdir $HOME/.config 2>/dev/null
+echo replaygain=no > $HOME/.config/pmetatagger
+fi
+if [ "`cat $HOME/.config/pmetatagger | grep replaygain=yes`" != "" ]; then
+cbox1=true
+else
+cbox1=false
+fi
+
+##write temp files as current user
+WHOAMI=`whoami`
+
+##find a suitable terminal
+TERMINAL=""
+if [ "`which rxvt`" != "" ]; then
+TERMINAL=rxvt
+elif [ "`which urxvt`" != "" ]; then
+TERMINAL=urxvt
+elif [ "`which mrxvt`" != "" ]; then
+TERMINAL=mrxvt
+elif [ "`which aterm`" != "" ]; then
+TERMINAL=aterm
+elif [ "`which materm`" != "" ]; then
+TERMINAL=materm
+elif [ "`which xterm`" != "" ]; then
+TERMINAL=xterm
+elif [ "`which Eterm`" != "" ]; then
+TERMINAL=Eterm
+elif [ "`which sakura`" != "" ]; then
+TERMINAL=sakura
+elif [ "`which konsole`" != "" ]; then
+TERMINAL=konsole
+elif [ "`which gnome-terminal`" != "" ]; then
+TERMINAL=gnome-terminal
+elif [ "`which xfce4terminal`" != "" ]; then
+TERMINAL=xfce4terminal
+elif [ "`which xfce4term`" != "" ]; then
+TERMINAL=xfce4term
+elif [ "`which xfce4-term`" != "" ]; then
+TERMINAL=xfce4-term
+fi
+
+##find a suitable defaulthtmlviewer for the help html.
+DEFAULTHTMLVIEWER=""
+if [ "`which gtkmoz`" != "" ]; then
+DEFAULTHTMLVIEWER=`which gtkmoz`
+elif [ "`which dillo`" != "" ]; then
+DEFAULTHTMLVIEWER=`which dillo`
+elif [ "`which hv3`" != "" ]; then
+DEFAULTHTMLVIEWER=`which hv3`
+elif [ "`which netsurf`" != "" ]; then
+DEFAULTHTMLVIEWER=`which netsurf`
+elif [ "`which kazehakase`" != "" ]; then
+DEFAULTHTMLVIEWER=`which kazehakase`
+elif [ "`which skipstone`" != "" ]; then
+DEFAULTHTMLVIEWER="skipstone"
+elif [ "`which links2`" != "" ]; then
+DEFAULTHTMLVIEWER="links2 -g"
+elif [ "`which opera`" != "" ]; then
+DEFAULTHTMLVIEWER=`which opera`
+elif [ "`which firefox`" != "" ]; then
+DEFAULTHTMLVIEWER=`which firefox`
+elif [ "`which seamonkey`" != "" ]; then
+DEFAULTHTMLVIEWER=`which seamonkey`
+elif [ "`which epiphany`" != "" ]; then
+DEFAULTHTMLVIEWER=`which epiphany`
+elif [ "`which konqueror`" != "" ]; then
+DEFAULTHTMLVIEWER=`which konqueror`
+elif [ "`which lynx`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e lynx"
+elif [ "`which links`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e links"
+elif [ "`which w3m`" != "" ]; then
+DEFAULTHTMLVIEWER="$TERMINAL -e w3m"
+fi
+
+##remove temp files (if any left over)
+rm -f /tmp/$WHOAMI-pmetatagger*
+
+DIR=`pwd`
+NODISPLAY=""
+SKIPCHOOSER=""
+FILETYPE=""
+FILETYPE2=""
+PTAG=""
+TAGGER=""
+PREVIOUS=""
+ID3=""
+ID3V=""
+SKIPGUI=""
+NUMBER=1
+SHOWONLYFILE=yes
+VTAG1=true
+VTAG2=false
+
+##find a suitable version of gtkdialog (needs 0.7.20 or greater) currently (as of puppy 4 and maybe before)
+##the executable is named gtkdialog3. Exit with a warning incase gtkdialog isn't found.
+GTKDIALOG=""
+if [ "`which gtkdialog3`" != "" ]; then
+GTKDIALOG=gtkdialog3
+elif [ "`which gtkdialog`" != "" ]; then
+GTKDIALOG=gtkdialog
+elif [ "$GTKDIALOG" = "" ]; then
+echo "you can only use the command line functions since gtkdialog needs to be installed for the gui"
+fi
+
+##check for various programs
+if [ "`which id3convert`" != "" ]; then
+if [ "`which id3info`" != "" ]; then
+if [ "`which id3tag`" != "" ]; then
+ID3=yes
+echo id3tag >> /tmp/$WHOAMI-pmetatagger-taggers
+echo mp3-v1 >> /tmp/$WHOAMI-pmetatagger-formats
+echo mp3-v2 >> /tmp/$WHOAMI-pmetatagger-formats
+echo ape >> /tmp/$WHOAMI-pmetatagger-formats
+echo mpc >> /tmp/$WHOAMI-pmetatagger-formats
+echo mpp >> /tmp/$WHOAMI-pmetatagger-formats
+echo ofr >> /tmp/$WHOAMI-pmetatagger-formats
+echo wv >> /tmp/$WHOAMI-pmetatagger-formats
+echo mp4 >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4a >> /tmp/$WHOAMI-pmetatagger-formats
+echo shn >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+fi
+fi
+if [ "`which mp3info`" != "" ]; then
+echo mp3-v1 >> /tmp/$WHOAMI-pmetatagger-formats
+echo mp3info >> /tmp/$WHOAMI-pmetatagger-taggers
+fi
+if [ "`which vorbiscomment`" != "" ]; then
+echo ogg >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+if [ "`which metaflac`" != "" ]; then
+echo flac >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+if [ "`which apetag`" != "" ]; then 
+echo apetag >> /tmp/$WHOAMI-pmetatagger-taggers
+echo ape >> /tmp/$WHOAMI-pmetatagger-formats
+echo mpc >> /tmp/$WHOAMI-pmetatagger-formats
+echo mpp >> /tmp/$WHOAMI-pmetatagger-formats
+echo ofr >> /tmp/$WHOAMI-pmetatagger-formats
+echo wv >> /tmp/$WHOAMI-pmetatagger-formats
+echo mp4 >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4a >> /tmp/$WHOAMI-pmetatagger-formats
+echo shn >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+if [ "`which AtomicParsley`" != "" ]; then 
+echo mp4 >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4a >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4b >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4v >> /tmp/$WHOAMI-pmetatagger-formats
+echo m4p >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+if [ "`which jhead`" != "" ]; then 
+echo jpg >> /tmp/$WHOAMI-pmetatagger-formats
+echo jpeg >> /tmp/$WHOAMI-pmetatagger-formats
+fi
+
+cat /tmp/$WHOAMI-pmetatagger-formats | sort -u > /tmp/$WHOAMI-pmetatagger-formats2
+cat /tmp/$WHOAMI-pmetatagger-taggers | sort -u > /tmp/$WHOAMI-pmetatagger-taggers2
+mv /tmp/$WHOAMI-pmetatagger-formats2 /tmp/$WHOAMI-pmetatagger-formats
+mv /tmp/$WHOAMI-pmetatagger-taggers2 /tmp/$WHOAMI-pmetatagger-taggers
+
+##help display from the command line
+##pmetatagger --help
+if [ "$1" = --help ]; then
+echo
+echo You can specify a file to add directly into the gui or specify a directory and filetype.
+echo
+echo \# pmetatagger /mnt/hda2/multimedia/01.ogg
+echo
+echo That command would open the specified file into the gui.
+echo
+echo \# pmetatagger /mnt/hda2/multimedia/ ogg
+echo
+echo That command would add all ogg files in the given directory to the gui.
+echo
+echo for mp3 you can select between id3v1 and id3v2 tags. You will need the
+echo id3lib utils installed for id3v2 support. For id3v1 tags put a -1 at the
+echo end of your command. Or for id3v2 put a -2 at the end.
+echo
+echo \# pmetatagger /mnt/hda2/multimedia/ mp3 -2
+echo
+echo You can bypass the gui and dump the tag from specified file like this:
+echo
+echo \# pmetatagger /mnt/hda2/multimedia/01.ogg -dumptag
+echo
+echo This will dump the tag information to the same directory as the file
+echo and will be named 01.ogg.ptag. You can use this ptag file to tag another
+echo file if you wish. 
+echo
+echo \# pmetatagger /mnt/hda2/multimedia/02.ogg /mnt/hda2/multimedia/01.ogg.ptag
+echo
+echo Now the tag information from 01.ogg will be the same as 02.ogg
+echo
+echo You have support for `cat /tmp/$WHOAMI-pmetatagger-formats`
+echo
+echo "http://www.murga-linux.com/puppy/viewtopic.php?p=158976"
+echo
+exit 0
+fi
+
+##Inputs from cli
+if [ -d "$1" ]; then
+SKIPCHOOSER=DIR
+DIR="$1"
+FILETYPE="$2"
+ID3V=`echo "$3" | cut -f 2 -d '-'`
+fi
+
+if [ "$1" != "" ]; then
+if [ "$SKIPCHOOSER" != DIR ]; then
+if [ "$1" = "`basename \"$1\"`" ]; then
+SKIPCHOOSER=FILE
+FILECHOSEN="$1"
+DIR=`pwd`
+FILETYPE="`echo ${FILECHOSEN##*.}`"
+ID3V=`echo "$2" | cut -f 2 -d '-'`
+if [ "`echo ${2##*.}`" = ptag ]; then
+PTAG="$2"
+fi
+if [ "`echo ${3##*.}`" = ptag ]; then
+PTAG="$3"
+fi
+if [ "$2" = -dumptag ]; then
+SKIPGUI=yes
+fi
+fi
+fi
+fi
+
+if [ -f "$1" ]; then
+SKIPCHOOSER=FILE
+FILECHOSEN="`basename "$1"`"
+DIR="`dirname "$1"`"
+FILETYPE="`echo ${FILECHOSEN##*.}`"
+ID3V=`echo "$2" | cut -f 2 -d '-'`
+if [ "`echo ${2##*.}`" = ptag ]; then
+PTAG="$2"
+fi
+if [ "`echo ${3##*.}`" = ptag ]; then
+PTAG="$3"
+fi
+if [ "$2" = -dumptag ]; then
+SKIPGUI=yes
+fi
+if [ "$3" = -nogui ]; then
+SKIPGUI=yes
+fi
+if [ "$4" = -nogui ]; then
+SKIPGUI=yes
+fi
+if [ "$3" = -nodisplay ]; then
+NODISPLAY=YES
+fi
+if [ "$4" = -nodisplay ]; then
+NODISPLAY=YES
+fi
+if [ "$5" = -nodisplay ]; then
+NODISPLAY=YES
+fi
+if [ "$5" = -cliptag ]; then
+PTAG="$2"
+cp "$PTAG" /tmp/$WHOAMI-pmetatagger-tmp 2>/dev/null
+fi
+if [ "$FILETYPE" = mp3 ]; then
+if [ "$NODISPLAY" = YES ]; then
+ID3V=2
+V2=true
+fi
+fi
+fi 
+
+##file/directory gui
+if [ "$SKIPCHOOSER" = "" ]; then
+
+touch /tmp/$WHOAMI-pmetatagger-chosenformat
+
+FORMATS=""
+for ONEFORMAT in `cat /tmp/$WHOAMI-pmetatagger-formats`
+do
+FORMATS="$FORMATS  
+      <menuitem>
+      <label>$ONEFORMAT</label>
+      <action>echo $ONEFORMAT | tee /tmp/$WHOAMI-pmetatagger-chosenformat</action>
+      <action>refresh:WORD</action>
+		</menuitem>"
+done
+
+export CHOOSER="
+<window title=\"Pmetatagger - $VERSION \"icon-name=\"gtk-convert\">
+<hbox>
+<vbox>
+	<frame Select your directory or single file>
+	<hbox>
+    <radiobutton active=\"true\">
+      <label>Select a directory</label>
+      <variable>RADIOBUTTON1</variable>
+		<action>if true enable:DIRENTRY</action>
+		<action>if true enable:FILE_BROWSE_DIRECTORY</action>
+      <action>if false disable:DIRENTRY</action>
+      <action>if false disable:FILE_BROWSE_DIRECTORY</action>
+      <action>if true enable:WORD</action>
+    </radiobutton>
+    <radiobutton active=\"false\">
+      <label>or select a single file</label>
+      <variable>RADIOBUTTON2</variable>
+		<action>if true enable:ENTRY1</action>
+		<action>if true enable:FILE_BROWSE_FILENAME</action>
+      <action>if false disable:ENTRY1</action>
+      <action>if false disable:FILE_BROWSE_FILENAME</action>
+      <action>if true disable:WORD</action>
+    </radiobutton>
+    </hbox>
+	<hbox>
+      <entry editable=\"true\" accept=\"directory\">
+        <label>Select a Directory</label>
+        <variable>DIRENTRY</variable>
+      </entry>
+      <button>
+        <input file stock=\"gtk-open\"></input>
+        <variable>FILE_BROWSE_DIRECTORY</variable>
+        <action type=\"fileselect\">DIRENTRY</action>
+      </button>
+  </hbox>
+    <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <label>Select an Existing File</label>
+        <variable>ENTRY1</variable>
+			<visible>disabled</visible>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+			<visible>disabled</visible>
+        <action type=\"fileselect\">ENTRY1</action>
+      </button>
+    </hbox>
+      </frame>
+
+	<frame Only necessary when selecting a directory>
+	<hbox>
+	<menubar>
+	<menu>
+      $FORMATS
+	<label>[ Select file format ]</label>
+	</menu>
+    </menubar>
+    </hbox>
+    </frame>
+    
+    <hbox>
+      <text><label>Selected file format, or enter in another</label></text>
+      <entry editable=\"true\">
+        <variable>WORD</variable>
+        <input>cat /tmp/$WHOAMI-pmetatagger-chosenformat</input>
+      </entry>
+      </hbox>
+      
+	<hbox>
+       <checkbox>
+      <label>Check the box if you want to add Replay Gain</label>
+      <variable>CBOX1</variable>
+      <default>$cbox1</default>
+    </checkbox>
+	</hbox>
+
+    <hbox> 
+      <button>
+			<input file icon=\"gtk-help\"></input>
+        <label>Help</label>
+        <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pmetatagger.html &</action> 
+      </button> 
+      <button>
+			<input file icon=\"gtk-ok\"></input>
+        <label>OK</label>
+        <action type=\"exit\">EXIT_OK</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+      </hbox>
+
+</vbox>
+</hbox>
+</window>    
+"
+CHOOSER2==`$GTKDIALOG --program=CHOOSER --center`
+
+if [ "`echo $CHOOSER2 | grep EXIT_NOW`" != "" ]; then
+exit 0
+fi
+
+##find variables from gui
+FILETYPE2=""
+CBOX1="`echo "$CHOOSER2" | sed 's/\"//g' | sed 's/=//g' | grep CBOX1 | sed 's/CBOX1//'`"
+if [ "$CBOX1" = true ]; then
+echo replaygain=yes > $HOME/.config/pmetatagger
+else
+echo replaygain=no > $HOME/.config/pmetatagger
+fi
+R1="`echo "$CHOOSER2" | sed 's/\"//g' | sed 's/=//g' | grep RADIOBUTTON1 | sed 's/RADIOBUTTON1//'`"
+R2="`echo "$CHOOSER2" | sed 's/\"//g' | sed 's/=//g' | grep RADIOBUTTON2 | sed 's/RADIOBUTTON2//'`"
+DIRENTRY="`echo "$CHOOSER2" | sed 's/\"//g' | sed 's/=//g' | grep DIRENTRY | sed 's/DIRENTRY//'`"
+ENTRY1="`echo "$CHOOSER2" | sed 's/\"//g' | sed 's/=//g' | grep ENTRY1 | sed 's/ENTRY1//'`"
+FILETYPE=`echo "$CHOOSER2" | sed 's/\"//g' | grep WORD= | cut -f 2 -d '='`
+
+if [ "$R1" = true ]; then
+if [ -d "$DIRENTRY" ]; then
+FILESELECTION=""
+DIR="$DIRENTRY"
+fi
+fi
+if [ "$R2" = true ]; then
+if [ -f "$ENTRY1" ]; then
+FILESELECTION="`basename \"$ENTRY1\"`"
+DIR="`dirname \"$ENTRY1\"`"
+FILETYPE=`echo $FILESELECTION | tr -s '.' '\n' | tail -n 1`
+FILECHOSEN="$FILESELECTION"
+fi
+fi
+
+if [ "$FILETYPE" = mp3-v1 ]; then
+FILETYPE=mp3
+ID3V=1
+VTAG1=true
+fi
+if [ "$FILETYPE" = mp3-v2 ]; then
+FILETYPE=mp3
+ID3V=2
+VTAG2=true
+fi
+
+fi ##end file/directory gui
+
+cd "$DIR"
+
+if [ "`which AtomicParsley`" != "" ]; then
+if [ "$FILETYPE" = m4a ]; then FILETYPE2=AtomicParsley; fi
+if [ "$FILETYPE" = mp4 ]; then FILETYPE2=AtomicParsley; fi
+if [ "$FILETYPE" = m4p ]; then FILETYPE2=AtomicParsley; fi
+if [ "$FILETYPE" = m4v ]; then FILETYPE2=AtomicParsley; fi
+if [ "$FILETYPE" = m4b ]; then FILETYPE2=AtomicParsley; fi
+if [ "$FILETYPE2" = AtomicParsley ]; then echo AtomicParsley >> /tmp/$WHOAMI-pmetatagger-taggers; fi
+fi
+
+ls *."$FILETYPE" 2>/dev/null | while read FILE
+do
+
+if [ "$FILETYPE" = jpg ]; then
+TAGGER=jhead
+fi
+if [ "$FILETYPE" = jpeg ]; then
+TAGGER=jhead
+fi
+
+if [ "$SKIPCHOOSER" = FILE ]; then
+ONCE=yes
+FILE="$FILECHOSEN"
+FILE2="$FILECHOSEN"
+fi
+
+if [ "$FILESELECTION" != "" ]; then
+ONCE=yes
+FILE="$FILESELECTION"
+FILE2="$FILESELECTION"
+fi
+
+if [ "$FILETYPE" = flac ]; then
+rm -f /tmp/$WHOAMI-pmetatagger-taggers
+touch /tmp/$WHOAMI-pmetatagger-taggers
+if [ "`which metaflac`" != "" ]; then
+TAGGER=metaflac
+TITLE="`metaflac --show-tag=TITLE \"$FILE\" 2>/dev/null | sed 's/TITLE=//g'`"
+TRACK="`metaflac --show-tag=TRACKNUMBER \"$FILE\" 2>/dev/null | sed 's/TRACKNUMBER=//g'`"
+DATE="`metaflac --show-tag=DATE \"$FILE\" 2>/dev/null | sed 's/DATE=//g'`"
+ALBUM="`metaflac --show-tag=ALBUM \"$FILE\" 2>/dev/null | sed 's/ALBUM=//g'`"
+ARTIST="`metaflac --show-tag=ARTIST \"$FILE\" 2>/dev/null | sed 's/ARTIST=//g'`"
+GENRE="`metaflac --show-tag=GENRE \"$FILE\" 2>/dev/null | sed 's/GENRE=//g'`"
+COMMENT="`metaflac --show-tag=COMMENT \"$FILE\" 2>/dev/null | sed 's/COMMENT=//g'`"
+COMPOSER="`metaflac --show-tag=COMPOSER \"$FILE\" 2>/dev/null | sed 's/COMPOSER=//g'`"
+if [ "$COMPOSER" = "" ]; then
+COMPOSER="`metaflac --show-tag=SOURCEMEDIA \"$FILE\" 2>/dev/null | sed 's/SOURCEMEDIA=//g'`"
+SOURCE="$COMPOSER"
+composer=source
+fi
+if [ "$COMPOSER" = "" ]; then
+COMPOSER="`metaflac --show-tag=COMPOSER \"$FILE\" 2>/dev/null | sed 's/COMPOSER=//g'`"
+composer=composer
+fi
+LYRICIST="`metaflac --show-tag=LYRICIST \"$FILE\" 2>/dev/null | sed 's/LYRICIST=//g'`"
+if [ "$LYRICIST" = "" ]; then
+LYRICIST="`metaflac --show-tag=DISCNUMBER \"$FILE\" 2>/dev/null | sed 's/DISCNUMBER=//g'`"
+DISCNUMBER=$LYRICIST
+lyricist=disc_number
+fi
+if [ "$LYRICIST" = "" ]; then
+LYRICIST="`metaflac --show-tag=LYRICIST \"$FILE\" 2>/dev/null | sed 's/LYRICIST=//g'`"
+lyricist=lyricist
+fi
+fi
+fi
+
+if [ "$FILETYPE" != flac ]; then
+
+if [ "$TAGGER" = "" ]; then
+if [ "`which apetag`" != "" ]; then
+if [ "`apetag -i \"$FILE\" 2>/dev/null | grep 'No valid APE tag found'`" = "" ]; then
+TAGGER=apetag
+TITLE="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"TITLE\" | cut -f 4 -d '\"'`"
+TRACK="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"TRACK\" | cut -f 4 -d '\"'`"
+DATE="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"YEAR\" | cut -f 4 -d '\"'`"
+ALBUM="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"ALBUM\" | cut -f 4 -d '\"'`"
+ARTIST="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"ARTIST\" | cut -f 4 -d '\"'`"
+GENRE="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"GENRE\" | cut -f 4 -d '\"'`"
+COMMENT="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"COMMENT\" | cut -f 4 -d '\"'`"
+COMPOSER="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"COMPOSER\" | cut -f 4 -d '\"'`"
+LYRICIST="`apetag -i \"$FILE\" 2>/dev/null | grep -i \"LYRICIST\" | cut -f 4 -d '\"'`"
+fi
+fi
+fi
+if [ "$TAGGER" = "" ]; then
+if [ "`which id3info`" != "" ]; then
+if [ "`id3info \"$FILE\" 2>/dev/null | tail -n 1 | grep 'Tag information for'`" = "" ]; then
+TAGGER=id3tag
+TITLE="`id3info \"$FILE\" 2>/dev/null | grep '=== TI*T2' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+TRACK="`id3info \"$FILE\" 2>/dev/null | grep '=== TRC*K' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+DATE="`id3info \"$FILE\" 2>/dev/null | grep '=== TYER*' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+ALBUM="`id3info \"$FILE\" 2>/dev/null | grep '=== TALB*' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+ARTIST="`id3info \"$FILE\" 2>/dev/null | grep '=== TPE*1' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+GENRE="`id3info \"$FILE\" 2>/dev/null | grep '=== TCON*' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //' | sed \"s/(//g\" | sed \"s/)//g\"`"
+COMMENT="`id3info \"$FILE\" 2>/dev/null | grep '=== COMM*' | head -n 1 | sed 's/:/\n/' | tail -n 1 | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+ENCODE="`id3info \"$FILE\" 2>/dev/null | grep '=== TENC*' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+fi
+fi
+fi
+if [ "$TAGGER" = "" ]; then
+if [ "`which mp3info`" != "" ]; then
+if [ "`mp3info \"$FILE\" 2>/dev/null`" != "" ]; then
+TAGGER=mp3info
+TITLE="`mp3info \"$FILE\" 2>/dev/null | tr -s ' ' | grep Title: | sed 's/:/\n/' | grep Title -A 1 | tail -n 1 | sed 's/^ //' | sed 's/\(.*\)Track/\1/'`"
+TRACK="`mp3info \"$FILE\" 2>/dev/null | grep Track: | tr -s ' ' | sed 's/:/\n/' | grep Track -A 1 | tail -n 1 | sed 's/ //g'`"
+DATE="`mp3info \"$FILE\" 2>/dev/null | grep Year: | tr -s ' ' | sed 's/:/\n/' | grep Year -A 1 | tail -n 1 | sed 's/ //g'`"
+ALBUM="`mp3info \"$FILE\" 2>/dev/null | grep Album: | tr -s ' ' | sed 's/:/\n/' | grep Album -A 1 | tail -n 1 | sed 's/^ //' | sed 's/\(.*\)Year/\1/'`"
+ARTIST="`mp3info \"$FILE\" 2>/dev/null | grep Artist: | tr -s ' ' | sed 's/:/\n/' | grep Artist -A 1 | tail -n 1 | sed 's/^ //'`"
+GENRE="`mp3info \"$FILE\" 2>/dev/null | grep Genre: | sed 's/:/\n/' | tail -n 1 | sed 's/^ //' | cut -f 1 -d '[' | sed 's/ //g'`"
+COMMENT="`mp3info \"$FILE\" 2>/dev/null | tr -s ' ' | grep Comment: | sed 's/:/\n/' | grep Comment -A 1 | tail -n 1 | sed 's/^ //' | sed 's/\(.*\)Genre/\1/'`"
+fi
+fi
+fi
+if [ "$FILETYPE" = ogg ]; then
+echo vorbiscomment >> /tmp/$WHOAMI-pmetatagger-taggers
+if [ "$TAGGER" = "" ]; then
+if [ "`which vorbiscomment`" != "" ]; then
+TAGGER=vorbiscomment
+TITLE="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i TITLE= | sed 's/=/\n/' | tail -n 1`"
+TRACK="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i TRACKNUM | sed 's/=/\n/' | tail -n 1`"
+DATE="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i DATE= | sed 's/=/\n/' | tail -n 1`"
+ALBUM="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i ALBUM= | sed 's/=/\n/' | tail -n 1`"
+ARTIST="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i ARTIST= | sed 's/=/\n/' | tail -n 1`"
+GENRE="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i GENRE= | sed 's/=/\n/' | tail -n 1`"
+COMMENT="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i COMMENT= | sed 's/=/\n/' | tail -n 1`"
+COMPOSER="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i COMPOSER= | sed 's/=/\n/' | tail -n 1`"
+LYRICIST="`vorbiscomment -l \"$FILE\" 2>/dev/null | grep -i LYRICIST= | sed 's/=/\n/' | tail -n 1`"
+fi
+fi
+fi
+
+if [ "$TAGGER" = jhead ]; then
+echo jhead > /tmp/$WHOAMI-pmetatagger-taggers
+DATETIME="`jhead \"$FILE\" 2>/dev/null | grep 'Date/Time' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //' | sed 's/ /-/'`"
+COMMENT="`jhead \"$FILE\" 2>/dev/null | grep 'Comment' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`"
+jhead "$FILE" > /tmp/"$FILE".ptag
+fi
+
+fi
+
+if [ "$TAGGER" != "" ]; then
+if [ "$TAGGER" != jhead ]; then
+echo track="$TRACK" > /tmp/"$FILE".ptag
+echo date="$DATE" >> /tmp/"$FILE".ptag
+echo title="$TITLE" >> /tmp/"$FILE".ptag
+echo album="$ALBUM" >> /tmp/"$FILE".ptag
+echo artist="$ARTIST" >> /tmp/"$FILE".ptag
+echo comment="$COMMENT" >> /tmp/"$FILE".ptag
+echo lyricist="$LYRICIST" >> /tmp/"$FILE".ptag
+echo composer="$COMPOSER" >> /tmp/"$FILE".ptag
+echo genre="$GENRE" >> /tmp/"$FILE".ptag
+echo encode="$ENCODE" >> /tmp/"$FILE".ptag
+fi
+fi
+
+if [ "$FILETYPE2" = AtomicParsley ]; then
+if [ "`AtomicParsley \"$FILE\" -t 2>/dev/null`" != "" ]; then
+TAGGER=AtomicParsley
+echo title="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'nam\" contains:' | sed 's/:/|/' | cut -f 2 -d '|' | sed 's/^ //'`" > /tmp/"$FILE".ptag
+echo track="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"trkn\" contains:' | sed 's/Atom \"trkn\" contains: //'`" >> /tmp/"$FILE".ptag
+echo disc="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"disk\" contains:' | sed 's/Atom \"disk\" contains: //'`" >> /tmp/"$FILE".ptag
+echo date="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'day\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo album="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'alb\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo artist="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'ART\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo genre="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'gen\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo comment="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'cmt\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo tvnn="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tvnn\" contains:' | sed 's/Atom \"tvnn\" contains: //'`" >> /tmp/"$FILE".ptag
+echo tvsh="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tvsh\" contains:' | sed 's/Atom \"tvsh\" contains: //'`" >> /tmp/"$FILE".ptag
+echo tven="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tven\" contains:' | sed 's/Atom \"tven\" contains: //'`" >> /tmp/"$FILE".ptag
+echo tvsn="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tvsn\" contains:' | sed 's/Atom \"tvsn\" contains: //'`" >> /tmp/"$FILE".ptag
+echo tves="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tves\" contains:' | sed 's/Atom \"tves\" contains: //'`" >> /tmp/"$FILE".ptag
+echo composer="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'wrt\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo cprt="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"cprt\" contains:' | sed 's/Atom \"cprt\" contains: //'`" >> /tmp/"$FILE".ptag
+echo grp="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'grp\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo aart="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"aART\" contains:' | sed 's/Atom \"aART\" contains: //'`" >> /tmp/"$FILE".ptag
+echo desc="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"desc\" contains:' | sed 's/Atom \"desc\" contains: //'`" >> /tmp/"$FILE".ptag
+echo catg="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"catg\" contains:' | sed 's/Atom \"catg\" contains: //'`" >> /tmp/"$FILE".ptag
+echo keyw="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"keyw\" contains:' | sed 's/Atom \"keyw\" contains: //'`" >> /tmp/"$FILE".ptag
+echo purd="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"purd\" contains:' | sed 's/Atom \"purd\" contains: //'`" >> /tmp/"$FILE".ptag
+echo rtng="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"rtng\" contains:' | sed 's/Atom \"rtng\" contains: //'`" >> /tmp/"$FILE".ptag
+echo too="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'too\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo lyr="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'lyr\" contains:' | sed 's/:/\n/' | tail -n 1 | sed 's/^ //'`" >> /tmp/"$FILE".ptag
+echo tmpo="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"tmpo\" contains:' | sed 's/Atom \"tmpo\" contains: //'`" >> /tmp/"$FILE".ptag
+echo purl="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"purl\" contains:' | sed 's/Atom \"purl\" contains: //'`" >> /tmp/"$FILE".ptag
+echo egid="`AtomicParsley \"$FILE\" -t 2>/dev/null | grep 'Atom \"egid\" contains:' | sed 's/Atom \"egid\" contains: //'`" >> /tmp/"$FILE".ptag
+fi
+fi
+
+if [ "`echo $2`" = -dumptag ]; then
+cat /tmp/"$FILE".ptag
+mv /tmp/"$FILE".ptag "$DIR"/"$FILE".ptag 2>/dev/null
+exit 0
+fi
+
+if [ "$TAGGER" = "" ]; then
+if [ "$FILETYPE2" = AtomicParsley ]; then
+if [ "`which AtomicParsley`" != "" ]; then
+TAGGER=AtomicParsley
+fi
+fi
+fi
+if [ "$TAGGER" = "" ]; then
+if [ "$ID3" = yes ]; then
+TAGGER=id3tag
+fi
+fi
+if [ "$TAGGER" = "" ]; then
+if [ "`which mp3info" != "" ]; then
+TAGGER=mp3info
+fi
+fi
+if [ "$TAGGER" = "" ]; then
+if [ "`which apetag" != "" ]; then
+TAGGER=apetag
+fi
+fi
+
+cat /tmp/$WHOAMI-pmetatagger-taggers | grep -v "$TAGGER" > /tmp/$WHOAMI-pmetatagger-taggers2
+echo "$TAGGER" > /tmp/$WHOAMI-pmetatagger-taggers
+cat /tmp/$WHOAMI-pmetatagger-taggers2 >> /tmp/$WHOAMI-pmetatagger-taggers
+if [ "`cat /tmp/$WHOAMI-pmetatagger-taggers | grep jhead`" != "" ]; then
+echo jhead > /tmp/$WHOAMI-pmetatagger-taggers
+TAGGER=jhead
+fi
+
+FORMATS=""
+for ONEFORMAT in `cat /tmp/$WHOAMI-pmetatagger-taggers`
+do
+ FORMATS="$FORMATS<item>$ONEFORMAT</item>"
+done
+
+if [ "$PTAG" = "" ]; then ##no gui when ptag file is being used
+
+if [ "$TAGGER" != jhead ]; then
+if [ "$NUMBER" = 2 ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>Do you want the program to show the metainfo of the previous file so you don't need to re-enter? It will not show the previous info for the first 2 fields, name & track number (this will just be 1 more than the previous). Click yes or no. Clicking no will show the metainfo (if any) for the file itself and you may need to do more editing this way.</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>Yes</label>
+      <action type=\"exit\">EXIT-YES</action>
+    </button>
+    <button>
+       <input file icon=\"gtk-cancel\"></input>
+      <label>No</label>
+      <action type=\"exit\">EXIT-NO</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+QUESTION=`$GTKDIALOG --program=MAIN_DIALOG --center`
+if [ "`echo $QUESTION | grep EXIT-YES`" != "" ]; then
+PREVIOUS=yes
+SHOWONLYFILE=no
+else
+PREVIOUS=""
+FILE2="$FILE"
+fi
+fi
+fi
+
+if [ "$FILE2" = "" ]; then
+FILE2="$FILE"
+fi
+
+if [ "$SHOWONLYFILE" = yes ]; then
+FILE2="$FILE"
+fi
+
+NUMGUI=`cat /tmp/"$FILE2".ptag | grep track= | sed 's/track=//'`
+if [ "$NUMGUI" = "" ]; then
+NUMGUI=`expr $NUMBER - 1`
+fi
+
+if [ "$TAGGER" != AtomicParsley ]; then
+if [ "$TAGGER" != jhead ]; then
+
+export FLACTAG="
+<window title=\"Pmetatagger - $VERSION \"icon-name=\"gtk-convert\">
+<hbox>
+<vbox>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    
+      <text><label>Enter track title</label></text>
+      <hbox>
+      <entry>
+    <variable>NAME</variable>
+  	<input>cat /tmp/\"$FILE\".ptag | grep title= | sed 's/title=//'</input>
+      </entry>
+    </hbox>   
+    
+      <text><label>Enter track number</label></text>
+      <hbox>
+      <entry>
+    <variable>TRACKNUMBER</variable>
+"
+if [ "$PREVIOUS" = "" ]; then
+FLACTAG="$FLACTAG
+    <input>cat /tmp/\"$FILE\".ptag | grep track= | sed 's/track=//'</input>
+"
+else
+FLACTAG="$FLACTAG
+    <input>expr $NUMGUI + 1</input>
+"
+fi
+FLACTAG="$FLACTAG
+      </entry>
+    </hbox>      
+      
+      <text><label>Enter track Year</label></text>
+      <hbox>
+      <entry>
+    <variable>YEAR</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep date= | sed 's/date=//'</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter album name</label></text>
+      <hbox>
+      <entry>
+    <variable>ALBUM</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep album= | sed 's/album=//'</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter artist name</label></text>
+      <hbox>
+      <entry>
+    <variable>ARTIST</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep artist= | sed 's/artist=//'</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter track genre (enter the name or the number)</label></text>
+      <hbox>
+      <entry>
+    <variable>GENRE</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep genre= | sed 's/genre=//'</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Enter a comment</label></text>
+      <hbox>
+      <entry>
+    <variable>COMMENT</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep comment= | sed 's/comment=//'</input>
+      </entry>
+    </hbox>
+"
+if [ "$TAGGER" != mp3info ]; then
+if [ "$TAGGER" != id3tag ]; then
+FLACTAG="$FLACTAG  
+      <text><label>Enter the composer</label></text>
+      <hbox>
+      <entry>
+    <variable>COMPOSER</variable> 
+  	<input>cat /tmp/\"$FILE2\".ptag | grep composer= | sed 's/composer=//'</input>
+      </entry>
+    </hbox>
+  
+      <text><label>Enter the lyricist</label></text>
+      <hbox>
+      <entry>
+    <variable>LYRICIST</variable>
+  	<input>cat /tmp/\"$FILE2\".ptag | grep lyricist= | sed 's/lyricist=//'</input>
+      </entry>
+    </hbox>
+"
+else
+FLACTAG="$FLACTAG  
+      <text><label>Encoded by (will be moved to comment field)</label></text>
+      <hbox>
+      <entry>
+    <variable>ENCODE</variable> 
+  	<input>cat /tmp/\"$FILE2\".ptag | grep encode= | sed 's/encode=//'</input>
+      </entry>
+    </hbox>
+"
+fi
+fi
+FLACTAG="$FLACTAG
+    	 <text><label>Tag file with an existing ptag then click ok/next</label></text>
+        <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <variable>PTAG</variable>
+      </entry>
+      <button>
+      <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">PTAG</action>
+      </button>
+      </hbox>
+"
+if [ "$TAGGER" = id3tag ]; then
+if [ "$FILETYPE" = mp3 ]; then
+FLACTAG="$FLACTAG  
+	<frame Select version 1 or version 2 tags>
+	<hbox>
+    <radiobutton active=\"`echo $VTAG1`\">
+      <label>Version 1 id3tag</label>
+      <variable>V1</variable>
+    </radiobutton>
+    <radiobutton active=\"`echo $VTAG2`\">
+      <label>Version 2 id3tag</label>
+      <variable>V2</variable>
+    </radiobutton>
+    </hbox>
+    </frame>
+"
+fi
+fi
+if [ "$TAGGER" != metaflac ]; then
+FLACTAG="$FLACTAG  
+    <hbox>
+    <text><label>Select your tagger</label></text>
+    <combobox>
+     <variable>PROBECOMBO</variable>
+$FORMATS
+    </combobox>
+    </hbox>  
+"
+fi   
+FLACTAG="$FLACTAG       
+      <hbox>
+      <button>
+			<input file icon=\"gtk-help\"></input>
+        <label>Help</label>
+        <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pmetatagger.html &</action> 
+      </button> 
+      <button>
+		<input file icon=\"gtk-index\"></input>
+        <label>DUMP-tag</label>
+      <action>echo track=\$TRACKNUMBER | sed 's/ //g' | grep [0-9] | tee \"$FILE\".ptag</action>
+      <action>echo date=\$YEAR | sed 's/ //g' | grep [0-9] | tee -a \"$FILE\".ptag</action>
+      <action>echo title=\$NAME | tee -a \"$FILE\".ptag</action>
+      <action>echo album=\$ALBUM | tee -a \"$FILE\".ptag</action>
+      <action>echo artist=\$ARTIST | tee -a \"$FILE\".ptag</action>
+      <action>echo comment=\$COMMENT | tee -a \"$FILE\".ptag</action>
+      <action>echo lyricist=\$LYRICIST | tee -a \"$FILE\".ptag</action>
+      <action>echo composer=\$COMPOSER | tee -a \"$FILE\".ptag</action>
+      <action>echo genre=\$GENRE | tee -a \"$FILE\".ptag</action>
+      <action>echo encode=\$ENCODE | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo v1=\$V1 | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo v2=\$V2 | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      </button>
+    <button>
+      <input file icon=\"gtk-ok\"></input>
+"
+if [ "$ONCE" = yes ]; then
+FLACTAG="$FLACTAG
+	  <label>OK</label>
+"
+else
+FLACTAG="$FLACTAG
+      <label>NEXT</label>
+"
+fi
+FLACTAG="$FLACTAG
+      <action>echo track=\$TRACKNUMBER | sed 's/ //g' | grep [0-9] | tee /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo date=\$YEAR | sed 's/ //g' | grep [0-9] | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo title=\$NAME | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo album=\$ALBUM | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo artist=\$ARTIST | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo comment=\$COMMENT | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo lyricist=\$LYRICIST | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo composer=\$COMPOSER | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo genre=\$GENRE | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo encode=\$ENCODE | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo v1=\$V1 | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo v2=\$V2 | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>if [ -f \$PTAG ]; then cp \$PTAG /tmp/$WHOAMI-pmetatagger-tmp 2>/dev/null; fi</action>
+		<action type=\"exit\">Exit by button</action>
+    </button>   
+      <button>
+			<input file icon=\"gtk-cancel\"></input>
+        <label>SKIP</label>
+        <action type=\"exit\">EXIT_SKIP</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+    </hbox>
+    
+</vbox>
+</hbox>
+</window>
+"
+IDTAGS=`$GTKDIALOG --program=FLACTAG --center 2>/dev/null`
+
+fi
+fi
+
+if [ "$TAGGER" = AtomicParsley ]; then
+
+export FLACTAG="
+<window title=\"Pmetatagger - $VERSION \"icon-name=\"gtk-convert\">
+<hbox>
+<vbox>
+<notebook labels=\"Main|Video|other|More|Artwork|Finish\">
+<frame Main tags>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    <text><label>___________________________________________________</label></text>
+    
+      <text><label>Enter track title</label></text>
+      <hbox>
+      <entry>
+    <variable>NAME</variable>
+    <input>cat /tmp/\"$FILE\".ptag | grep title= | sed 's/title=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter track number</label></text>
+      <hbox>
+      <entry>
+    <variable>TRACKNUMBER</variable>
+"
+if [ "$PREVIOUS" = "" ]; then
+FLACTAG="$FLACTAG
+    <input>cat /tmp/\"$FILE\".ptag | grep track= | sed 's/track=//'</input>
+"
+else
+FLACTAG="$FLACTAG
+    <input>expr $NUMGUI + 1</input>
+"
+fi
+FLACTAG="$FLACTAG
+    </entry>
+    </hbox>
+    
+      <text><label>Enter the disc number</label></text>
+      <hbox>
+      <entry>
+    <variable>DISC</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep disc= | sed 's/disc=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter track Year</label></text>
+      <hbox>
+      <entry>
+    <variable>YEAR</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep date= | sed 's/date=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter album name</label></text>
+      <hbox>
+      <entry>
+    <variable>ALBUM</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep album= | sed 's/album=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter artist name</label></text>
+      <hbox>
+      <entry>
+    <variable>ARTIST</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep artist= | sed 's/artist=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter genre</label></text>
+      <hbox>
+      <entry>
+    <variable>GENRE</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep genre= | sed 's/genre=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter a comment</label></text>
+      <hbox>
+      <entry>
+    <variable>COMMENT</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep comment= | sed 's/comment=//'</input>
+    </entry>
+    </hbox>
+     
+    <text><label>___________________________________________________</label></text>
+    </frame>
+    
+    <frame Video specific tags>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    <text><label>___________________________________________________</label></text>
+    
+      <text><label>Enter the TV Network</label></text>
+      <hbox>
+      <entry>
+    <variable>TVNN</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tvnn= | sed 's/tvnn=//'</input>
+    </entry>
+    </hbox>    
+    
+      <text><label>Enter the TV Show Name</label></text>
+      <hbox>
+      <entry>
+    <variable>TVSH</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tvsh= | sed 's/tvsh=//'</input>
+    </entry>
+    </hbox>   
+    
+      <text><label>Enter the TV Episode Name</label></text>
+      <hbox>
+      <entry>
+    <variable>TVEN</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tven= | sed 's/tven=//'</input>
+    </entry>
+    </hbox>   
+    
+      <text><label>Enter the TV Season Number</label></text>
+      <hbox>
+      <entry>
+    <variable>TVSN</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tvsn= | sed 's/tvsn=//'</input>
+    </entry>
+    </hbox>   
+    
+      <text><label>Enter the TV Episode Number</label></text>
+      <hbox>
+      <entry>
+    <variable>TVES</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tves= | sed 's/tves=//'</input>
+    </entry>
+    </hbox>   
+    
+    <text><label>___________________________________________________</label></text>
+    </frame>
+    
+    <frame Other tags>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    <text><label>___________________________________________________</label></text>
+    
+      <text><label>Enter the composer</label></text>
+      <hbox>
+      <entry>
+    <variable>COMPOSER</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep composer= | sed 's/composer=//'</input>
+    </entry>
+    </hbox>
+    
+      <text><label>Enter the copyright</label></text>
+      <hbox>
+      <entry>
+    <variable>CPRT</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep cprt= | sed 's/cprt=//'</input>
+    </entry>
+    </hbox>    
+    
+      <text><label>Enter the grouping</label></text>
+      <hbox>
+      <entry>
+    <variable>GRP</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep grp= | sed 's/grp=//'</input>
+    </entry>
+    </hbox>   
+    
+      <text><label>Enter the Album Artist</label></text>
+      <hbox>
+      <entry>
+    <variable>AART</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep aart= | sed 's/aart=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the description</label></text>
+      <hbox>
+      <entry>
+    <variable>DESC</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep desc= | sed 's/desc=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the category</label></text>
+      <hbox>
+      <entry>
+    <variable>CATG</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep catg= | sed 's/catg=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter a keyword</label></text>
+      <hbox>
+      <entry>
+    <variable>KEYW</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep keyw= | sed 's/keyw=//'</input>
+    </entry>
+    </hbox>  
+      
+    <text><label>___________________________________________________</label></text>
+    </frame>
+    
+    <frame More tags>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    <text><label>___________________________________________________</label></text>
+    
+      <text><label>Enter the date purchased</label></text>
+      <hbox>
+      <entry>
+    <variable>PURD</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep purd= | sed 's/purd=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the rating (clean or explicit)</label></text>
+      <hbox>
+      <entry>
+    <variable>RTNG</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep rtng= | sed 's/rtng=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the encoder</label></text>
+      <hbox>
+      <entry>
+    <variable>TOO</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep too= | sed 's/too=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the lyrics</label></text>
+      <hbox>
+      <entry>
+    <variable>LYR</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep lyr= | sed 's/lyr=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Set the tempo/bpm (numerical value)</label></text>
+      <hbox>
+      <entry>
+    <variable>TMPO</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep tmpo= | sed 's/tmpo=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the podcast url</label></text>
+      <hbox>
+      <entry>
+    <variable>PURL</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep purl= | sed 's/purl=//'</input>
+    </entry>
+    </hbox>  
+    
+      <text><label>Enter the podcast episode url</label></text>
+      <hbox>
+      <entry>
+    <variable>EGID</variable>
+    <input>cat /tmp/\"$FILE2\".ptag | grep egid= | sed 's/egid=//'</input>
+    </entry>
+    </hbox>  
+    
+    <text><label>___________________________________________________</label></text>
+    </frame>
+    
+    <frame Artwork>
+		<text use-markup=\"true\">
+     <label>\"<b>File = $FILE</b>\"</label></text>
+    <text><label>___________________________________________________</label></text>
+    
+      <text><label>display if file contains artwork (no input)</label></text>
+      <hbox>
+      <entry editable=\"false\">
+    <variable>COVR</variable>
+    <input>AtomicParsley \"$FILE2\" -t | grep 'Atom \"covr\" contains:' | cut -f 2 -d ':' | sed 's/^ //'</input>
+    </entry>
+    </hbox>  
+    
+    	 <text><label>add artwork (select file - jpg or png only)</label></text>
+        <hbox>
+      <entry editable=\"false\" accept=\"filename\">
+        <variable>ENTRY1</variable>
+      </entry>
+      <button>
+        <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">ENTRY1</action>
+      </button>
+    </hbox>
+    
+      <hbox>
+      <text><label>extract artwork, if there is any?</label></text>
+      <button>
+			<input file icon=\"gtk-convert\"></input>
+        <label>Extract</label>
+        <action>AtomicParsley \"$FILE\" -E</action>
+      </button>
+    </hbox>  
+      
+    <text><label>___________________________________________________</label></text>
+    </frame>
+    
+    <frame Exit or click ok/next to save tags>
+    	 <text><label>Tag file with an existing ptag then click ok/next</label></text>
+        <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <variable>PTAG</variable>
+      </entry>
+      <button>
+      <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">PTAG</action>
+      </button>
+      </hbox>
+      
+    <hbox>
+    <text><label>Select your tagger</label></text>
+    <combobox>
+     <variable>PROBECOMBO</variable>
+$FORMATS
+    </combobox>
+    </hbox>  
+
+    <hbox>
+      <button>
+			<input file icon=\"gtk-help\"></input>
+        <label>Help</label>
+        <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pmetatagger.html &</action> 
+      </button> 
+      <button>
+		<input file icon=\"gtk-index\"></input>
+        <label>DUMP-tag</label>
+      <action>echo track=\$TRACKNUMBER | sed 's/ //g' | grep [0-9] | tee /tmp/\"$FILE\".ptag</action>
+      <action>echo date=\$YEAR | sed 's/ //g' | grep [0-9] | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo title=\$NAME | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo album=\$ALBUM | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo artist=\$ARTIST | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo comment=\$COMMENT | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo disc=\$DISC | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo composer=\$COMPOSER | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo genre=\$GENRE | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tvnn=\$TVNN | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tvsh=\$TVSH | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tven=\$TVEN | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tvsn=\$TVSN | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tves=\$TVES | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo cprt=\$CPRT | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo grp=\$GRP | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo aart=\$AART | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo desc=\$DESC | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo keyw=\$KEYW | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo catg=\$CATG | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo purd=\$PURD | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo rtng=\$RTNG | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo too=\$TOO | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo lyr=\$LYR | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo tmpo=\$TMPO | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo purl=\$PURL | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo egid=\$EGID | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>echo entry1=\$ENTRY1 | tee -a /tmp/\"$FILE\".ptag</action>
+      <action>mv /tmp/\"$FILE\".ptag \"$FILE\".ptag 2>/dev/null</action>
+      </button>
+        <button>
+      <input file icon=\"gtk-ok\"></input>
+"
+if [ "$ONCE" = yes ]; then
+FLACTAG="$FLACTAG
+	  <label>OK</label>
+"
+else
+FLACTAG="$FLACTAG
+      <label>NEXT</label>
+"
+fi
+FLACTAG="$FLACTAG
+      <action>echo track=\$TRACKNUMBER | sed 's/ //g' | grep [0-9] | tee /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo date=\$YEAR | sed 's/ //g' | grep [0-9] | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo title=\$NAME | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo album=\$ALBUM | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo artist=\$ARTIST | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo comment=\$COMMENT | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo disc=\$DISC | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo composer=\$COMPOSER | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo genre=\$GENRE | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tvnn=\$TVNN | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tvsh=\$TVSH | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tven=\$TVEN | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tvsn=\$TVSN | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tves=\$TVES | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo cprt=\$CPRT | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo grp=\$GRP | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo aart=\$AART | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo desc=\$DESC | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo keyw=\$KEYW | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo catg=\$CATG | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo purd=\$PURD | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo rtng=\$RTNG | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo too=\$TOO | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo lyr=\$LYR | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo tmpo=\$TMPO | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo purl=\$PURL | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo egid=\$EGID | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>echo entry1=\$ENTRY1 | tee -a /tmp/$WHOAMI-pmetatagger-tmp</action>
+      <action>if [ -f \$PTAG ]; then cp \$PTAG /tmp/$WHOAMI-pmetatagger-tmp 2>/dev/null; fi</action>
+		<action type=\"exit\">Exit by button</action>
+    </button>   
+      <button>
+			<input file icon=\"gtk-cancel\"></input>
+        <label>SKIP</label>
+        <action type=\"exit\">EXIT_SKIP</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+    </hbox>
+    </frame>
+    
+
+</notebook>
+</vbox>
+</hbox>
+</window>
+"
+IDTAGS=`$GTKDIALOG --program=FLACTAG --center 2>/dev/null`
+
+fi
+
+if [ "$TAGGER" = jhead ]; then
+
+export FLACTAG="
+<window title=\"Pmetatagger - $VERSION \"icon-name=\"gtk-convert\">
+<hbox>
+<vbox>
+<notebook labels=\"jhead|Editable\">
+<frame jhead output>
+<vbox>
+    <edit editable=\"false\">
+      <variable>EDITOR</variable>
+      <width>310</width><height>400</height>
+      <input file>/tmp/$FILE.ptag</input>
+    </edit>
+</vbox>
+</frame>
+  
+  	<frame Editable>  
+      <text><label>Exif Date/time in YYYY:MM:DD-hh:mm:ss format</label></text>
+      <hbox>
+      <entry>
+    <variable>DATETIME</variable>
+  	<input>echo $DATETIME</input>
+      </entry>
+    </hbox>
+    
+      <text><label>Comment:</label></text>
+      <hbox>
+      <entry>
+    <variable>COMMENT</variable>
+  	<input>echo $COMMENT</input>
+      </entry>
+    </hbox>
+
+    	 <text><label>tag with EXIF data from another jpeg</label></text>
+        <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <variable>EXIF</variable>
+      </entry>
+      <button>
+      <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME</variable>
+        <action type=\"fileselect\">EXIF</action>
+      </button>
+      </hbox>  
+      
+		<frame Strip specified data from file>
+		<hbox>
+	<checkbox>
+      <label>comments</label>
+      <variable>CHECK1</variable>
+      <default>false</default>
+    </checkbox>      
+	<checkbox>
+      <label>exif</label>
+      <variable>CHECK2</variable>
+      <default>false</default>
+    </checkbox>    
+	<checkbox>
+      <label>IPTC</label>
+      <variable>CHECK3</variable>
+      <default>false</default>
+    </checkbox>    
+	<checkbox>
+      <label>non-image</label>
+      <variable>CHECK4</variable>
+      <default>false</default>
+    </checkbox>    
+    </hbox>
+    </frame>
+    
+		<frame Thumbnails>
+		<hbox>
+	<checkbox>
+      <label>Save</label>
+      <variable>CHECK5</variable>
+      <default>false</default>
+    </checkbox>      
+	<checkbox>
+      <label>Remove</label>
+      <variable>CHECK6</variable>
+      <default>false</default>
+    </checkbox>    
+	<checkbox>
+      <label>Replace</label>
+      <variable>CHECK7</variable>
+      <default>false</default>
+      <action>if true enable:THUMB</action>
+	  <action>if true enable:FILE_BROWSE_FILENAME2</action>
+      <action>if false disable:THUMB</action>
+      <action>if false disable:FILE_BROWSE_FILENAME2</action>
+    </checkbox>  
+    </hbox>
+    	 <text><label>Select replacement thumbnail</label></text>
+        <hbox>
+      <entry editable=\"true\" accept=\"filename\">
+        <variable>THUMB</variable>
+        <visible>disabled</visible>
+      </entry>
+      <button>
+      <input file stock=\"gtk-file\"></input>
+        <variable>FILE_BROWSE_FILENAME2</variable>
+        <visible>disabled</visible>
+        <action type=\"fileselect\">THUMB</action>
+      </button>
+      </hbox>  
+    </frame>
+    
+		<frame Create exif header - will REMOVE current exif info>
+		<hbox>
+	<checkbox>
+      <label>create</label>
+      <variable>CHECK8</variable>
+      <default>false</default>
+    </checkbox>        
+    </hbox>
+    </frame>
+
+      <hbox>
+      <button>
+			<input file icon=\"gtk-help\"></input>
+        <label>Help</label>
+        <action>$DEFAULTHTMLVIEWER file:///usr/share/doc/pmetatagger.html &</action> 
+      </button> 
+      <button>
+		<input file icon=\"gtk-index\"></input>
+        <label>DUMP-tag</label>
+        <action>cp /tmp/\"$FILE\".ptag $DIR/</action>
+      </button>
+    <button>
+      <input file icon=\"gtk-ok\"></input>
+	  <label>OK</label>
+		<action type=\"exit\">EXIT_OK</action>
+    </button>   
+      <button>
+			<input file icon=\"gtk-cancel\"></input>
+        <label>SKIP</label>
+        <action type=\"exit\">EXIT_SKIP</action>
+      </button>
+      <button>
+			<input file icon=\"gtk-quit\"></input>
+        <label>QUIT</label>
+        <action type=\"exit\">EXIT_NOW</action>
+      </button>
+    </hbox>
+    </frame>
+
+</notebook>
+</vbox>
+</hbox>
+</window>
+"
+IDTAGS=`$GTKDIALOG --program=FLACTAG --center 2>/dev/null`
+
+fi
+
+if [ "`echo $IDTAGS | grep EXIT_NOW`" != "" ]; then
+exit 0
+fi
+
+if ! [ -f /tmp/$WHOAMI-pmetatagger-tmp ]; then
+touch /tmp/$WHOAMI-pmetatagger-tmp
+fi
+
+if [ "$TAGGER" = jhead ]; then
+if [ "`echo $IDTAGS | grep EXIT_OK`" != "" ]; then
+CHECK1="`echo \"$IDTAGS\" | grep CHECK1 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK2="`echo \"$IDTAGS\" | grep CHECK2 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK3="`echo \"$IDTAGS\" | grep CHECK3 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK4="`echo \"$IDTAGS\" | grep CHECK4 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK5="`echo \"$IDTAGS\" | grep CHECK5 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK6="`echo \"$IDTAGS\" | grep CHECK6 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK7="`echo \"$IDTAGS\" | grep CHECK7 | cut -f 2 -d '=' | sed 's/\"//g'`"
+CHECK8="`echo \"$IDTAGS\" | grep CHECK8 | cut -f 2 -d '=' | sed 's/\"//g'`"
+DATETIME="`echo \"$IDTAGS\" | grep DATETIME | cut -f 2 -d '=' | sed 's/\"//g'`"
+THUMB="`echo \"$IDTAGS\" | grep THUMB | cut -f 2 -d '=' | sed 's/\"//g'`"
+COMMENT="`echo \"$IDTAGS\" | grep COMMENT | sed 's/=/|/' | cut -f 2 -d '|' | sed 's/\"//g'`"
+EXIF="`echo \"$IDTAGS\" | grep EXIF | cut -f 2 -d '=' | sed 's/\"//g'`"
+echo "$COMMENT" > /tmp/$WHOAMI-pmetatagger-comment
+if [ "$CHECK8" = true ]; then
+jhead -mkexif "$FILE"
+fi
+jhead -ci /tmp/$WHOAMI-pmetatagger-comment "$FILE"
+if [ "`echo $DATETIME | grep ':'`" != "" ]; then
+jhead -ts"$DATETIME" "$FILE"
+fi
+if [ "`echo $EXIF | grep -i jp`" != "" ]; then
+jhead -te "$EXIF" "$FILE"
+fi
+if [ "$CHECK1" = true ]; then
+jhead -dc "$FILE"
+fi
+if [ "$CHECK2" = true ]; then
+jhead -de "$FILE"
+fi
+if [ "$CHECK3" = true ]; then
+jhead -di "$FILE"
+fi
+if [ "$CHECK4" = true ]; then
+jhead -du "$FILE"
+fi
+if [ "$CHECK5" = true ]; then
+EXT=${FILE##*.}
+FILE2="`echo \"$FILE\" | sed 's/.$EXT//'`"
+jhead -st "$FILE2"-thumb.$EXT "$FILE"
+fi
+if [ "$CHECK6" = true ]; then
+jhead -dt "$FILE"
+fi
+if [ "$CHECK7" = true ]; then
+if [ -f "$THUMB" ]; then
+jhead -rt "$THUMB" "$FILE"
+fi
+fi
+fi
+fi
+
+rm -f /tmp/$WHOAMI-pmetatagger-comment
+
+if [ "$TAGGER" != jhead ]; then
+TAGGER=`echo "$IDTAGS" | grep PROBECOMBO= | cut -f 2 -d '=' | sed 's/\"//g'`
+fi
+
+else
+cp "$PTAG" /tmp/$WHOAMI-pmetatagger-tmp 2>/dev/null
+fi ##end no gui for direct ptag input
+
+if [ "$TAGGER" != jhead ]; then
+NEWPTAG="`echo \"$IDTAGS\" | grep PTAG | cut -f 2 -d '=' | sed 's/\"//g' | grep ptag`"
+V1="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep v1= | sed 's/v1=//g'`"
+if [ "$V2" != true ]; then
+V2="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep v2= | sed 's/v2=//g'`"
+fi
+ENTRY1="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep entry1= | sed 's/entry1=//g'`"
+ARTWORK=""
+if [ -f "$ENTRY1" ]; then
+ARTWORK="--artwork \"$ENTRY1\""
+fi
+if [ "$NEWPTAG" != "" ]; then
+cp "$NEWPTAG" /tmp/$WHOAMI-pmetatagger-tmp
+fi
+TRACKNUMBER=`cat /tmp/$WHOAMI-pmetatagger-tmp | grep track= | sed 's/track=//g'`
+YEAR=`cat /tmp/$WHOAMI-pmetatagger-tmp | grep date= | sed 's/date=//g'`
+ENCODE="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep encode= | sed 's/encode=//g'`"
+DISCNUMBER="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep disc_number= | sed 's/disc_number=//'`"
+SOURCE="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep source= | sed 's/source=//'`"
+NAME="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep title= | sed 's/title=//g'`"
+ALBUM="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep album= | sed 's/album=//g'`"
+ARTIST="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep artist= | sed 's/artist=//g'`"
+COMPOSER="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep composer= | sed 's/composer=//g'`"
+LYRICIST="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep lyricist= | sed 's/lyricist=//g'`"
+COMMENT="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep comment= | sed 's/comment=//g'`"
+GENRE="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep genre= | sed 's/genre=//g'`"
+TVNN="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tvnn= | sed 's/tvnn=//g'`"
+TVSH="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tvsh= | sed 's/tvsh=//g'`"
+TVEN="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tven= | sed 's/tven=//g'`"
+TVSN="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tvsn= | sed 's/tvsn=//g'`"
+TVES="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tves= | sed 's/tves=//g'`"
+CPRT="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep cprt= | sed 's/cprt=//g'`"
+GRP="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep grp= | sed 's/grp=//g'`"
+AART="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep aart= | sed 's/aart=//g'`"
+DESC="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep desc= | sed 's/desc=//g'`"
+KEYW="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep keyw= | sed 's/keyw=//g'`"
+CATG="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep catg= | sed 's/catg=//g'`"
+PURD="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep purd= | sed 's/purd=//g'`"
+RTNG="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep rtng= | sed 's/rtng=//g'`"
+TOO="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep too= | sed 's/too=//g'`"
+LYR="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep lyr= | sed 's/lyr=//g'`"
+TMPO="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep tmpo= | sed 's/tmpo=//g'`"
+PURL="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep purl= | sed 's/purl=//g'`"
+EGID="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep egid= | sed 's/egid=//g'`"
+DISC="`cat /tmp/$WHOAMI-pmetatagger-tmp | grep disc= | sed 's/disc=//g'`"
+fi
+
+echo "$GENRE" > /tmp/$WHOAMI-pmetatagger-genre
+if [ "`which lame`" != "" ]; then
+if [ "`echo \"$GENRE\" | grep [0-9]`" = "" ]; then
+lame --genre-list | sed 's/^ //g' | sed 's/^ //g' > /tmp/$WHOAMI-pmetatagger-genrelist
+BYTES=`echo "$GENRE" | wc -c`
+cat /tmp/$WHOAMI-pmetatagger-genrelist | grep -i "$GENRE" | while read GENRE1
+do
+GENRE2="`echo "$GENRE1" | sed 's/[0-9]//g' | sed 's/^ //g'`"
+GENRE3="`echo "$GENRE1" | cut -f 1 -d ' '`"
+BYTES2="`echo "$GENRE2" | wc -c`"
+if [ "$BYTES" = "$BYTES2" ]; then
+echo "$GENRE3" > /tmp/$WHOAMI-pmetatagger-genre
+fi
+done
+GENRE=`cat /tmp/$WHOAMI-pmetatagger-genre`
+fi
+fi
+
+if [ "`echo $IDTAGS | grep EXIT_SKIP`" = "" ]; then
+if [ "$FILETYPE" = flac ]; then
+metaflac --remove-all-tags "$FILE"
+if [ "`cat $HOME/.config/pmetatagger | grep replaygain=yes`" != "" ]; then
+metaflac --set-tag="TRACKNUMBER=${TRACKNUMBER}" --set-tag="ARTIST=${ARTIST}" --set-tag="ALBUM=${ALBUM}" --set-tag="TITLE=${NAME}" --set-tag="GENRE=${GENRE}" --set-tag="DATE=$YEAR" --set-tag="LYRICIST=$LYRICIST" --set-tag="COMMENT=$COMMENT" --set-tag="COMPOSER=$COMPOSER" --set-tag="SOURCEMEDIA=$SOURCE" --set-tag="DISCNUMBER=$DISCNUMBER" --add-replay-gain  --preserve-modtime "$FILE" 2>/dev/null
+else
+metaflac --set-tag="TRACKNUMBER=${TRACKNUMBER}" --set-tag="ARTIST=${ARTIST}" --set-tag="ALBUM=${ALBUM}" --set-tag="TITLE=${NAME}" --set-tag="GENRE=${GENRE}" --set-tag="DATE=$YEAR" --set-tag="LYRICIST=$LYRICIST" --set-tag="COMMENT=$COMMENT" --set-tag="COMPOSER=$COMPOSER" --set-tag="SOURCEMEDIA=$SOURCE" --set-tag="DISCNUMBER=$DISCNUMBER" "$FILE" 2>/dev/null
+fi
+elif [ "$TAGGER" = vorbiscomment ]; then
+vorbiscomment -w "$FILE" -t TRACKNUM="$TRACKNUMBER" -t ARTIST="$ARTIST" -t ALBUM="$ALBUM" -t TITLE="$NAME" -t GENRE="$GENRE" -t DATE="$YEAR" -t LYRICIST="$LYRICIST" -t COMMENT="$COMMENT" -t COMPOSER="$COMPOSER"
+if [ "`cat $HOME/.config/pmetatagger | grep replaygain=yes`" != "" ]; then
+if [ "`which vorbisgain`" != "" ]; then
+vorbisgain "$FILE"
+fi
+fi
+elif [ "$TAGGER" = apetag ]; then
+apetag -i "$FILE" -m overwrite -p TRACK="$TRACKNUMBER" -p ARTIST="$ARTIST" -p ALBUM="$ALBUM" -p TITLE="$NAME" -p GENRE="$GENRE" -p YEAR="$YEAR" -p LYRICIST="$LYRICIST" -p COMMENT="$COMMENT" -p COMPOSER="$COMPOSER" 2>/dev/null
+elif [ "$TAGGER" = AtomicParsley ]; then
+echo AtomicParsley \"$FILE\" --tracknum \"$TRACKNUMBER\" --artist \"$ARTIST\" --album \"$ALBUM\" --title \"$NAME\" --genre \"$GENRE\" --disk \"$DISC\" --year \"$YEAR\" --comment \"$COMMENT\" --lyrics \"$LYR\" --composer \"$COMPOSER\" --copyright \"$CPRT\" --grouping \"$GRP\" --bpm \"$TMPO\" --albumArtist \"$AART\" --advisory \"$RTNG\" --description \"$DESC\" --TVNetwork \"$TVNN\" --TVShowName \"$TVSH\" --TVEpisode \"$TVEN\" --TVSeasonNum \"$TVSN\" --TVEpisodeNum \"$TVES\" --category \"$CATG\" --keyword \"$KEYW\" --podcastURL \"$PURL\" --podcastGUID \"$EGID\" --purchaseDate \"$PURD\" --encodingTool \"$TOO\" \"$ARTWORK\" > /tmp/$WHOAMI-pmetatagger-atomicparsley
+chmod a+x /tmp/$WHOAMI-pmetatagger-atomicparsley
+/tmp/$WHOAMI-pmetatagger-atomicparsley
+FILENOEXT="`echo ${FILE%.*}`"
+mv "$FILENOEXT"-temp-* "$FILE"
+elif [ "$TAGGER" = id3tag ]; then
+ID3V=1
+if [ "$FILETYPE" = mp3 ]; then
+if [ "$V2" = true ]; then
+ID3V=2
+fi
+fi
+id3convert -s "$FILE"
+if [ "$COMMENT" = "" ]; then
+SPACE=""
+else
+SPACE=" - "
+fi
+if [ "$ENCODE" != "" ]; then
+COMMENT2="`echo \"$COMMENT\" $SPACE Encoder: \"$ENCODE\" | tr -s ' ' | sed 's/^ //'`"
+else
+COMMENT2="$COMMENT"
+fi
+id3tag -"$ID3V" --artist="$ARTIST" --album="$ALBUM" --song="$NAME" --year="$YEAR" --track="$TRACKNUMBER" --genre="$GENRE" --comment="$COMMENT2" "$FILE"
+elif [ "$TAGGER" = mp3info ]; then
+mp3info -d -f "$FILE"
+mp3info -a "$ARTIST" -g "$GENRE" -l "$ALBUM" -n "$TRACKNUMBER" -t "$NAME" -y "$YEAR" -c "$COMMENT" -f "$FILE"
+fi
+fi
+
+if [ "$FILESELECTION" != "" ]; then
+rm -f /tmp/$WHOAMI-pmetatagger*
+rm -f /tmp/"$FILE".ptag
+exit 0
+fi
+
+if [ "$SKIPCHOOSER" = FILE ]; then
+rm -f /tmp/$WHOAMI-pmetatagger*
+rm -f /tmp/"$FILE".ptag
+exit 0
+fi
+
+FILE2="$FILE"
+TAGGER=""
+
+NUMBER=`expr $NUMBER + 1`
+
+done
+
+if [ "$NODISPLAY" != YES ]; then
+if [ "$SKIPGUI" = "" ]; then
+export MAIN_DIALOG="
+ <vbox>
+  <text wrap=\"true\" width-chars=\"40\">
+    <label>All processes complete</label>
+  </text>
+  <hbox>
+    <button>
+       <input file icon=\"gtk-ok\"></input>
+      <label>OK</label>
+      <action type=\"exit\">Exit-now</action>
+    </button>
+  </hbox>
+ </vbox>
+"
+COMPLETE=`$GTKDIALOG --program=MAIN_DIALOG --center`
+else
+echo
+echo operations complete
+fi
+fi
+
+##remove temp files
+rm -f /tmp/$WHOAMI-pmetatagger*
+cd /tmp/
+rm -f *.ptag
+
+exit 0

@@ -1,0 +1,44 @@
+GNOME Mplayer has a dbus interface
+
+Signals it handles
+
+Open			string:
+OpenPlaylist	string:
+OpenButton		string:		string:
+Close
+Play			
+Pause
+Stop
+FastForward
+FastReverse
+Quit
+Terminate
+SetFullscreen	boolean:
+SetInfo			string:
+SetPercent		double:
+SetProgressText	string:
+SetShowControls	boolean:
+Volume			double;
+VolumeUp
+VolumeDown
+Ping
+
+
+Path controls what items are controlled
+
+Path			What is controlled
+/				All gnome-mplayer windows, good for multihead
+/pid/[pid]		Controls just the instance with pid=[pid]
+/control/[cid]	Controls all instances with control id of [cid] set
+/window/[wid]	Controls instance embedded in window id [wid]
+
+Example dbus-send
+
+Tell all windows to "Play"
+dbus-send / com.gnome.mplayer.Play	
+
+Tell window embedded in window 123 to Pause
+dbus-send /window/123 com.gnome.mplayer.Pause	
+
+Tell player with controlid of 456 to Open and Play /tmp/media.mov
+dbus-send /control/456 com.gnome.mplayer.Open string:'/tmp/media.mov'

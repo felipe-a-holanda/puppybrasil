@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /usr/local/jwmconfig2
+exec ./jwmConfigMgr

@@ -1,0 +1,67 @@
+#! /bin/bash
+
+# Pmwget created by gposil with thanks to Lobster for Pwget
+# April 2009 GPL v3 License
+# http://gposil.netne.net
+
+export HELP_DIALOG='
+<window title="PMirrorget - Help" resizable="false">
+  <vbox>
+    <text>
+      <label>PMirrorget allows you to download an entire web page and its text linked pages to a folder on you PC.Copy and paste the URL you wish to download. Use the folder selector to choose the destination. It is designed primarily for grabbing manuals and wiki pages without sifting through them, so you can view them later.</label>
+    </text>
+    <button>
+      <label>Close</label>
+      <action type="closewindow">HELP_DIALOG</action>
+    </button>
+  </vbox>
+  </window>
+'
+
+export Pmwget='
+<window title="PMirrorget - 0.2 - Site Grabber Utility" resizable="false">
+<vbox>
+ <hbox>
+  <text><label>Copy and Paste or type the URL of the required site into "URL". Choose your destination folder and then "Grab It Now!"</label></text>
+ </hbox>
+ <frame>
+ <hbox>
+  <text><label>URL:    </label></text>
+  <entry accept="directory"><variable>SOURCE</variable><input>/tmp/pm_source_dir</input></entry>
+ </hbox>
+ <hbox>
+  <text><label>Folder:</label></text>
+  <entry accept="directory"><variable>DEST</variable><input>/tmp/pm_mirror_dir</input></entry>
+  <button>
+   <input file icon="gtk-open"></input>
+   <action type="fileselect">DEST</action>
+   <action>refresh:DEST</action>
+  </button>
+ </hbox>
+ </frame>
+ <hbox>
+ <frame>
+  <button help>
+<action type="launch">HELP_DIALOG</action> 
+  </button>
+  <button cancel></button>
+  </frame>
+  <button>
+  <input file>/usr/share/mini-icons/mini.checkmark.xpm</input>
+       <label>Grab It Now! </label>
+       <action type="exit">OK</action>
+  </button>
+
+ </hbox>
+</vbox>
+</window>'
+
+I=$IFS; IFS=""
+for STATEMENTS in  $(gtkdialog3 --program=Pmwget --center); do
+   eval $STATEMENTS
+done
+IFS=$I
+if [ $EXIT = OK ]; then
+  rxvt -name PMirrorget -bg "#F3F2DF" -e wget -m -c -k -r -np -P "$DEST" $SOURCE
+  rox -d "$DEST"
+fi 

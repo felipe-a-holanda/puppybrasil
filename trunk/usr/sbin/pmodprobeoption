@@ -1,0 +1,35 @@
+#!/bin/sh
+#Barry Kauler, LGPL 2010
+
+#Adapted from Vodaphone Mobile Connect scripts.
+# This driver script functions only if the product id is not already 
+# compiled into another driver and does not appear in the modules_alias file.
+#This consolidates the modprobe and echo-to-new_id portions of vmc scripts: vmc-huawei, vmc-novatel, vmc-option, vmc-zte.
+#It supports both Option and Sierra (vendor 1199) modems.
+#It may be necessary to blacklist pl2303 and onda
+
+VID="$1"
+PID="$2"
+UCIDS="`echo v${VID}p${PID} | tr [a-f] [A-F]`"
+KERNVER="`uname -r`"
+MODULE="option"; SCRIPT="Allusbserial"
+if [ "`grep "^alias usb:${UCIDS}d" /lib/modules/$KERNVER/modules.alias | grep " $MODULE"`" = "" ];then
+ [ "$VID" = "0AF0" ] && MODULE="hso" && SCRIPT="Hso"
+ [ "$VID" = "1199" ] && MODULE="sierra"
+fi
+
+echo "pmodprobeoption: `date | tr -s ' ' | cut -f 4 -d ' '` - $VID:$PID MODULE: $MODULE" >> /tmp/udevtrace-modem.log  #DEBUG
+if [ "`grep "^alias usb:${UCIDS}d" /lib/modules/$KERNVER/modules.alias | grep " $MODULE"`" = "" ];then
+echo "pmodprobeoption: Probing MODULE: $MODULE  Setting ${MODULE}1/new_id" >> /tmp/udevtrace-modem.log  #DEBUG
+ /sbin/pup_event_backend_modprobe $MODULE
+ echo "${VID} ${PID}" > /sys/bus/usb-serial/drivers/${MODULE}1/new_id
+ #All fields are passed in as hexadecimal values (no leading 0x).
+echo -e "pmodprobeoption: usbserial new_id files:\n`ls -1 /sys/bus/usb-serial/drivers/*/new_id`" >> /tmp/udevtrace-modem.log  #DEBUG
+ sleep 5
+ 
+ #Run modem initialization script to detect modem.
+ [ ! -e /tmp/usb_modeswitch_active ] && /etc/init.d/$SCRIPT start
+ [ ! -e /tmp/usb_modeswitch_active ] && echo "pmodprobeoption: `date | tr -s ' ' | cut -f 4 -d ' '` - Completed modem initialization script $SCRIPT" >> /tmp/udevtrace-modem.log  #DEBUG
+fi
+
+### END ###

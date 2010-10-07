@@ -1,0 +1,30 @@
+#!/bin/sh
+#Barry Kauler 2010 LGPL
+
+#Find another candidate for USB modem, for device in argument 1.
+DEVM=$1
+DEVMALT=""
+if [ "`echo "$DEVM" | grep -E 'ttyACM[0-9]|ttyHS[0-9]|ttyUSB[0-9]|rfcomm[0-9]'`" != "" ];then
+ DEVMLIST="`grep -l -s 'Interrupt'  /sys/class/tty/ttyACM?*/device/ep_??/type | cut -f 5 -d /` `grep -l -s 'Modem' /sys/class/tty/ttyHS?*/hsotype | cut -f 5 -d /` `grep -l -s 'Interrupt' /sys/class/tty/ttyUSB?*/device/ep_??/type | cut -f 5 -d /`"
+ #v433 prepend any bluetooth modems to list...
+ if which rfcomm >/dev/null && which sdptool >/dev/null;then  
+  DUNPATTERN="`sdptool search DUN | sed -n -e '/^Searching/h' -e '/^    Channel:/{H;x}' -e 's/Searching for DUN on //' -e 's/ ...\n    Channel://p'`"
+  if [ "$DUNPATTERN" != "" ];then
+   DUNRFCLIST="`rfcomm -a | grep ' connected' | sed -e 's/ channel//' | grep -F "$DUNPATTERN" | cut -f 1 -d :`"
+   if [ "$DUNRFCLIST" != "" ];then
+    DEVMLIST="$DUNRFCLIST $DEVMLIST"
+   fi
+  fi
+#  echo "Modemtest/probe: DUNPATTERN: $DUNPATTERN  DUNRFCLIST: $DUNRFCLIST" >> /tmp/udevtrace-modem.log #debug
+ fi #v433 end
+ DEVMLIST="`echo "$DEVMLIST" | tr -s ' ' | tr ' ' '\n'`"
+ SEDSCRIPT1="/${DEVM}/"'{n;p;q}'
+ DEVMALT="`echo "$DEVMLIST" | sed -n "$SEDSCRIPT1"`"
+ [ "$DEVMALT" = "" ] \
+  && SEDSCRIPT2="/${DEVM}/"'!{p;q}' \
+  && DEVMALT="`echo "$DEVMLIST" | sed -n "$SEDSCRIPT2"`"
+fi
+echo "$DEVMALT"
+exit 0
+
+###END###

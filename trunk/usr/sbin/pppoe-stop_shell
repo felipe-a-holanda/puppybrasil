@@ -1,0 +1,7 @@
+#!/bin/sh
+
+pppoe-stop
+
+echo
+echo -n 'Press ENTER key to continue: '
+read yabboodo

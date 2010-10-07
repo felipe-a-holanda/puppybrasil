@@ -1,0 +1,100 @@
+#!/bin/sh
+#simple switcher for jwm to icewm and back
+#01micko 2010 GPL see /usr/share/doc/legal/
+#Backup /usr/bin/restartwm (and hide it)
+#ver 0.1 #2010-07-11
+#ver 0.3 #2010-07-12
+#ver 0.4 #2010-07-25
+#ver 0.5 #2010-08-01
+
+ver="0.5"
+#find images for gui
+IMGDIR="/usr/share/pixmaps"
+#test that we actually are running jwm or icewm
+CURWM=`head -c5 /etc/windowmanager`
+if [[ $CURWM -ne jwm || $CURWM -ne icewm ]];then /usr/X11R7/bin/yaf-splash -bg hotpink -margin 3 -font "-misc-dejavu sans-bold-r-normal--20-0-0-0-p-0-iso10646-1" -timeout 3 -outline 0 -text "ERROR: You aren't using Jwm or Icwm, programm exiting. Bye"
+	exit
+fi
+#make sure icewm exists
+ICETHERE=`which icewm`
+if [ "$ICETHERE" = "" ];then /usr/X11R7/bin/yaf-splash -bg hotpink -margin 3 -font "-misc-dejavu sans-bold-r-normal--20-0-0-0-p-0-iso10646-1" -timeout 3 -outline 0 -text "ERROR: Icewm is not installed"
+	exit 2
+fi
+#cp -f /usr/bin/restartwm /usr/bin/.restartwm.bak #see /root/Startup/zfixwm (cleanup)#No, moved to pinstall
+
+#using rpl, a new program introduced by BarryK in woof
+#icewm changer #careful! critical system files being tampered with
+function ICEWM(){
+	FUTUREWM=`grep -we'^NEXTWM=' /usr/bin/restartwm` 2>/dev/null
+	echo "rpl -v '$FUTUREWM' 'NEXTWM=\"icewm\"' /usr/bin/restartwm" >/tmp/wmswithcer
+	. /tmp/wmswithcer
+	rm -f /tmp/wmswithcer
+	
+}
+export -f ICEWM
+#jwm changer #ditto icewm comment
+function JWM(){
+	FUTUREWM=`grep -we'^NEXTWM=' /usr/bin/restartwm` 2>/dev/null
+	echo "rpl -v '$FUTUREWM' 'NEXTWM=\"jwm\"' /usr/bin/restartwm" >/tmp/wmswithcer
+	. /tmp/wmswithcer
+	rm -f /tmp/wmswithcer
+	
+}
+export -f JWM
+#switch function
+function SWITCH(){
+	if [ $RADIOBUTTON1 = true ];then JWM
+		elif [ $RADIOBUTTON2 = true ];then ICEWM
+	fi
+}
+export -f SWITCH
+
+
+#current window manager and radio button defaults
+CURRENTWM=`cat /etc/windowmanager`
+if [ "$CURRENTWM" = "jwm" ];then RADIOBUTTON1=true;RADIOBUTTON2=false
+		else RADIOBUTTON2=true;RADIOBUTTON1=false
+fi
+
+#GUI
+export switcheroo="
+<window title=\"WM Switcher $ver\" resizable=\"false\">
+ <vbox>
+   <hbox homogeneous=\"true\">
+    <pixmap><input file>$IMGDIR/jwm.png</input></pixmap>
+    <text><label>or</label></text>
+    <pixmap><input file>$IMGDIR/icewm-logo.png</input></pixmap>
+   </hbox> 
+  <frame Choose the window manager you would like to use>
+   <hbox homogeneous=\"true\">
+    <radiobutton>
+     <variable>RADIOBUTTON1</variable>
+	 <label>\"JWM\"</label>
+	 <default>$RADIOBUTTON1</default>
+	</radiobutton>
+    <radiobutton>
+     <variable>RADIOBUTTON2</variable>
+	 <label>\"IceWm\"</label>
+     <default>$RADIOBUTTON2</default>
+	</radiobutton>
+   </hbox>
+  </frame>
+  <frame Important Information>
+	<text use-markup=\"true\" xalign=\"0\"><label>\"<b>Restart X</b> will switch WMs and restart X now\"</label></text>
+	<text use-markup=\"true\" xalign=\"0\"><label>\"<b>Note:</b><i> Restarting X will kill all your open applications</i>\"</label></text>
+	<text use-markup=\"true\"><label>\"<i>Save your work before you continue</i>\"</label></text>
+   </frame>
+	<hbox homogeneous=\"true\">
+	<button>
+	 <label>Restart X</label>
+     <input file stock=\"gtk-apply\"></input> 
+     <action>SWITCH</action>
+     <action>restartwm</action>
+     <action>EXIT:restartX</action>
+	</button>
+	</hbox>
+ </vbox>
+</window>"
+gtkdialog3 -p switcheroo
+unset switcheroo
+#END

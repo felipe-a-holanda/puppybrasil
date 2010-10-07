@@ -1,0 +1,150 @@
+#!/bin/sh
+#Barry Kauler 2005 www.puppylinux.com
+#2007 Lesser GPL licence v2 (http://www.fsf.org/licensing/licenses/lgpl.html)
+#w019 apr2009: updated for woof.
+#100215 fixes.
+
+VIDEOINFO="`cat /proc/pci | grep "VGA" | cut -f 2-4 -d ':'`"
+WHATXS="`ls -1 /usr/bin/X?* | sed -e 's/\/usr\/bin\///g' | tr "\n" " "`"
+CURRENTX="`readlink /usr/bin/X`"
+
+XVESATXT=""
+if [ -e /usr/bin/Xvesa ];then
+ XVESATXT="    <hbox>
+     <text><label>Xvesa Kdrive server. This has been in most live-CDs, and works on the widest range of video hardware. The single biggest disadvantage is that the screen refresh frequency cannot be changed (which does not matter for LCD monitors, it is only a problem for CRT monitors where low frequency causes noticeable flicker). Click button to run the Xvesa video Wizard:</label></text>
+     <vbox><button>
+      <input file>/usr/local/lib/X11/pixmaps/x24.png</input>
+      <action>video-wizard & </action>
+      <action type=\"exit\">exited xserver wizard</action>
+     </button></vbox>
+    </hbox>
+"
+fi
+
+export MAINDIALOG="
+<window title=\"Puppy X server chooser Wizard\" icon-name=\"gtk-preferences\">
+  <hbox>
+  <vbox>
+   <text><label>\"
+These X servers are currently installed:
+$WHATXS
+
+The currently running X server is:
+$CURRENTX\"</label></text>
+  </vbox>
+
+  <vbox>
+   <frame X server Wizards>
+   
+    ${XVESATXT}
+
+    <hbox>
+     <text><label>Xorg X server. This is the big fella, large, sophisticated, accelerated rendering, Xinerama, supports many input devices. Click button to run the Xorg Video Wizard:</label></text>
+     <vbox><button>
+      <input file>/usr/local/lib/X11/pixmaps/x24.png</input>
+      <action>xorgwizard & </action>
+      <action type=\"exit\">exited xserver wizard</action>
+     </button></vbox>
+    </hbox>
+
+   </frame>
+  </vbox>
+  </hbox>
+</window>
+"
+
+#echo "$MAINDIALOG" | gtkdialog2 --stdin
+gtkdialog3 --program=MAINDIALOG
+
+exit
+###early stuff below####
+
+MSGXFBDEV="Click button for info how to install Xfbdev server."
+if [ -f /usr/X11R7/bin/Xfbdev ];then
+ ACTIONXFBDEV="framebufferwizard"
+else
+ echo "The Xfbdev Kdrive X server is available as a PupGet package.
+You need to install two packages, \"xfbdev\" and \"modules_fb\".
+(some live-CD builds may have modules_fb already installed, in which
+ case PupGet manager will not offer it as an installation choice)
+Go to the menu: Start -> Setup -> PupGet package manager
+and install them, then immediately reboot Puppy." > /tmp/servermsg.txt
+ ACTIONXFBDEV="xmessage -center -title xfbdev -file /tmp/servermsg.txt"
+fi
+
+CURRENTX="`readlink /usr/X11R7/bin/X`"
+case $CURRENTX in
+ Xfbdev)
+  MSGXFBDEV="Click button to run the Framebuffer Wizard:"
+  ACTIONXFBDEV="framebufferwizard"
+  ;;
+ *)
+  ;;
+esac
+
+
+MAINDIALOG="
+ <wtitle>Puppy X server chooser Wizard</wtitle>
+  <hbox>
+  <vbox>
+   <text><label>\"Your PC has this video hardware:
+$VIDEOINFO\"</label></text>
+
+   <text><label>Puppy has a variety of X servers to choose from. The live-CD has the Xvesa Kdrive server and/or the Xorg, and custom builds may also have the Xfbdev or Xi810 Kdrive servers. The Kdrive servers are a simplified and smaller server. If one of these is not in the live-CD, it can be downloaded and installed as a PupGet package.</label></text>
+   <text><label>There are also full X servers to choose from, both as PupGet or DotPup packages. To install many of these, it is wise to read about them on the Wiki or Forum first.</label></text>
+   <text><label>The buttons on the right tell you more about some of the servers, with instructions to install where appropriate. Note that the current running server is $CURRENTX</label></text>
+   <text><label>---o0o---</label></text>
+   <text><label>WORK IN PROGRESS: We are currently developing the /usr/sbin/framebufferwizard script. When installed, the framebuffer modules are at /lib/modules/`uname -r`/video, but they are not fully supported by the script. You are welcome to work on the script. Some framebuffer docs are at /usr/share/doc/framebuffer (when modules_fb is installed)</label></text>
+
+  </vbox>
+
+  <vbox>
+   <frame X server Wizards>
+    <hbox>
+     <text><label>Xvesa Kdrive server. This has been in all live-CDs, and works on the widest range of video hardware. The single biggest disadvantage is that the screen refresh frequency cannot be changed. Click button to run the Xvesa video Wizard:</label></text>
+     <button>
+      <input file>/usr/local/lib/X11/pixmaps/x.xpm</input>
+      <action>video-wizard</action>
+     </button>
+    </hbox>
+
+    <hbox>
+     <text><label>The Xfbdev Kdrive server uses kernel framebuffer modules. Performance may be inferior to Xvesa but some of the modules allow adjustment of refresh frequency. $MSGXFBDEV</label></text>
+     <button>
+      <input file>/usr/local/lib/X11/pixmaps/x.xpm</input>
+      <action>$ACTIONXFBDEV</action>
+     </button>
+    </hbox>
+
+    <hbox>
+     <text><label>There is a compact full X server for older video hardware, pre year 2000, named XF86_SVGA (XFree version 3.3.6). Note, it may work on recent video hardware that is backwards-compatible. Click the button for further information:</label></text>
+     <button>
+      <input file>/usr/local/lib/X11/pixmaps/x.xpm</input>
+      <action>exec xf86svga336wizard</action>
+     </button>
+    </hbox>
+
+    <hbox>
+     <text><label>Xorg full X servers are available as DotPup packages. These are large, which is why one of them is not in the live-CD. However, you can certainly install one. Click the button for further information on the Puppy Forum:</label></text>
+     <button>
+      <input file>/usr/local/lib/X11/pixmaps/x.xpm</input>
+      <action>defaultbrowser http://www.murga.org/%7Epuppy/viewtopic.php?t=672</action>
+     </button>
+    </hbox>
+
+   </frame>
+  </vbox>
+  </hbox>
+"
+
+#  <hbox>
+#   <text><label>The currently running server is $CURRENTX. Click to change:</label></text>
+#   <button>
+#    <label>Change X</label>
+#    <action>xmessage -center -title Change_X -buttons $XBUTTONS -file /tmp/changex.txt</action>
+#   </button>
+#  </hbox>
+
+echo "$MAINDIALOG" | gtkdialog2 --stdin
+
+

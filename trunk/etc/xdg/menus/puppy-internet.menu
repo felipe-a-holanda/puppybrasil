@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xfdesktop-menu PUBLIC "-//freedesktop//DTD Menu 0.8//EN" "http://www.freedesktop.org/standards/menu-spec/menu-0.8.dtd">
+<Menu>
+  <Name>Internet</Name>
+  <DefaultAppDirs/>
+  <DefaultDirectoryDirs/>
+  <AppDir>/opt/kde/share/applications/kde</AppDir>
+  <Directory>Puppy-Internet.directory</Directory>
+  <Include>
+    <Category>X-Internet</Category>
+    <Category>WebBrowser</Category>
+    <Category>Email</Category>
+    <Category>News</Category>
+    <Category>InstantMessaging</Category>
+    <Category>Telephony</Category>
+    <Category>IRCClient</Category>
+    <Category>FileTransfer</Category>
+    <Category>P2P</Category>
+  </Include>
+
+</Menu>

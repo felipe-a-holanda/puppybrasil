@@ -1,0 +1,516 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>Manpage of Xdialog</title></head><body>Content-type: text/html
+
+
+
+<h1>Xdialog</h1>
+Section: X11/tool (1)<br>Updated: 2.3.1<br><a href="#index">Index</a>
+<a href="http://localhost/cgi-bin/man/man2html">Return to Main Contents</a><hr>
+
+<a name="lbAB">&nbsp;</a>
+<h2>Online docs:</h2>
+<h2><a href="http://xdialog.free.fr/doc/index.html">http://xdialog.free.fr/doc/index.html</a>&nbsp;</h2>
+
+<h2>NAME</h2>
+
+
+<p>
+
+Xdialog - (c)dialog replacement for X-Windows
+<a name="lbAC">&nbsp;</a>
+</p><h2>SYNTAX</h2>
+
+<p>
+
+Xdialog [&lt;<i>common options</i>&gt;] [&lt;<i>transient options</i>&gt;] &lt;<i>box option</i>&gt; ...
+</p><p>
+
+and:
+</p><p>
+
+Xdialog &lt;<i>special option</i>&gt;
+<a name="lbAD">&nbsp;</a>
+</p><h2>DESCRIPTION</h2>
+
+<p>
+
+Xdialog is designed to be a drop in replacement for the <i>dialog</i> and <i>cdialog</i> programs (BTW Xdialog may also be used in place of <i>gdialog</i>).
+It converts any terminal based program into a program with an X-windows
+interface. The dialogs are easier to see and use, and the new widgets
+adds even more functionality. </p><p>
+
+To achieve this, Xdialog uses the Gimp ToolKit (also known as GTK+).
+<a name="lbAE">&nbsp;</a>
+</p><h2>OPTIONS</h2>
+
+<p>
+
+The [&lt;<i>common options</i>&gt;] [&lt;<i>transient options</i>&gt;] &lt;<i>box option</i>&gt;
+sequence may be repeated several times in the same Xdialog command line
+(this is called dialog chaining). The common/transient options may be
+omitted but there must always be a box option as the last Xdialog
+option.
+</p><p>
+
+<i>Common options:</i>
+</p><p>The &lt;common options&gt; are options applying to all following
+&lt;box options&gt; until the same or opposite &lt;common options&gt;
+are encountered into the Xdialog command line. These options are mostly
+dealing with menu look, style, placement and behaviour.
+</p><p>
+
+<i>Available common options:</i>
+</p><dl compact="compact">
+<dt><b>--wmclass</b> &lt;name&gt;</dt><dd>
+    <br>
+</dd><dt><b>--rc-file</b> &lt;gtkrc filename&gt;</dt><dd>
+    <br>
+</dd><dt><b>--backtitle</b> &lt;backtitle&gt;</dt><dd>
+    <br>
+</dd><dt><b>--title</b> &lt;title&gt;</dt><dd>
+    <br>
+</dd><dt><b>--allow-close</b> | <b>--no-close</b></dt><dd>
+    <br>
+</dd><dt><b>--screen-center</b> | <b>--under-mouse</b> | <b>--auto-placement</b></dt><dd>
+    <br>
+</dd><dt><b>--center</b> | <b>--right</b> | <b>--left</b> | <b>--fill</b></dt><dd>
+    <br>
+</dd><dt><b>--no-wrap</b> | <b>--wrap</b></dt><dd>
+    <br>
+</dd><dt><b>--cr-wrap</b> | <b>--no-cr-wrap</b></dt><dd>
+    <br>
+</dd><dt><b>--stderr</b> | <b>--stdout</b></dt><dd>
+    <br>
+</dd><dt><b>--separator</b> &lt;character&gt; | <b>--separate-output</b></dt><dd>
+    <br>
+</dd><dt><b>--buttons-style</b> default|icon|text</dt><dd>
+    <br>
+</dd></dl>
+<p>
+
+<i>Transient options:</i>
+</p><p>The &lt;transient options&gt; only apply to the next &lt;box
+option&gt; into the Xdialog command line. These options are used to
+tune the widgets (number and type of buttons, menu icon) or to trigger
+some of the widgets specific features.
+</p><p>
+
+<i>Available transient options:</i>
+</p><dl compact="compact">
+<dt><b>--fixed-font</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --tailbox, --textbox and --editbox.
+</dd><dt><b>--password</b> | <b>--password=1|2</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>This option may be repeated 2 or 3 times before --2inputsbox
+or --3inputsbox. It is also possible to specify one (and only one)
+password field with the --password=1|2 syntax.
+</dd><dt><b>--editable</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --combobox.
+</dd><dt><b>--time-stamp</b> | <b>--date-stamp</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --logbox.
+</dd><dt><b>--reverse</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --logbox.
+</dd><dt><b>--keep-colors</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --logbox.
+</dd><dt><b>--interval</b> &lt;timeout&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>This option may be used with input(s) boxes, combo box,
+range(s) boxes, spin(s) boxes, list boxes, menu box, treeview, calendar
+and timebox widgets.
+</dd><dt><b>--timeout</b> &lt;timeout&gt; (in seconds)</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all but infobox, gauge and progress widgets.
+</dd><dt><b>--no-tags</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --menubox, --checklist and --radiolist.
+</dd><dt><b>--item-help</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>When this option is used, the &lt;helpN&gt; parameters of the
+--menubox, --checklist, --radiolist, --buildlist and --treeview options
+<b>must</b> be specified (while they <b>must</b> be omitted if --item-help is not specified).
+</dd><dt><b>--default-item</b> &lt;tag&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --menubox.
+</dd><dt><b>--icon</b> &lt;xpm filename&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with any widget accepting a &lt;text&gt; parameter.
+</dd><dt><b>--no-ok</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --tailbox and --logbox.
+</dd><dt><b>--no-cancel</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all but --infobox, --gauge and --progress.
+</dd><dt><b>--no-buttons</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with --textbox, --tailbox, --logbox, --infobox, --fselect and --dselect.
+</dd><dt><b>--default-no</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>This option may be used with all widgets with a "Cancel" or
+"No" button. Note that it is ignored when the --wizard option is in
+force.
+</dd><dt><b>--wizard</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all but --msgbox, --infobox, --gauge and --progress.
+</dd><dt><b>--help</b> &lt;help&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all but --infobox, --gauge and --progress.
+</dd><dt><b>--print</b> &lt;printer&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --tailbox, --textbox and --editbox.
+</dd><dt><b>--check</b> &lt;label&gt; [&lt;status&gt;]</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all but --infobox, --gauge and --progress.
+</dd><dt><b>--ok-label</b> &lt;label&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>This option may be used with all widgets with a "OK" or "Yes"
+button. Note that it is ignored when the --wizard option is in force.
+</dd><dt><b>--cancel-label</b> &lt;label&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>This option may be used with all widgets with a "Cancel" or
+"No" button. Note that it is ignored when the --wizard option is in
+force.
+</dd><dt><b>--beep</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all widgets.
+</dd><dt><b>--beep-after</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all widgets.
+</dd><dt><b>--begin</b> &lt;Yorg&gt; &lt;Xorg&gt;</dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with all widgets.
+</dd><dt><b>--ignore-eof</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option may be used with --infobox and --gauge.
+</dd><dt><b>--smooth</b></dt><dd>
+    <br>
+</dd><dt><br>
+</dt><dd>
+This option is for use with --tailbox and --logbox.
+</dd><dt><i>Box options:</i></dt><dd>
+    <br>
+</dd></dl>
+<p>
+
+The &lt;box option&gt; tells to Xdialog which widget must be used and is followed by three or more parameters:
+</p><dl compact="compact">
+<dt><br>
+</dt><dd>
+the first parameter is a text string or a filename (this depends on the box option);
+</dd><dt><br>
+</dt><dd>the second and the third parameters are menu &lt;height&gt;
+and &lt;width&gt; in characters. These two parameters may be replaced
+by a single &lt;<b>XSIZE</b>x<b>YSIZE</b>&gt;
+parameter, giving the width and height in pixels. When a size of 0 0
+(or 0x0) is passed to Xdialog, then the widget is auto-sized by GTK+.
+When a size of -1 -1 (or -1x-1) is passed, then the Xdialog widget is
+set to the maximum size so to fit the screen. It is possible to give
+the widget an absolute origin on the screen (provided your window
+manager lets you do so), either by using the <b>--begin</b> transient option (when the size is given in characters) or by using a "-geometry"-like origin (e.g. 400x200+20-30).
+</dd><dt><br>
+</dt><dd>
+some box options require additional parameters such as tags, menu items, labels or default values.
+</dd></dl>
+<p>
+
+<i>Available box options:</i>
+</p><dl compact="compact">
+<dt><b>--yesno</b><tt>&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--msgbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--infobox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;timeout&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--gauge</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;percent&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--progress</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;maxdots&gt; [[-]&lt;msglen&gt;]]</dt><dd>
+    <br>
+</dd><dt><b>--inputbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;init&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--2inputsbox</b><tt>&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;label1&gt; &lt;init1&gt; &lt;label2&gt; &lt;init2&gt;</dt><dd>
+    <br>
+</dd><dt><b>--3inputsbox</b><tt>&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;label1&gt; &lt;init1&gt; &lt;label2&gt; &lt;init2&gt; &lt;label3&gt; &lt;init3&gt;</dt><dd>
+    <br>
+</dd><dt><b>--combobox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;item1&gt; ... &lt;itemN&gt;</dt><dd>
+    <br>
+</dd><dt><b>--rangebox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;min value&gt; &lt;max value&gt; [&lt;default value&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--2rangesbox</b><tt>&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt;
+&lt;height&gt; &lt;width&gt; &lt;label1&gt; &lt;min1&gt; &lt;max1&gt;
+&lt;def1&gt; &lt;label2&gt; &lt;min2&gt; &lt;max2&gt; &lt;def2&gt;</dt><dd>
+    <br>
+</dd><dt><b>--3rangesbox</b><tt>&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt;
+&lt;height&gt; &lt;width&gt; &lt;label1&gt; &lt;min1&gt; &lt;max1&gt;
+&lt;def1&gt; &lt;label2&gt; &lt;min2&gt; &lt;max2&gt; &lt;def2&gt;
+&lt;label3&gt; &lt;min3&gt; &lt;max3&gt; &lt;def3&gt;</dt><dd>
+    <br>
+</dd><dt><b>--spinbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;min&gt; &lt;max&gt; &lt;def&gt; &lt;label&gt; </dt><dd>
+    <br>
+</dd><dt><b>--2spinsbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt;
+&lt;height&gt; &lt;width&gt; &lt;min1&gt; &lt;max1&gt; &lt;def1&gt;
+&lt;label1&gt; &lt;min2&gt; &lt;max2&gt; &lt;def2&gt; &lt;label2&gt; </dt><dd>
+    <br>
+</dd><dt><b>--3spinsbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt;
+&lt;height&gt; &lt;width&gt; &lt;min1&gt; &lt;max1&gt; &lt;def1&gt;
+&lt;label1&gt; &lt;min2&gt; &lt;max2&gt; &lt;def2&gt; &lt;label2&gt;
+&lt;min3&gt; &lt;max3&gt; &lt;def3&gt; &lt;label3&gt;</dt><dd>
+    <br>
+</dd><dt><b>--textbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;file&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--editbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;file&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--tailbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;file&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--logbox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;file&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--menubox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;menu height&gt; &lt;tag1&gt; &lt;item1&gt; {&lt;help1&gt;}...</dt><dd>
+    <br>
+</dd><dt><b>--checklist</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;list height&gt; &lt;tag1&gt; &lt;item1&gt; &lt;status1&gt; {&lt;help1&gt;}...</dt><dd>
+    <br>
+</dd><dt><b>--radiolist</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;list height&gt; &lt;tag1&gt; &lt;item1&gt; &lt;status1&gt; {&lt;help1&gt;}...</dt><dd>
+    <br>
+</dd><dt><b>--buildlist</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; &lt;list height&gt; &lt;tag1&gt; &lt;item1&gt; &lt;status1&gt; {&lt;help1&gt;}...</dt><dd>
+    <br>
+</dd><dt><b>--treeview</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt;
+&lt;height&gt; &lt;width&gt; &lt;list height&gt; &lt;tag1&gt;
+&lt;item1&gt; &lt;status1&gt; &lt;item_depth1&gt; {&lt;help1&gt;}...</dt><dd>
+    <br>
+</dd><dt><b>--fselect</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;file&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--dselect</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;directory&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--colorsel</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;red&gt; &lt;green&gt; &lt;blue&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--fontsel</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;font name&gt; &lt;height&gt; &lt;width&gt;</dt><dd>
+    <br>
+</dd><dt><b>--calendar</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;day&gt; &lt;month&gt; &lt;year&gt;]</dt><dd>
+    <br>
+</dd><dt><b>--timebox</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>&lt;text&gt; &lt;height&gt; &lt;width&gt; [&lt;hours&gt; &lt;minutes&gt; &lt;seconds&gt;]</dt><dd>
+    <br>
+</dd></dl>
+<p>
+
+<i>Special options:</i><br>
+</p><p>The &lt;special options&gt; take no parameter and are to be used
+alone into the command line. They just make Xdialog to print a string
+on stderr and to exit immediately (with a 0 exit code).
+</p><p>
+
+<i>Available special options:</i>
+</p><dl compact="compact">
+<dt><b>--version</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>(prints version number to stderr and exits).</dt><dd>
+    <br>
+</dd><dt><b>--print-version</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>(same as above in a cdialog-compatible way).</dt><dd>
+    <br>
+</dd><dt><b>--print-maxsize</b><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt>(prints maximum menu size in characters and exits).</dt><dd>
+    <br>
+</dd></dl>
+<a name="lbAF">&nbsp;</a>
+<h2>DIAGNOSTICS</h2>
+
+<p>On completion of each box option (i.e. every time a widget is
+closed) Xdialog sends any result (text, numbers) as one or more strings
+to stderr (this can be changed so that the results are sent to stdout
+thanks to a common option). <br>
+</p><p>
+When Xdialog terminates (i.e. when all the &lt;box options&gt; are
+processed or when an error occurs), the exit code may take the
+following values: </p><dl compact="compact">
+<dt>0 : <i>OK</i>, <i>Yes</i> or <i>Next</i> button pressed.</dt><dd>
+    <br>
+</dd><dt>1 : <i>Cancel</i> or <i>No</i> button pressed.</dt><dd>
+    <br>
+</dd><dt>2 : <i>Help</i> button pressed (when the --help transient option was passed an empty string).</dt><dd>
+    <br>
+</dd><dt>3 : <i>Previous</i> button pressed (--wizard transient option in force).</dt><dd>
+    <br>
+</dd><dt>255 : an error (or timeout) occurred, or the box was closed
+through the window manager (same exit code as when the ESC key is
+pressed in (c)dialog). </dt><dd>
+    <br>
+</dd></dl>
+<p>
+
+Note that when chaining dialogs, the chain is broken and Xdialog terminates as soon as a widget returns a non zero exit code. 
+<a name="lbAG">&nbsp;</a>
+</p><h2>FILES</h2>
+
+<p>
+
+<i>/usr/local/bin/Xdialog</i> 
+<br>
+
+<i>/usr/local/share/locale/*/LC_MESSAGES/Xdialog.mo</i> 
+<br>
+
+<i>/usr/local/man/man1/Xdialog.1*</i>
+<br>
+
+<i>/usr/local/share/doc/Xdialog-2.3.1/*</i>
+<br>
+
+<i>/usr/local/share/doc/Xdialog-2.3.1/samples/*</i>
+<a name="lbAH">&nbsp;</a>
+</p><h2>ENVIRONMENT VARIABLES</h2>
+
+<p>
+
+<i>XDIALOG_HIGH_DIALOG_COMPAT</i>
+</p><dl compact="compact">
+<dt><br>
+</dt><dd>
+When set to <b>1</b> or <b>true</b> (case insensitive), this environment variable turns the <b>(c)dialog</b> high compatibility mode on. The net effect is that:
+</dd><dt><br>
+</dt><dd>
+- a fixed (monospacing) font is used in all Xdialog widgets (including labels, tags, menu/list items and buttons);
+</dd><dt><br>
+</dt><dd>
+- the <b>--left</b> common option is used as the default justification option instead of the <b>--center</b> one;
+</dd><dt><br>
+</dt><dd>
+- the &lt;text&gt; wrapping is always in force (<b>--wrap</b>) and the <b>--fill</b> option is ignored.
+</dd><dt><br>
+</dt><dd>
+- the <b>--no-cr-wrap</b> common option is used as the default instead of the <b>--cr-wrap</b> one (but it does not apply to the &lt;backtitle&gt; in this case).
+</dd><dt><br>
+</dt><dd>
+- regardless of the specified box size, the auto-sizing feature of Xdialog is forced when <b>XDIALOG_FORCE_AUTOSIZE</b> environment variable is set it to <b>1</b> or <b>true</b>.
+This makes for the sizing problems of some menus (e.g. when the
+specified box size is actually too small for the number of specified
+menu/list entries to fit).
+</dd><dt><br>
+</dt><dd>
+- the <b>Cancel</b> button is not displayed into the <b>tailbox</b> and <b>textbox</b> widgets;
+</dd><dt><br>
+</dt><dd>
+- the <b>infobox</b> widget is turned into a <b>msgbox</b> unless the <b>XDIALOG_INFOBOX_TIMEOUT</b> environment variable is set (in 1/1000s) and greater than 0, in which case an actual <b>infobox</b> without button is used;
+</dd><dt><br>
+</dt><dd>
+- the <b>--version</b> special option returns the same string as <b>--print-version</b>.
+</dd></dl>
+<p>
+
+<i>XDIALOG_FORCE_AUTOSIZE</i>
+<br>
+
+<i>XDIALOG_INFOBOX_TIMEOUT</i>
+</p><dl compact="compact">
+<dt><br>
+</dt><dd>
+See the notes about <b>XDIALOG_HIGH_DIALOG_COMPAT</b> above.
+</dd></dl>
+<p>
+
+<i>XDIALOG_NO_GMSGS</i>
+</p><dl compact="compact">
+<dt><br>
+</dt><dd>
+Setting this variable to 1 will prevent the Gdk, GLib and Gtk library from emitting messages via g_log().
+</dd></dl>
+<a name="lbAI">&nbsp;</a>
+<h2>EXAMPLES</h2>
+
+<p>
+
+Sample scripts are available in the <i>/usr/local/share/doc/Xdialog-2.3.1/samples/</i> directory.
+<br>
+
+Full HTML doc with screen shots, examples and FAQ is available in the <i>/usr/local/share/doc/Xdialog-2.3.1/</i> directory.
+<a name="lbAJ">&nbsp;</a>
+</p><h2>AUTHORS</h2>
+
+<p>
+
+Thierry Godefroy &lt;<a href="mailto:xdialog@free.fr">xdialog@free.fr</a>&gt; (from v1.1.0 onwards)
+<br>
+
+Alfred Reynolds &lt;<a href="mailto:alfred@cyberone.com.au">alfred@cyberone.com.au</a>&gt; (v1.0 only)
+<a name="lbAK">&nbsp;</a>
+</p><h2>SEE ALSO</h2>
+
+<p>
+
+<a href="http://localhost/cgi-bin/man/man2html?1+dialog">dialog</a>(1), <a href="http://localhost/cgi-bin/man/man2html?1+cdialog">cdialog</a>(1)
+</p><p>
+
+</p><hr>
+<a name="index">&nbsp;</a><h2>Index</h2>
+<dl>
+<dt><a href="#lbAB">NAME</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAC">SYNTAX</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAD">DESCRIPTION</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAE">OPTIONS</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAF">DIAGNOSTICS</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAG">FILES</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAH">ENVIRONMENT VARIABLES</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAI">EXAMPLES</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAJ">AUTHORS</a></dt><dd>
+    <br>
+</dd><dt><a href="#lbAK">SEE ALSO</a></dt><dd>
+    <br>
+</dd></dl>
+<hr>
+This document was created by
+<a href="http://localhost/cgi-bin/man/man2html">man2html</a>,
+using the manual pages.<br>
+Time: 23:59:02 GMT, November 25, 2006
+
+</body></html>

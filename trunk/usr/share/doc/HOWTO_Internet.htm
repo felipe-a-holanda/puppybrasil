@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+
+
+
+
+
+
+
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1">
+  <meta content="text/html; charset=iso-8859-1"><title>HOWTO Internet</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"></head><body>
+<h1><img style="width: 96px; height: 96px;" src="puppylogo96.png" alt=""> HOWTO: Internet access</h1>
+I originally designed Puppy to access the Internet by conventional
+modem dialup to an ISP (Internet
+Service Provider). I now have a satellite broadband account (direct
+connection to a satellite via a dish on the roof). Broadband is of
+course very popular, but many people are still on dialup,
+either because they live where broadband is not available, broadband is
+too expensive, or they simply choose to remain with dialup. This page
+is broken into
+two halves, the top-half dealing with dialup.<br>
+<h2>Dialup by analog modem</h2>
+Traditionally, Linux only really worked with what we call "hardware"
+serial modems -- whereas most modems these days are what is called
+"soft" modems and most of them only work with Microsoft Windows. If
+your PC has an internal modem, or a external modem attached via a USB
+cable, it is most likely a soft-modem.<br>
+Please note that I am describing analog modems here, for dialing-up an
+ISP (Internet Service Provider) -- these are different from ADSL and
+cable modems that are used for broadband Internet access.<br>
+<ul>
+  <li><span style="font-weight: bold;">External serial modem</span>. If
+you have an external serial modem, it is easy to recognise by the
+distinctive cable -- fairly large flat rectangle shape, with 9 or 25
+pins. This is a hardware modem, and will definitely work with Puppy.</li>
+  <li><span style="font-weight: bold;">Internal PCI modem card</span>.
+'PCI' refers to the sockets on the motherboard, into which an internal
+modem can be plugged. Up until about 2002, true hardware PCI modems were
+manufactured, since then they have all been soft-modems -- so that's
+most likely what you have.</li>
+  <li><span style="font-weight: bold;">Modem built-in to the motherboard</span>.
+Technically, these are still PCI modems, as the term "PCI" actually
+refers to the main interface bus on the motherboard, to which all
+input/output devices are connected. These are all soft-modems.<br>
+  </li>
+  <li><span style="font-weight: bold;">External USB modem</span>. These
+days USB is used for almost all external devices -- mouse, keyboard,
+modem, printer, scanner. There are some true-hardware USB modems, but
+most likely it is a soft-modem.</li>
+  <li><span style="font-weight: bold;">PCMCIA modem</span>. Also known as cardbus. This is a socket on laptops. These can be soft or hard, the modern ones likely to be soft.<br>
+  </li>
+</ul>
+What is a soft-modem? Basically, it is a cheaper modem that does less
+processing within itself and makes the CPU do some of the processing
+work. This means that it places an ovehead on the CPU, that you won't
+notice with modern fast CPUs, but it is a factor for old PCs. My
+personal experience also is that hardware modems tend to have higher
+transfer speed even with modern PCs. <br>
+The real down-side of a soft-modem however, is that to make the CPU do
+some of the processing work requires a special driver for that
+particular modem, and most manufacturers have only bothered to write
+drivers for Windows. However, some manufacturers have become more
+"Linux aware" and also some Linux enthusiasts have developed drivers.<br>
+<br>
+Be warned, if you have a soft modem, it may not work with Puppy.
+Puppy-enthusiast 'ezeze5000' (forum name) sent me half-a-dozen old PCI
+soft-modem cards to test and I got one to work -- so that is about the
+ratio! Well, that was back in 2008 -- updating this page in September
+2009, Puppy 4.3 has more modem drivers so the ratio may be better!<br>
+<br>
+Note, if a soft-modem does work in Linux, there is a jargon name used for it -- it is called a "linmodem".<br>
+<h3>Extra modem drivers</h3>
+Puppy 4.3 adds many more modem drivers, however some of them are very
+big. So, you may find that they are provided in a separate file that
+you have to download. Please read the release notes for your version of
+Puppy -- follow the link from the local <a href="file:///usr/share/doc/index.html">Help page</a>. You will find that we use a jargon name to refer to this extra-drivers file: the "zdrv".<br>
+<br>
+Of course, the term 'big' is relative! With Puppy we like to keep the
+live-CD at around 100MB or less, as this enables everything to load
+into RAM, which gives us the lovely speed that Puppy is famous for. So,
+we sometimes provide less-used functionality as a separate file, such
+as the "zdv" and the "devx" file -- although they are separate files,
+they are very easy to use -- read up on <span style="font-style: italic;">SFS</span> files at our <a href="http://puppylinux.com/development/package-management.htm">package management</a> web page.<br>
+<h3>How to dialup</h3>
+Puppy version 2.17 has introduced a whole new ball-game for dialup. In
+a nutshell, Puppy will auto-detect your analog modem, and if it is a
+supported type then everything will be automatically setup and you will
+be ready to connect. For serial modems this is straightforward, however
+Puppy now supports many soft-modems. If it's supported, it will most likely be
+autodetected.<br>
+<br>
+Note: autodetection and auto-setup of some modems is a
+work-in-progress, and there is some on-going discussion on this topic
+in the Puppy forum.<br>
+<br>
+Warning: make sure your modem is plugged in and turned on when you boot
+Puppy, as Puppy autodetects at bootup only. This only has to happen
+once and on subsequent boots the modem does not have to be turned on at
+bootup -- only just before you want to use it.<br>
+<br>
+To dialup, all you have to do is click the 'connect' icon on the
+desktop. This will bring up the "Internet Connection Wizard" in which
+you will see a a button labelled "Connect to Internet by dialup analog
+modem" -- just click that and you're in business -- a program I
+developed called <span style="font-style: italic; font-weight: bold; color: rgb(204, 0, 0);">PupDial</span> runs, and it will tell you whether or not your modem is detected.<br>
+<br>
+Note, in the Internet Connection Wizard you will see some radio-buttons
+at the bottom. These enable you to configure the desktop 'connect' icon
+to immediately launch PupDial, not the Wizard -- one less click to get
+online!<br>
+<br>
+Note, you can also run PupDial from the "Network" menu.<br>
+<br>
+One thing though, although Puppy can autodetect many modems and
+automatically set things up so that the modem is ready to go, in some
+cases you may have to do some extra tweaking. For example, Puppy
+detects your modem, but it won't dialout -- you do some research and
+find that the modem "initialisation string" needs to be changed, then
+it works. Whatever, if you do tweak a soft-modem and get it going,
+please please let me know about it and I can build those tweaks into
+the next release of Puppy.<br>
+Note: some soft modems need the "dialtone check" in PupDial to be turned off.<br>
+<h3>Further useful information</h3>If you need to troubleshoot your
+dialup modem, I recommend browse around on the Puppy Forum. There is a
+special section on dialup modems, with lots of feedback and solutions.<br>
+The main guy who can help is forum member 'rerwin', who is currently
+working toward getting modems to be autodetected and automatically
+setup. Rerwin is also updating PupDial.<br>
+<br>
+If for some reason PupDial does not work for you, Puppy has two other modem dialer programs, called <span style="font-style: italic; color: rgb(204, 0, 0); font-weight: bold;">Gkdial</span> and <span style="font-style: italic; font-weight: bold; color: rgb(204, 0, 0);">Xeznet</span>,
+that are PET packages that you can install (see 'install' icon on
+desktop) -- be warned though that the former is a GTK1 application, the
+latter a Tcl/Tk application and in the case of Puppy 4.x and later
+these are
+dependencies that will also have to be installed (although 4.20 and
+4.21 does have Tcl/Tk, 4.3 and later does not) -- so stay with
+PupDial if at all possible. Note on Xeznet: when adding an account, the
+"tty" field and the "speed" field
+do not need to have anything entered into them as they default to
+/dev/modem
+and 115200bps.<br>
+<p>If you would like to experiment with sending Hayes commands to your modem, Puppy has a neat little commandline program called <span style="color: rgb(204, 0, 0); font-style: italic; font-weight: bold;">modem-stats</span>. Open a terminal window and run it like this:<br>
+</p>
+
+<pre># modem-stats -c "ATZ" /dev/ttyS0<br></pre>This has a local <a href="modem-stats.htm">help file</a>. Puppy also has another tiny commandline serial-port communications utility called <span style="font-style: italic; font-weight: bold; color: rgb(204, 0, 0);">picocom</span>.<br>
+<br>
+There is another application, called <span style="font-style: italic; font-weight: bold; color: rgb(204, 0, 0);">Cutecom</span>,
+a GUI serial port terminal program, that you will find in the Utility
+menu (note, recent releases of Puppy do not have this program builtin
+-- it is a PET package: see the menu Setup --&gt; Puppy Package
+Manager, or click the 'install' icon on the desktop -- it requires the
+Qt library package, which get automatically installed). It's very easy
+to use: for my modem I had to tick the
+"Handshake:
+software" checkbox and selected "CR,LF line end" from the listbox near
+bottom of the window. After opening the serial port for any Hayes
+commands that you type in "Input:" box, the response from the modem
+will appear in the top text box. For example, you type "AT" followed by
+the ENTER key, and the modem should respond with "OK".<br>
+<br>
+
+This site has more info on soft-modems:
+<a href="http://linmodems.technion.ac.il/resources.html">linmodems.technion.ac.il/resources.html </a><br>
+
+<br>
+Here are some URLs with lists of modem strings for particular
+modems:
+
+<p><a href="http://www.56k.com/inits/">www.56k.com/inits</a></p>
+
+
+<p><a href="http://www.west.net/%7Ejay/modem/">www.west.net/~jay/modem<br>
+</a></p>
+<br>
+<hr style="width: 100%; height: 2px;"><h2>ADSL/Broadband</h2>
+
+<p><span style="color: rgb(255, 0, 0);">THIS SECTION WRITTEN AGES AGO, NEEDS TO BE UPDATED</span> <br>
+</p>
+<p>My own experience with using Puppy to connect to ADSL was very simple and
+pleasant.</p>
+
+
+<p>A friend of mine has ADSL with westnet.com.au (in Australia). Her computer
+runs Windows 98, and she ran the Easy-Config program supplied on the CD. She
+purchased a Netcomm NB1300 Plus 4, which is an ADSL router modem with one usb
+and four ethernet ports. On my recommendation, she did not use the usb port.
+She connected the first ethernet port to her PC, inserted the CD and did some
+simple hardware configuration as explained in docs on the CD (basically,
+choose "Never dial a connection" in the Internet configuration, and run
+"winipcfg" and choose the ethernet card not the dialup modem and press
+"Renew" button). Then she ran Easy-Config and just entered three parameters:
+she had to choose a "ISP-profile" and she left it at the first one, which was
+"ISP-profile-001". The other two parameters were username in format of
+"username@westnet.com.au" and her password.</p>
+
+<p>Hey presto, she was up and running.</p>
+
+<p>I plugged my PC into the second ethernet port, ran the Puppy
+Ethernet/network Wizard and chose DHCP, and immediately I was off and running
+also!</p>
+
+<p>My experience highlights the advantage of using a better quality modem. If
+you are thinking of upgrading from dial-up to ADSL, look very carefully at
+the modems offered by the ISPs. The Netcomm NB1300 Plus 4 has a router
+built-in, so supports 4 PCs simultaneously connected to the internet (5 PCs
+if the usb port is also used). After running Easy-Config, the username and
+password are stored inside the modem itself. This modem has built-in DHCP
+server and firewall capability. In fact, this kind type of intelligent modem
+may be running Linux internally -- I don't know if this particular model does
+though.</p>
+
+<p>Avoid a usb-only modem. Cheap and troublesome. For Windows, they require a
+special driver to be installed, whereas an ethernet modem needs no special
+driver. For Linux, ethernet modems are supported, but usb modems may not have
+a driver. Puppy has very little support for usb modems.<br>
+</p>
+<p>An update to the above is that I recently setup another ADSL router
+modem for somebody, and this one has a web browser interface -- meaning
+that no Windows-specific software is required to get it setup -- the
+way to go!<br>
+</p><p>(c) copyright 2007,2008,2009 Barry Kauler<br>
+<br>
+</p>
+
+</body></html>

@@ -1,0 +1,45 @@
+#!/bin/bash
+#Written by PANZERKOPF
+#100215 hacked by BK
+
+TITLE="Monitor Gamma calibration"
+BACKTITLE='Set percentage value for each colour,\nor adjust equally if only want to adjust\nbrightness of screen'
+
+if [ "`which xgamma`" = "" ]; then
+ Xdialog --title "${TITLE}" --msgbox "xgamma not found." 0 0
+ exit
+fi
+
+GAMMA='100/100/100'
+#file contains one line like this: xgamma -rgamma 1.00 -ggamma 1.00 -bgamma 1.00 #100/100/100
+[ -f $HOME/.xgamma-gamma ] && GAMMA="`cat $HOME/.xgamma-gamma | cut -f 2 -d '#'`"
+
+EXCODE="0"
+
+while [ "${EXCODE}" = "0" ]; do
+
+ if [ ! -z ${xGAMMA} ]; then
+  xgamma -rgamma ${xGAMMA:0:1}.${xGAMMA:1:2} -ggamma ${xGAMMA:4:1}.${xGAMMA:5:2} -bgamma ${xGAMMA:8:1}.${xGAMMA:9:2}
+  sGAMMA=${xGAMMA}
+  xgamma
+ fi
+
+ xGAMMA=`Xdialog --screen-center --left --backtitle "${BACKTITLE}" --title "${TITLE}" --stdout --buttons-style "text" --icon "/usr/share/images/xgamma-gui.xpm" --ok-label "Apply" --cancel-label "Exit" \
+--3spinsbox "" 0 0 "0" "199" "${GAMMA:0:3}" "Red" "0" "199" "${GAMMA:4:3}" "Green" "0" "199" "${GAMMA:8:3}" "Blue"`
+ EXCODE=${?}
+
+done
+
+if [ ! -z ${sGAMMA} ]; then
+ Xdialog --yesno "Save current configuration?" 0 0
+  if [ ${?} -eq 0 ]; then
+   echo -n "xgamma -rgamma ${sGAMMA:0:1}.${sGAMMA:1:2} -ggamma ${sGAMMA:4:1}.${sGAMMA:5:2} -bgamma ${sGAMMA:8:1}.${sGAMMA:9:2}"' &' > $HOME/.xgamma-gamma
+   echo " #${sGAMMA}" >> $HOME/.xgamma-gamma
+   #...xgamma is executed in /root/.xinitrc
+   echo "Saved"
+   #ummm, but if defaults, don't need xgamma...
+   [ "$sGAMMA" = "100/100/100" ] && rm -f $HOME/.xgamma-gamma #saves time in .xinitrc
+  fi
+fi
+
+###END###

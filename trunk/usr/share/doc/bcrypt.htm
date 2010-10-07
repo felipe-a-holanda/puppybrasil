@@ -1,0 +1,148 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of bcrypt</TITLE>
+</HEAD><BODY>
+<H1>bcrypt</H1>
+Section: User Commands  (1)<BR>Updated: 10 September 2002<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+bcrypt - blowfish file encryption
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>bcrypt</B> [-orc]<B>[-s</B>N]
+
+<I>file ...</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>bcrypt</B>
+
+encrypts and decrypts files using the
+<I>blowfish </I>
+
+algorithm.
+<P>
+
+Encrypted files will be saved with an extension of
+<B>.bfe</B>.
+
+Any files ending in
+<B>.bfe</B>
+
+will be assumed to be encrypted with
+<B>bcrypt</B> and 
+
+will attempt to decrypt them. Any other input files will be encrypted.
+If more than one type of file is given,
+<B>bcrypt</B>
+
+will process all files which are the same as the first filetype given.
+<P>
+
+By default,
+<B>bcrypt</B>
+
+will compress input files before encryption, remove input files after
+they are processed (assuming they are processed successfully) and
+overwrite input files with random data to prevent data recovery.
+<P>
+
+Passphrases may be between 8 and 56 characters. Regardless of the
+passphrase size, the key is hashed internally to 448 bits - the
+largest keysize supported by the
+<I>blowfish</I> algorithm. However, it is still wise to use a strong
+
+passphrase. 
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-o</B>
+
+<DD>
+print output to standard out. Implies -r.
+<DT><B>-c</B>
+
+<DD>
+DO NOT compress files before encryption.
+<DT><B>-r</B>
+
+<DD>
+DO NOT remove input files after processing
+<DT><B>-s</B><I>N</I>
+
+<DD>
+How many times to overwrite input files with random data before deleting. 
+The default number of overwrites is 3. Use -s0 to disable this 
+feature. No effect if -r is supplied.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>The</B> -o ,<B>-r </B>,and<B> -c </B>options
+
+each have the opposite effects
+if the appropriate settings are altered from the defaults in config.h. To
+determine what effect each of these have on your system, run
+<B>bcrypt</B>
+
+without any options.
+<P>
+
+Encrypted files should be compatible between most systems.
+Binary compatibility has been tested on all supported systems. There
+is a list of supported systems in the README file that was included
+with this software.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Probably.
+If you find that it will not compile and run on your system, or that 
+encrypted files are not compatible with other platforms, its probably 
+because I don't have access to the platform in question. Patches or 
+access to an unsupported machine are welcome.
+<A NAME="lbAH">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+<DL COMPACT>
+<DT>johnny shelley <DD>
+&lt;<A HREF="mailto:jshelley@cahaus.com">jshelley@cahaus.com</A>&gt;, 
+&lt;<A HREF="mailto:jshelley@ictransnet.com">jshelley@ictransnet.com</A>&gt;
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>DISTRIBUTION</H2>
+
+<B>bcrypt</B>
+
+includes Paul Kocher's implementation of the
+<I>blowfish</I> algorithm. The version distributed with
+
+<B>bcrypt</B> has been altered. Original sources are available from
+
+<A HREF="http://www.counterpane.com/bfsh-koc.zip">http://www.counterpane.com/bfsh-koc.zip</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">AUTHOR</A><DD>
+<DT><A HREF="#lbAI">DISTRIBUTION</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 00:53:22 GMT, September 29, 2003
+</BODY>
+</HTML>

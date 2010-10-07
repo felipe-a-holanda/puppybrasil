@@ -1,0 +1,68 @@
+#!/bin/sh
+#$Id: installwatch,v 0.6.1.1 2001/06/25 05:29:45 izto Exp $
+
+PREFIX=/usr
+
+HACK="PREFIX"
+HACK="#$HACK#";
+
+if test "$PREFIX" = "$HACK" ; then
+	echo 'This script has not been installed'
+	echo 'Please run "make install"'
+	exit 1
+fi
+
+LIBDIR=$PREFIX/lib
+
+if test -z "$1" ; then
+	echo "Syntax: $0 [-o outfile] <program> <arguments>"
+	exit 1
+fi
+
+if test "$1" = "-o" ; then
+	shift
+	INSTALLWATCHFILE="$1"
+	if test -z "$INSTALLWATCHFILE" ; then
+		echo "Syntax: $0 [-o outfile] <program> <arguments>"
+		exit 1
+	fi
+
+	# If $INSTALLWATCHFILE is a relative path, it must become
+	# absolute
+	if echo $INSTALLWATCHFILE | grep -qv '^/' ; then
+		INSTALLWATCHFILE=`pwd`/$INSTALLWATCHFILE
+	fi
+
+	export INSTALLWATCHFILE
+	if cat /dev/null > $INSTALLWATCHFILE ; then
+		true
+	else
+		echo Unable to prepare $INSTALLWATCHFILE
+		exit 1
+	fi
+	shift
+fi
+
+if test -z "$*" ; then
+	echo "Syntax: $0 [-o outfile] <program> <arguments>"
+	exit 1
+fi
+
+if test -u $1 ; then
+	echo "Warning: $0 may not work with suid programs"
+fi
+
+LD_PRELOAD=$LIBDIR/installwatch.so
+export LD_PRELOAD
+$*
+if [ $? -eq 0 ]; then
+   FAIL=0
+else
+   FAIL=1
+fi
+
+[ "$INSTALLWATCH_BACKUP_PATH" ] && rm -rf ${INSTALLWATCH_BACKUP_PATH}/no-backup
+
+ exit $FAIL
+
+

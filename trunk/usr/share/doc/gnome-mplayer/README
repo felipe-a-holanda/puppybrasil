@@ -1,0 +1,4 @@
+The Advanced Video Controls may not work on all machines they seem to require
+that the vo be set to gl:yuv=3 or gl:yuv=4 for the gamma, hue and saturation 
+settings.
+

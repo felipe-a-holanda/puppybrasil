@@ -1,0 +1,46 @@
+#the menu hierarchy used in official Puppy v2.14
+#'X-' categories are unofficial, Puppy-specific.
+#w482 changed top-level name 'Calculate' to 'Business'.
+
+PUPHIERARCHY='
+MENU                       CATEGORIES
+Desktop    :Settings       X-Desktop,DesktopSettings,Screensaver,Accessibility
+Desktop    :Country        X-DesktopCountry
+Desktop    :Applets        X-DesktopApplets
+System     :Config         System,Monitor,Security,HardwareSettings,Core
+System     :Memory         X-SystemMemory
+System     :Schedule       X-SystemSchedule
+Setup      :Entry          X-SetupEntry,PackageManager
+Setup      :Wizard         X-SetupWizard
+Setup      :Utility        X-SetupUtility
+Utility    :Sub            Utility,Viewer,Development,Building,Debugger,
+Utility    :               IDE,Profiling,Translation,GUIDesigner
+Utility    :Archiving      Archiving
+Utility    :Console        TerminalEmulator,Shell
+Filesystem :Manager        FileSystem,FileManager
+Filesystem :Mount          X-FilesystemMount
+Filesystem :Utility        X-FilesystemUtility
+Filesystem :Find           X-FilesystemFind
+Graphic    :Sub            2DGraphics,3DGraphics,Photography,Presentation,
+Graphic    :               Chart,FlowChart
+Graphic    :Edit           VectorGraphics,RasterGraphics
+Graphic    :Utility        X-GraphicUtility
+Document   :Sub            X-Document,WordProcessor,WebDevelopment
+Document   :TextEditor     TextEditor
+Document   :Utility        X-DocumentUtility,Dictionary
+Business   :Sub            X-Calculate,Finance,Spreadsheet,ProjectManagement
+Business   :Calculators    Calculator
+Business   :Utility        X-CalculateUtility
+Personal   :Sub            X-Personal,Calendar,ContactManagement
+Personal   :Utility        X-PersonalUtility
+Network    :Dialup         Dialup
+Network    :Sub            Network,HamRadio,RemoteAccess
+Internet   :               X-Internet,WebBrowser,Email,News,InstantMessaging,
+Internet   :               Telephony,IRCClient,FileTransfer,P2P
+Multimedia :Sub            AudioVideo,Video,Player,AudioVideoEditing,Recorder,
+Multimedia :               Music,Audio,Midi,Mixer,Sequencer,Tuner,Video,TV
+Multimedia :Burn           DiskBurning
+Fun        :               Game,Amusement,ActionGame,AdventureGame,ArcadeGame,
+Fun        :               BlocksGame,BoardGame,CardGame,KidsGame,LogicGame,
+Fun        :               RolePlaying,Simulation,SportsGame,StrategyGame
+'

@@ -1,0 +1,62 @@
+#!/bin/bash
+#BK nov 2007 gui frontend for dict.
+# 2010-05-26 ecube: refurbishing
+
+WIDTH=550; HEIGHT=700
+
+echo -n "" > /tmp/pdict-results.txt
+
+if [ "`ls /root/.dict_dbs`" = "" ]; then
+  `dict --dbs > /root/.dict_dbs`
+fi
+
+DICTLIST="`cat /root/.dict_dbs`"
+COMBOCONTENT="`echo "$DICTLIST" | grep -v '^Databases available:' | sed -e 's/^/<item>/' | sed -e 's/$/<\/item>/'`" 
+
+export MAIN_DIALOG="
+<window title=\"Pdict dictionary and thesaurus\" icon-name=\"gtk-info\">
+ <vbox>
+  <hbox>
+   <button>
+    <label>config</label>
+<action type=\"execute\"> Xdialog --title \"DICT databases\" --msgbox \"Initialize the list of databases by deleting the hidden file /root/.dict_dbs.\" 5 70</action>
+    <action type=\"execute\">/usr/local/bin/defaulttexteditor /root/.dict_dbs</action>
+    <action type=\"execute\">yaf-splash  -timeout 5 -font \"9x15B\" -outline 0 -margin 4 -bg cyan -text \"Restart pdict to activate the configuration\" &</action>
+   </button>
+
+   <entry activates-default=\"true\">
+    <variable>WORD</variable>
+   </entry>
+   <text><label>enter a word:</label></text>
+
+   <button>
+    <label>dict</label>
+    <action>dict -d \${DB%  *} \$WORD &>/tmp/pdict-results.txt</action>
+    <action>refresh:INFO</action>
+   </button>
+
+  </hbox>
+  <text><label>Choose which online database:</label></text>
+  <combobox>
+   <variable>DB</variable>
+    $COMBOCONTENT
+  </combobox>
+  <frame result:>
+   <edit>
+    <variable>INFO</variable>
+    <input file>/tmp/pdict-results.txt</input>
+    <width>$WIDTH</width>
+    <height>$HEIGHT</height>
+   </edit>
+  </frame>
+  <hbox>     
+   <button>
+    <label>exit</label>
+    <input file stock=\"gtk-quit\"></input>
+    <action type=\"exit\">EXIT</action>
+   </button>
+  </hbox>
+ </vbox>
+</window>
+"
+gtkdialog3 --program=MAIN_DIALOG
